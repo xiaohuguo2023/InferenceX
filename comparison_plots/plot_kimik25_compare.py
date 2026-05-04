@@ -98,23 +98,15 @@ def find_latest_sweep_dir() -> Path | None:
 def load_sweep(sweep_dir: Path) -> dict[tuple, dict]:
     """Load our sweep results — keyed by (isl, osl, tp, conc).
 
-    Result JSON file pattern:
-      kimik25_widegraph_default_mi355x_isl<ISL>_osl<OSL>_tp<TP>_conc<CONC>.json
+    Matches any file containing the ``_isl<I>_osl<O>_tp<T>_conc<C>.json``
+    suffix. That covers both the original sweep convention
+    (``kimik25_widegraph_default_mi355x_isl…``) and the harness convention
+    (``kimik2.5_fp4_mi355x_isl…``).
     """
+    import re
     out = {}
-    for path in glob.glob(str(sweep_dir / "kimik25_widegraph_default_mi355x_isl*_osl*_tp*_conc*.json")):
+    for path in glob.glob(str(sweep_dir / "*_isl*_osl*_tp*_conc*.json")):
         name = Path(path).stem
-        # Parse isl/osl/tp/conc from filename
-        try:
-            parts = dict(p.split("isl") if "isl" in p else
-                         p.split("osl") if "osl" in p else
-                         p.split("tp")  if "tp"  in p else
-                         p.split("conc") if "conc" in p else (None,None)
-                         for p in name.split("_") if any(k in p for k in ("isl","osl","tp","conc")))
-        except ValueError:
-            continue
-        # Easier: regex
-        import re
         m = re.search(r"isl(\d+)_osl(\d+)_tp(\d+)_conc(\d+)", name)
         if not m:
             continue

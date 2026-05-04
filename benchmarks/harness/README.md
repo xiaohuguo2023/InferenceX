@@ -189,11 +189,56 @@ already do — via the IX dump." When someone asks "should we run on B200?" the
 answer is "only if you have a profiling-on-NV use case AND access to NV
 hardware."
 
+## `--plot` flag (PR3)
+
+After the sweep finishes, look up
+`comparison_plots/plot_<model_prefix_no_dots>_compare.py` and invoke it with
+the per-config sweep dir + `IX_DUMP_DIR` env. Skipped in `--smoke` mode (one
+combo doesn't make a curve).
+
+```bash
+python3 benchmarks/harness/sa_bench.py \
+    --config kimik2.5-fp4-mi355x-vllm \
+    --out-dir /workspace/sweep_kimik25_$(date +%Y%m%d-%H%M%S) \
+    --plot \
+    --ix-dump-dir /home/inferencex_dump/inferencex-dump-2026-04-27
+```
+
+Produces grid + Pareto PNGs in `comparison_plots/`:
+- `<model>_mi355x_vs_b200_tp{4,8}.png`           — 2x3 panels (tput / TTFT / TPOT × ISL/OSL)
+- `<model>_pareto_{1k1k,8k1k}_tp{4,8}.png`       — interactivity Pareto, log-log
+- `<model>_pareto_e2el_{1k1k,8k1k}_tp{4,8}.png`  — E2EL Pareto, log-log
+- `<model>_data_table.csv`                       — per-combo numbers across ours + IX series
+
+### Adding plot support for a new model
+
+If `plot_<slug>_compare.py` doesn't exist for a model, `--plot` prints a
+warning and skips. The model_prefix-to-slug rule strips dots
+(`kimik2.5` → `kimik25`, `minimaxm2.5` → `minimaxm25`).
+
+To add a model: copy `comparison_plots/plot_kimik25_compare.py` and edit
+the `SOURCES`, `TPS`, `COLS`, `CONCS` constants near the top, plus the output
+filename prefix. The sweep file glob in `load_sweep()` already matches any
+`*_isl*_osl*_tp*_conc*.json`, so the harness's per-combo JSON naming is
+auto-detected.
+
+This intentionally keeps a thin "per-model curated plot script" layer
+(different models may want different cfg lists or vendor selections); the
+harness handles everything upstream.
+
 ## Roadmap
 
-- **PR3** — `--plot` flag wires `comparison_plots/plot_*_compare.py` against
-  the harness-produced `sa_bench.csv` so a single `sa_bench.py` invocation
-  produces grid + Pareto PNGs end-to-end. Pure plumbing; no new analysis.
+The mechanical pieces (PR1 + PR2 + PR3) cover the core "model-name + GPU as
+flags, emits SA-schema CSV, wires to plots" workflow the team asked for.
+Future ideas:
+
+- **Generic `plot_compare.py`** that infers everything from the CSV's
+  `config_label` field, removing the per-model copy step. Worth doing once we
+  have 3+ model plot scripts to compare.
+- **Auto-fetch latest IX dump** on `--plot` if `--ix-dump-dir` is omitted and
+  the cached one is stale.
+- **`--multi-version` mode** for the kind of "vLLM 0.16 vs 0.19 + Triton vs
+  AITER MLA" decomposition we did manually for kimik2.5 TP=8.
 
 ### Future / out of scope today
 

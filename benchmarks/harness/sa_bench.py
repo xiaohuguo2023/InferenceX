@@ -652,10 +652,15 @@ def main():
 
     rep = ap.add_argument_group("smoke report")
     rep.add_argument("--ix-dump-dir", default=None,
-                     help="Path to inferencex-dump-YYYY-MM-DD/ for DRIFT detection. "
-                          "Auto-detected if omitted.")
+                     help="Path to inferencex-dump-YYYY-MM-DD/ for DRIFT detection "
+                          "and --plot. Auto-detected if omitted.")
     rep.add_argument("--drift-pct", type=float, default=20.0,
                      help="Throughput delta threshold for DRIFT verdict (default 20)")
+    rep.add_argument("--plot", action="store_true",
+                     help="After sweep, invoke comparison_plots/plot_<model_prefix>_compare.py "
+                          "with the per-config sweep dir + IX_DUMP_DIR env. Writes grid + "
+                          "Pareto PNGs to comparison_plots/. Skipped in --smoke (1 combo "
+                          "doesn't make a curve).")
 
     args = ap.parse_args()
 
@@ -761,6 +766,42 @@ def main():
 
     n_pass = sum(1 for r in all_runs if r["json_present"] and r["rc"] == 0)
     print(f"\nFinal: {n_pass}/{len(all_runs)} combos produced JSON. Out: {root_out}")
+
+    # --- Plot pipeline (PR3) ---
+    if args.plot:
+        if args.smoke:
+            print("\n--plot: skipped (smoke mode runs 1 combo per config — no curves to plot)")
+        else:
+            run_plot_pipeline(jobs, root_out, ix_dump_dir, args.all)
+
+
+def run_plot_pipeline(jobs, root_out: Path, ix_dump_dir: Path | None, multi_config: bool):
+    """Invoke comparison_plots/plot_<model_prefix>_compare.py for each config that has one."""
+    plot_dir = REPO_ROOT / "comparison_plots"
+    print("\n=== --plot ===")
+    if ix_dump_dir is None:
+        print("WARN: no IX dump found; plots will only show 'ours' series")
+
+    for cfg, _ in jobs:
+        # Plot script naming: strip dots from model_prefix (kimik2.5 -> kimik25,
+        # minimaxm2.5 -> minimaxm25) to match the existing convention.
+        slug = cfg.model_prefix.replace(".", "")
+        plot_script = plot_dir / f"plot_{slug}_compare.py"
+        sweep_dir = (root_out / cfg.key) if multi_config else root_out
+        if not plot_script.exists():
+            print(f"  [{cfg.key}] no plot script at {plot_script.relative_to(REPO_ROOT)} — skipping. "
+                  f"To add: copy plot_kimik25_compare.py and edit constants for this model.")
+            continue
+        env = os.environ.copy()
+        if ix_dump_dir:
+            env["IX_DUMP_DIR"] = str(ix_dump_dir)
+        print(f"  [{cfg.key}] running {plot_script.name} on {sweep_dir.relative_to(REPO_ROOT) if str(sweep_dir).startswith(str(REPO_ROOT)) else sweep_dir}")
+        rc = subprocess.run(
+            ["python3", str(plot_script), str(sweep_dir)],
+            env=env, cwd=str(REPO_ROOT),
+        ).returncode
+        if rc != 0:
+            print(f"  [{cfg.key}] plot script exited rc={rc}", file=sys.stderr)
 
 
 if __name__ == "__main__":
