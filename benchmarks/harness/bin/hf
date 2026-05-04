@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Harness shim: no-op `hf download` when the target is already a local dir.
+# Falls through to the real `hf` for everything else (login, list, etc.).
+#
+# Why: the IX launchers under benchmarks/single_node/ all do
+#   hf download "$MODEL"
+# on every combo. On a benchmark machine the model is already in /data and
+# the download adds minutes per combo. By prepending this dir to PATH we
+# skip the call without patching any launcher.
+
+if [ "$1" = "download" ] && [ -n "$2" ] && [ -d "$2" ]; then
+  echo "[harness] skip 'hf download' — local path already present: $2" >&2
+  exit 0
+fi
+
+# Find the real hf, excluding our shim dir.
+SHIM_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REAL_HF=""
+IFS=':' read -ra DIRS <<< "$PATH"
+for d in "${DIRS[@]}"; do
+  if [ "$d" != "$SHIM_DIR" ] && [ -x "$d/hf" ]; then
+    REAL_HF="$d/hf"
+    break
+  fi
+done
+
+if [ -z "$REAL_HF" ]; then
+  echo "[harness hf shim] no real 'hf' on PATH (excluding $SHIM_DIR)" >&2
+  exit 127
+fi
+exec "$REAL_HF" "$@"
