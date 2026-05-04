@@ -170,9 +170,21 @@ cp -r /tmp/inferencex_dump/inferencex-dump-2026-04-27 /home/xiaohugu/inferencex_
 sa_bench.py … --ix-dump-dir /home/inferencex_dump/inferencex-dump-2026-04-27
 ```
 
-## Roadmap (subsequent PRs, not in PR1+PR2)
+## Roadmap
 
-- **PR3** — `--gpu b200` enabled end-to-end (launchers exist, just needs CSV
-  schema verification against NV runs).
-- **PR4** — `--plot` flag invokes the comparison + Pareto plot pipeline
-  against the produced CSV.
+- **PR3** — `--plot` flag wires the existing `comparison_plots/plot_*_compare.py`
+  scripts against the harness-produced `sa_bench.csv` so a single
+  `sa_bench.py` invocation produces grid + Pareto PNGs end-to-end.
+
+## Not in scope: `--gpu b200`
+
+The `--gpu` flag mechanically accepts `b200` / `b300` / `h200` (the launchers
+already exist in `benchmarks/single_node/`), but we don't run NV hardware
+locally. Cross-vendor comparison is handled via the **IX dashboard dump**
+(see DRIFT detection above and `comparison_plots/plot_kimik25_compare.py`),
+which already pulls B200/B300/H200 numbers without us re-running them.
+
+If you ever need to actually invoke the harness on NV hardware, the work
+would be: (1) verify `nvidia-smi`-based cleanup vs the current `pkill`
+approach, (2) confirm the IX-schema CSV columns map cleanly to TRT-backend
+JSON output (different metric field names than vllm). Defer until needed.
