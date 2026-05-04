@@ -117,11 +117,61 @@ on the benchmark machine where models live in `/data`.
   `benchmark_results.json` flat fields (one rename: `config_id` → `config_label`,
   since SA assigns the integer ID server-side and we don't have one).
 
-## Roadmap (subsequent PRs, not in this MVP)
+## `--all --smoke` mode (PR2)
 
-- **PR2** — smoke-test mode (`--all --smoke`) over every MI355x config in
-  amd-master.yaml; report PASS/FAIL/DRIFT per model so we can identify which
-  launchers need tweaks.
+Iterate every config in amd-master.yaml matching `--gpu` and `--framework`,
+run only the cheapest combo per config (smallest TP × smallest ISL+OSL ×
+smallest CONC from the search-space), and emit a PASS/FAIL/DRIFT report
+versus the IX dashboard:
+
+```bash
+python3 benchmarks/harness/sa_bench.py \
+    --gpu mi355x --all --smoke \
+    --ix-dump-dir /home/inferencex_dump/inferencex-dump-2026-04-27 \
+    --out-dir /workspace/smoke_$(date +%Y%m%d-%H%M%S)
+
+# Skip configs whose key matches a regex (e.g., known-broken or WIP):
+sa_bench.py --gpu mi355x --all --smoke --exclude 'minimax|dsv4-fp8' --out-dir ...
+
+# Resumable: re-run after a partial sweep, skip combos with JSON already on disk:
+sa_bench.py --gpu mi355x --all --smoke --skip-existing --out-dir ...
+```
+
+### Verdicts
+
+| Verdict | Meaning |
+|---|---|
+| **PASS**   | Combo ran, JSON produced, throughput within `--drift-pct` of the IX dashboard for the same combo |
+| **DRIFT**  | Combo ran, JSON produced, throughput >`--drift-pct` off IX (default 20%) |
+| **FAIL**   | Launcher non-zero exit OR no JSON produced |
+| **NO_REF** | Combo ran fine, but no matching IX dashboard row exists to compare against |
+
+### Outputs (root-of `--out-dir`)
+
+```
+<config-key-1>/
+  ├── *.{json,server.log,gpu_metrics.csv,stdout}    (per combo)
+  ├── sa_bench.csv                                  (this config's IX-schema rows)
+  └── manifest.json
+<config-key-2>/
+  └── …
+smoke_report.md       # human report: per-config table with verdicts and deltas
+smoke_report.csv      # machine: same data, one row per smoke combo
+```
+
+### IX dump path inside containers
+
+The dump auto-detect looks at `/tmp/inferencex_dump/inferencex-dump-*`. If your
+container only mounts `/home/xiaohugu`, copy the dump under there and pass
+`--ix-dump-dir` explicitly:
+
+```bash
+cp -r /tmp/inferencex_dump/inferencex-dump-2026-04-27 /home/xiaohugu/inferencex_dump/
+sa_bench.py … --ix-dump-dir /home/inferencex_dump/inferencex-dump-2026-04-27
+```
+
+## Roadmap (subsequent PRs, not in PR1+PR2)
+
 - **PR3** — `--gpu b200` enabled end-to-end (launchers exist, just needs CSV
   schema verification against NV runs).
 - **PR4** — `--plot` flag invokes the comparison + Pareto plot pipeline

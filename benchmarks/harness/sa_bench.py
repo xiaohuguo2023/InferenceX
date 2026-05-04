@@ -391,11 +391,219 @@ def write_manifest(out_dir: Path, cfg: IxConfig, results: list[dict],
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2))
 
 
+# ---------- multi-config discovery (--all) ----------
+
+def discover_configs(gpu: str, framework: str | None = None,
+                     exclude_re: str | None = None) -> list[IxConfig]:
+    """Return all amd-master.yaml configs matching --gpu and --framework.
+
+    `exclude_re` is a Python regex applied to the config key; matching keys
+    are dropped (useful to skip WIP / known-broken configs).
+    """
+    import re as _re
+    with open(AMD_MASTER_YAML) as f:
+        all_cfgs = yaml.safe_load(f)
+    excl = _re.compile(exclude_re) if exclude_re else None
+    out = []
+    for key, raw in all_cfgs.items():
+        if raw.get("runner") != gpu:
+            continue
+        if framework and raw.get("framework") != framework:
+            continue
+        if excl and excl.search(key):
+            continue
+        if raw.get("is_multinode") or raw.get("multinode"):
+            continue
+        out.append(IxConfig(
+            key=key, model=raw["model"], image=raw["image"],
+            runner=raw["runner"], framework=raw["framework"],
+            precision=raw["precision"], model_prefix=raw["model-prefix"],
+            seq_len_configs=raw["seq-len-configs"], raw=raw,
+        ))
+    return sorted(out, key=lambda c: c.key)
+
+
+def pick_smoke_combo(cfg: IxConfig) -> tuple[int, int, int, int]:
+    """Pick the cheapest (isl, osl, tp, conc) combo for a config.
+
+    Heuristic: smallest ISL+OSL, smallest TP within that, smallest CONC
+    within that. Wall-time minimizer.
+    """
+    candidates = []
+    for sl in cfg.seq_len_configs:
+        isl, osl = sl["isl"], sl["osl"]
+        for ss in sl["search-space"]:
+            tp = ss["tp"]
+            conc = ss["conc-start"]
+            candidates.append((isl + osl, isl, osl, tp, conc))
+    isl_osl_sum, isl, osl, tp, conc = min(candidates, key=lambda x: (x[0], x[3], x[4]))
+    return (isl, osl, tp, conc)
+
+
+# ---------- DRIFT detection vs IX dump ----------
+
+def find_latest_ix_dump() -> Path | None:
+    """Locate the most recent IX dump under /tmp/inferencex_dump/."""
+    candidates = sorted(Path("/tmp/inferencex_dump").glob("inferencex-dump-*"))
+    return candidates[-1] if candidates else None
+
+
+def find_ix_match(dump_dir: Path, cfg: IxConfig,
+                  isl: int, osl: int, tp: int, conc: int) -> dict | None:
+    """Look up the IX dashboard row for the same (model, hw, fw, tp, isl, osl, conc).
+
+    Returns the most recent row, or None if no match.
+    """
+    cfgs_path = dump_dir / "configs.json"
+    br_path   = dump_dir / "benchmark_results.json"
+    if not (cfgs_path.exists() and br_path.exists()):
+        return None
+    with open(cfgs_path) as f:
+        ix_cfgs = json.load(f)
+    matching_ids = {
+        c["id"] for c in ix_cfgs
+        if c["model"].startswith(cfg.model_prefix)
+        and c["precision"] == cfg.precision
+        and c["hardware"] == cfg.runner
+        and c["framework"] == cfg.framework
+        and c["decode_tp"] == tp
+        and not c.get("disagg")
+        and not c.get("is_multinode")
+    }
+    if not matching_ids:
+        return None
+    with open(br_path) as f:
+        br = json.load(f)
+    matches = [
+        r for r in br
+        if r.get("config_id") in matching_ids and not r.get("error")
+        and r.get("isl") == isl and r.get("osl") == osl and r.get("conc") == conc
+    ]
+    if not matches:
+        return None
+    matches.sort(key=lambda r: r.get("date", ""), reverse=True)
+    return matches[0]
+
+
+def classify(combo_result: dict, json_data: dict | None,
+             ix_match: dict | None, drift_pct: float = 20.0) -> dict:
+    """Classify a smoke run as PASS / FAIL / DRIFT.
+
+    PASS  — combo finished, JSON present, throughput within drift_pct of IX
+    DRIFT — combo finished, JSON present, throughput >drift_pct off IX
+    FAIL  — combo did not finish or no JSON
+    NO_REF — passed but no IX row to compare against (still a useful smoke)
+    """
+    if not combo_result["json_present"] or combo_result["rc"] != 0:
+        return {"verdict": "FAIL", "ours_tput": None, "ix_tput": None,
+                "delta_pct": None, "reason": f"rc={combo_result['rc']}"}
+    ours_tput = (json_data or {}).get("total_token_throughput")
+    if ours_tput is None:
+        return {"verdict": "FAIL", "ours_tput": None, "ix_tput": None,
+                "delta_pct": None, "reason": "no total_token_throughput in JSON"}
+    if ix_match is None:
+        return {"verdict": "NO_REF", "ours_tput": ours_tput, "ix_tput": None,
+                "delta_pct": None, "reason": "no matching IX dashboard row"}
+    ix_tput = (ix_match.get("metrics", {}).get("tput_per_gpu") or 0.0) * combo_result["tp"]
+    if not ix_tput:
+        return {"verdict": "NO_REF", "ours_tput": ours_tput, "ix_tput": None,
+                "delta_pct": None, "reason": "IX row has no tput_per_gpu"}
+    delta = (ours_tput / ix_tput - 1) * 100
+    verdict = "PASS" if abs(delta) <= drift_pct else "DRIFT"
+    return {"verdict": verdict, "ours_tput": ours_tput, "ix_tput": ix_tput,
+            "delta_pct": delta, "reason": ""}
+
+
+def write_smoke_report(out_dir: Path, rows: list[dict], drift_pct: float,
+                       ix_dump_dir: Path | None):
+    """Write smoke_report.md (human) and smoke_report.csv (machine)."""
+    md = out_dir / "smoke_report.md"
+    cs = out_dir / "smoke_report.csv"
+
+    counts = {"PASS": 0, "DRIFT": 0, "FAIL": 0, "NO_REF": 0}
+    for r in rows:
+        counts[r["verdict"]] = counts.get(r["verdict"], 0) + 1
+
+    with open(md, "w") as f:
+        f.write("# sa_bench --all --smoke report\n\n")
+        f.write(f"- IX dump:   `{ix_dump_dir}`\n")
+        f.write(f"- Drift threshold: ±{drift_pct:.0f}% on total_token_throughput\n")
+        f.write(f"- Out dir:   `{out_dir}`\n")
+        f.write(f"- Summary:   "
+                f"PASS={counts['PASS']}  DRIFT={counts['DRIFT']}  "
+                f"FAIL={counts['FAIL']}  NO_REF={counts['NO_REF']}  "
+                f"(of {len(rows)} configs)\n\n")
+        f.write("| config | tp | isl/osl | conc | verdict | ours tput | IX tput | Δ% | reason / elapsed |\n")
+        f.write("|---|---:|---|---:|---|---:|---:|---:|---|\n")
+        for r in rows:
+            ours = f"{r['ours_tput']:.0f}" if r['ours_tput'] is not None else "—"
+            ix   = f"{r['ix_tput']:.0f}"   if r['ix_tput']   is not None else "—"
+            delt = f"{r['delta_pct']:+.1f}%" if r['delta_pct'] is not None else "—"
+            extra = r["reason"] or f"{r['elapsed_s']}s"
+            f.write(f"| `{r['config']}` | {r['tp']} | {r['isl']}/{r['osl']} | {r['conc']} | "
+                    f"**{r['verdict']}** | {ours} | {ix} | {delt} | {extra} |\n")
+    print(f"wrote {md}")
+
+    with open(cs, "w", newline="") as f:
+        cols = ["config", "tp", "isl", "osl", "conc", "verdict",
+                "ours_tput", "ix_tput", "delta_pct", "elapsed_s", "rc", "reason"]
+        w = csv.DictWriter(f, fieldnames=cols)
+        w.writeheader()
+        for r in rows:
+            w.writerow({k: r.get(k, "") for k in cols})
+    print(f"wrote {cs}")
+
+
 # ---------- argparse + main ----------
 
 def parse_isl_osl(s: str) -> tuple[int, int]:
     a, b = s.split("/")
     return (int(a), int(b))
+
+
+def run_one_config(cfg: IxConfig, combos: list[tuple[int, int, int, int]],
+                   out_dir: Path, base_env: dict[str, str], vllm_version: str,
+                   args: argparse.Namespace) -> list[dict]:
+    """Run all combos for a single config. Writes per-config csv + manifest."""
+    launcher = derive_launcher_path(cfg)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    print(f"\n--- {cfg.key} ---")
+    print(f"    image:    {cfg.image}")
+    print(f"    launcher: {launcher.relative_to(REPO_ROOT)}")
+    print(f"    combos:   {len(combos)} -> {out_dir}")
+
+    results = []
+    for i, (isl, osl, tp, conc) in enumerate(combos, 1):
+        rf = f"{cfg.model_prefix}_{cfg.precision}_{cfg.runner}_isl{isl}_osl{osl}_tp{tp}_conc{conc}"
+        if args.skip_existing and (out_dir / f"{rf}.json").exists():
+            print(f"\n[{i}/{len(combos)}] SKIP — JSON exists at {rf}.json")
+            results.append(dict(isl=isl, osl=osl, tp=tp, conc=conc, rc=0,
+                                elapsed_s=0, result_filename=rf, json_present=True,
+                                skipped=True))
+            continue
+        print(f"\n[{i}/{len(combos)}]", end=" ")
+        try:
+            r = run_one_combo(cfg, launcher, out_dir, isl, osl, tp, conc,
+                              base_env, args.port, args.random_range_ratio,
+                              args.max_num_seqs)
+        except KeyboardInterrupt:
+            cleanup_vllm()
+            raise
+        except Exception as e:
+            print(f"WARN: combo crashed: {e}", file=sys.stderr)
+            r = dict(isl=isl, osl=osl, tp=tp, conc=conc, rc=-1, elapsed_s=0,
+                     result_filename="", json_present=False)
+        results.append(r)
+
+    extra_env = parse_extra_env(args.extra_env)
+    write_manifest(out_dir, cfg, results, vllm_version,
+                   args.env_overlay, extra_env, launcher, args)
+    write_csv(out_dir, results, cfg, vllm_version, args.env_overlay, extra_env)
+
+    n_pass = sum(1 for r in results if r["json_present"] and r["rc"] == 0)
+    print(f"  -> {n_pass}/{len(results)} combos produced JSON")
+    return results
 
 
 def main():
@@ -405,11 +613,20 @@ def main():
     sel.add_argument("--config", help="Full amd-master.yaml key, e.g. kimik2.5-fp4-mi355x-vllm")
     sel.add_argument("--model", help="Short model spec like 'kimik2.5-fp4'; combine with --gpu/--framework")
     sel.add_argument("--gpu", choices=["mi355x", "mi300x", "mi325x", "b200", "b300", "h200"],
-                     help="Hardware key when using --model")
+                     help="Hardware key when using --model or --all")
     sel.add_argument("--framework", default="vllm",
-                     help="Framework when using --model (default: vllm)")
+                     help="Framework when using --model or --all (default: vllm)")
+    sel.add_argument("--all", action="store_true",
+                     help="Iterate every config in amd-master.yaml matching --gpu and --framework")
+    sel.add_argument("--exclude", default=None,
+                     help="Regex; configs whose key matches are skipped (only with --all)")
 
-    flt = ap.add_argument_group("combo filters (optional)")
+    mode = ap.add_argument_group("run mode")
+    mode.add_argument("--smoke", action="store_true",
+                      help="Run only the cheapest combo per config (for --all sanity checks). "
+                           "When used without --all, picks the smoke combo of the single config.")
+
+    flt = ap.add_argument_group("combo filters (optional, ignored when --smoke)")
     flt.add_argument("--tp", help="Comma-separated TPs to keep (e.g. 4,8)")
     flt.add_argument("--conc", help="Comma-separated CONCs to keep (e.g. 4,8,16)")
     flt.add_argument("--isl-osl", action="append", default=[],
@@ -424,79 +641,126 @@ def main():
 
     run = ap.add_argument_group("runtime")
     run.add_argument("--out-dir", required=True,
-                     help="Where per-combo artifacts and CSV land")
+                     help="Where per-combo artifacts and CSV land. With --all, "
+                          "each config gets a subdir <out-dir>/<config-key>/")
     run.add_argument("--port", type=int, default=8891)
     run.add_argument("--max-num-seqs", type=int, default=256)
     run.add_argument("--random-range-ratio", type=float, default=0.8)
-    run.add_argument("--dry-run", action="store_true", help="Print combos and exit")
+    run.add_argument("--skip-existing", action="store_true",
+                     help="Skip combos whose result JSON is already on disk (resumable)")
+    run.add_argument("--dry-run", action="store_true", help="Print plan and exit")
+
+    rep = ap.add_argument_group("smoke report")
+    rep.add_argument("--ix-dump-dir", default=None,
+                     help="Path to inferencex-dump-YYYY-MM-DD/ for DRIFT detection. "
+                          "Auto-detected if omitted.")
+    rep.add_argument("--drift-pct", type=float, default=20.0,
+                     help="Throughput delta threshold for DRIFT verdict (default 20)")
 
     args = ap.parse_args()
 
-    if not args.config and not args.model:
-        ap.error("supply --config or (--model + --gpu)")
-    if args.model:
+    # --- Validate selection mode ---
+    if args.all:
         if not args.gpu:
-            ap.error("--model requires --gpu")
-        args.config = f"{args.model}-{args.gpu}-{args.framework}"
+            ap.error("--all requires --gpu")
+        if args.config or args.model:
+            ap.error("--all is exclusive with --config/--model")
+    else:
+        if not args.config and not args.model:
+            ap.error("supply --config, (--model + --gpu), or --all + --gpu")
+        if args.model:
+            if not args.gpu:
+                ap.error("--model requires --gpu")
+            args.config = f"{args.model}-{args.gpu}-{args.framework}"
 
-    cfg = load_config(args.config)
-    launcher = derive_launcher_path(cfg)
+    # --- Build the config + combo list ---
+    if args.all:
+        configs = discover_configs(args.gpu, args.framework, args.exclude)
+        if not configs:
+            raise SystemExit(f"no configs match runner={args.gpu} framework={args.framework}")
+    else:
+        configs = [load_config(args.config)]
 
-    combos = all_combos(cfg)
-    tps = [int(x) for x in args.tp.split(",")] if args.tp else None
-    concs = [int(x) for x in args.conc.split(",")] if args.conc else None
+    tps     = [int(x) for x in args.tp.split(",")] if args.tp else None
+    concs   = [int(x) for x in args.conc.split(",")] if args.conc else None
     isl_osls = [parse_isl_osl(s) for s in args.isl_osl] if args.isl_osl else None
-    combos = filter_combos(combos, tps=tps, concs=concs, isl_osls=isl_osls)
-    if not combos:
-        raise SystemExit("no combos after filtering")
+
+    jobs: list[tuple[IxConfig, list[tuple[int, int, int, int]]]] = []
+    for cfg in configs:
+        if args.smoke:
+            combos = [pick_smoke_combo(cfg)]
+        else:
+            combos = filter_combos(all_combos(cfg), tps=tps, concs=concs, isl_osls=isl_osls)
+        if not combos:
+            print(f"WARN: skip {cfg.key} — no combos after filter", file=sys.stderr)
+            continue
+        jobs.append((cfg, combos))
+    if not jobs:
+        raise SystemExit("no jobs to run")
 
     overlay = load_overlay(args.env_overlay if args.env_overlay != "baseline" else "")
     extra_env = parse_extra_env(args.extra_env)
     base_env = {**overlay, **extra_env}
 
-    print(f"config:    {cfg.key}")
-    print(f"model:     {cfg.model}")
-    print(f"image:     {cfg.image}")
-    print(f"launcher:  {launcher.relative_to(REPO_ROOT)}")
+    print(f"mode:      {'smoke' if args.smoke else 'full'}, "
+          f"{'all' if args.all else 'single-config'}")
+    print(f"gpu:       {args.gpu or '(from config)'}")
+    print(f"framework: {args.framework}")
     print(f"overlay:   {args.env_overlay} ({len(overlay)} vars)")
     print(f"extra-env: {extra_env or '(none)'}")
-    print(f"combos:    {len(combos)} after filter")
-    for isl, osl, tp, conc in combos:
-        print(f"  isl={isl} osl={osl} tp={tp} conc={conc}")
+    print(f"jobs:      {len(jobs)} configs, {sum(len(c) for _, c in jobs)} combos total")
+    for cfg, combos in jobs:
+        for isl, osl, tp, conc in combos:
+            print(f"  {cfg.key:40s} isl={isl} osl={osl} tp={tp} conc={conc}")
 
     if args.dry_run:
         return
 
-    out_dir = Path(args.out_dir).resolve()
-    out_dir.mkdir(parents=True, exist_ok=True)
+    root_out = Path(args.out_dir).resolve()
+    root_out.mkdir(parents=True, exist_ok=True)
     vllm_version = detect_vllm_version()
-    print(f"\nout_dir:   {out_dir}")
-    print(f"vllm:      {vllm_version}\n")
+    ix_dump_dir = Path(args.ix_dump_dir) if args.ix_dump_dir else find_latest_ix_dump()
+    print(f"\nout_dir:   {root_out}")
+    print(f"vllm:      {vllm_version}")
+    print(f"ix dump:   {ix_dump_dir or '(none — DRIFT detection disabled)'}")
 
-    # Stop on Ctrl-C cleanly.
     signal.signal(signal.SIGINT, lambda *_: (cleanup_vllm(), sys.exit(130)))
 
-    results = []
-    for i, (isl, osl, tp, conc) in enumerate(combos, 1):
-        print(f"\n[{i}/{len(combos)}]", end=" ")
-        try:
-            r = run_one_combo(cfg, launcher, out_dir, isl, osl, tp, conc,
-                              base_env, args.port, args.random_range_ratio, args.max_num_seqs)
-        except KeyboardInterrupt:
-            cleanup_vllm()
-            raise
-        except Exception as e:
-            print(f"WARN: combo crashed: {e}", file=sys.stderr)
-            r = dict(isl=isl, osl=osl, tp=tp, conc=conc, rc=-1, elapsed_s=0,
-                     result_filename="", json_present=False)
-        results.append(r)
+    # --- Run all jobs, collect results ---
+    all_runs: list[dict] = []
+    for ji, (cfg, combos) in enumerate(jobs, 1):
+        print(f"\n========== [{ji}/{len(jobs)}] {cfg.key} ==========")
+        cfg_out = root_out / cfg.key if args.all else root_out
+        results = run_one_config(cfg, combos, cfg_out, base_env, vllm_version, args)
+        for r in results:
+            all_runs.append({"cfg": cfg, "out_dir": cfg_out, **r})
 
-    write_manifest(out_dir, cfg, results, vllm_version,
-                   args.env_overlay, extra_env, launcher, args)
-    write_csv(out_dir, results, cfg, vllm_version, args.env_overlay, extra_env)
+    # --- Smoke-mode classification + report ---
+    if args.smoke:
+        report_rows = []
+        for run in all_runs:
+            cfg = run["cfg"]
+            json_data = None
+            if run["json_present"]:
+                json_path = run["out_dir"] / f"{run['result_filename']}.json"
+                try:
+                    json_data = json.loads(json_path.read_text())
+                except Exception:
+                    pass
+            ix_match = None
+            if ix_dump_dir:
+                ix_match = find_ix_match(ix_dump_dir, cfg, run["isl"], run["osl"],
+                                         run["tp"], run["conc"])
+            verdict = classify(run, json_data, ix_match, args.drift_pct)
+            report_rows.append({
+                "config": cfg.key, "tp": run["tp"], "isl": run["isl"], "osl": run["osl"],
+                "conc": run["conc"], "rc": run["rc"], "elapsed_s": run["elapsed_s"],
+                **verdict,
+            })
+        write_smoke_report(root_out, report_rows, args.drift_pct, ix_dump_dir)
 
-    n_pass = sum(1 for r in results if r["json_present"] and r["rc"] == 0)
-    print(f"\nSummary: {n_pass}/{len(results)} combos produced JSON. Out: {out_dir}")
+    n_pass = sum(1 for r in all_runs if r["json_present"] and r["rc"] == 0)
+    print(f"\nFinal: {n_pass}/{len(all_runs)} combos produced JSON. Out: {root_out}")
 
 
 if __name__ == "__main__":
