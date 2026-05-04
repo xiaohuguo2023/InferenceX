@@ -170,21 +170,37 @@ cp -r /tmp/inferencex_dump/inferencex-dump-2026-04-27 /home/xiaohugu/inferencex_
 sa_bench.py … --ix-dump-dir /home/inferencex_dump/inferencex-dump-2026-04-27
 ```
 
+## Architectural rule: comparison-vs-NV is **always** through the IX dump
+
+This is the load-bearing design choice for the harness. Internalize it:
+
+- **Comparison** (our MI355x vs B200/B300/H200) is done by overlaying our
+  `sa_bench.csv` (or per-combo JSONs) with rows pulled from the **IX dashboard
+  dump**. No NV hardware required on our end. This works today via
+  `find_ix_match` (DRIFT check) and `comparison_plots/plot_*_compare.py`
+  (overlay plots).
+- **Re-running NV** ourselves is *not* a comparison workflow. It's only useful
+  for **profiling NV hardware on a vLLM patch we want to test** — i.e., when we
+  don't trust the dashboard's NV numbers because we changed something the
+  dashboard hasn't picked up yet.
+
+So when someone asks "should we compare our run to B200?" the answer is "we
+already do — via the IX dump." When someone asks "should we run on B200?" the
+answer is "only if you have a profiling-on-NV use case AND access to NV
+hardware."
+
 ## Roadmap
 
-- **PR3** — `--plot` flag wires the existing `comparison_plots/plot_*_compare.py`
-  scripts against the harness-produced `sa_bench.csv` so a single
-  `sa_bench.py` invocation produces grid + Pareto PNGs end-to-end.
+- **PR3** — `--plot` flag wires `comparison_plots/plot_*_compare.py` against
+  the harness-produced `sa_bench.csv` so a single `sa_bench.py` invocation
+  produces grid + Pareto PNGs end-to-end. Pure plumbing; no new analysis.
 
-## Not in scope: `--gpu b200`
+### Future / out of scope today
 
-The `--gpu` flag mechanically accepts `b200` / `b300` / `h200` (the launchers
-already exist in `benchmarks/single_node/`), but we don't run NV hardware
-locally. Cross-vendor comparison is handled via the **IX dashboard dump**
-(see DRIFT detection above and `comparison_plots/plot_kimik25_compare.py`),
-which already pulls B200/B300/H200 numbers without us re-running them.
-
-If you ever need to actually invoke the harness on NV hardware, the work
-would be: (1) verify `nvidia-smi`-based cleanup vs the current `pkill`
-approach, (2) confirm the IX-schema CSV columns map cleanly to TRT-backend
-JSON output (different metric field names than vllm). Defer until needed.
+- **`--gpu b200` end-to-end** — only worth doing when there's a concrete
+  profiling-on-NV need AND access to NV hardware. The mechanical bits work
+  already (launchers exist, `--gpu b200` is accepted), but real validation
+  would need: `nvidia-smi`-based cleanup vs the current `pkill` approach, and
+  TRT-backend JSON field name mapping in `json_to_ix_row` (TRT emits
+  different metric keys than vLLM). Defer until needed; do not preemptively
+  build for this.
