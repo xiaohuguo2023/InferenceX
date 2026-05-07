@@ -60,6 +60,13 @@ class IxConfig:
     raw: dict = field(repr=False)
 
 
+def _seq_len_configs(raw: dict) -> list[dict]:
+    # New schema: scenarios.fixed-seq-len. Old schema: top-level seq-len-configs.
+    if "seq-len-configs" in raw:
+        return raw["seq-len-configs"]
+    return raw.get("scenarios", {}).get("fixed-seq-len", []) or []
+
+
 def load_config(key: str) -> IxConfig:
     with open(AMD_MASTER_YAML) as f:
         all_cfgs = yaml.safe_load(f)
@@ -75,7 +82,7 @@ def load_config(key: str) -> IxConfig:
         framework=raw["framework"],
         precision=raw["precision"],
         model_prefix=raw["model-prefix"],
-        seq_len_configs=raw["seq-len-configs"],
+        seq_len_configs=_seq_len_configs(raw),
         raw=raw,
     )
 
@@ -414,11 +421,15 @@ def discover_configs(gpu: str, framework: str | None = None,
             continue
         if raw.get("is_multinode") or raw.get("multinode"):
             continue
+        sl = _seq_len_configs(raw)
+        if not sl:
+            # No fixed-seq-len scenario (e.g. agentic-coding only) — skip.
+            continue
         out.append(IxConfig(
             key=key, model=raw["model"], image=raw["image"],
             runner=raw["runner"], framework=raw["framework"],
             precision=raw["precision"], model_prefix=raw["model-prefix"],
-            seq_len_configs=raw["seq-len-configs"], raw=raw,
+            seq_len_configs=sl, raw=raw,
         ))
     return sorted(out, key=lambda c: c.key)
 
