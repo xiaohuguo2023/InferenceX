@@ -97,8 +97,10 @@ def derive_launcher_path(cfg: IxConfig) -> Path:
     """
     candidates = []
     if cfg.framework == "vllm":
-        candidates.append(SINGLE_NODE_DIR / f"{cfg.model_prefix}_{cfg.precision}_{cfg.runner}.sh")
+        # Prefer the explicit _vllm.sh suffix when present — the bare name may
+        # be a different framework's launcher (sglang/atom) when both exist.
         candidates.append(SINGLE_NODE_DIR / f"{cfg.model_prefix}_{cfg.precision}_{cfg.runner}_vllm.sh")
+        candidates.append(SINGLE_NODE_DIR / f"{cfg.model_prefix}_{cfg.precision}_{cfg.runner}.sh")
     candidates.append(
         SINGLE_NODE_DIR / f"{cfg.model_prefix}_{cfg.precision}_{cfg.runner}_{cfg.framework}.sh"
     )
