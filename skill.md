@@ -1,6 +1,6 @@
 ---
 name: kimik3-mi355x-asm
-description: Reusable command lines for Kimi-K3 fp8/bf16 ASM-MLA on MI355X (gfx950, TP8) — env build (aiter #4452 change recipe + aiperf 818c3a5a venv), serve, IX-CI agentic sweep, GEMM tuning of untuned shapes, untuned-shape collection, and pareto build. Base-folder working notes (not part of the IX recipe PR).
+description: Reusable command lines for Kimi-K3 fp8/bf16 ASM-MLA on MI355X (gfx950, TP8) — container bring-up (xguo-k3asm), env build (aiter #4452 change recipe + aiperf 818c3a5a venv), serve, IX-CI agentic sweep, GEMM tuning of untuned shapes, untuned-shape collection, and pareto build. Base-folder working notes (not part of the IX recipe PR).
 ---
 
 # Kimi-K3 MI355X (gfx950, TP8) — ASM MLA runbook
@@ -19,6 +19,47 @@ MODEL_PATH=/dev/shm/hf-cache/models--moonshotai--Kimi-K3/snapshots/9f62e4e9fffbd
 AIPERF=/workspace/.aiperf_818c3a5a/bin/aiperf   # 818c3a5a venv — see §0b (NOT .aiperf_be758d)
 export HF_HUB_CACHE=/dev/shm/hf-cache HF_HOME=/dev/shm/hf-cache
 ```
+
+## 0. Container bring-up (xguo-k3asm)
+
+The serving container is the K3 ROCm image with the repo, aiter, and /dev/shm bind-mounted
+(reconstructed from `docker inspect xguo-k3asm`):
+```bash
+docker run -d --name xguo-k3asm \
+  --device /dev/kfd --device /dev/dri --group-add video \
+  --ipc host --network host --shm-size 128g \
+  --security-opt seccomp=unconfined --security-opt apparmor=unconfined --security-opt label=disable \
+  --cap-add CAP_SYS_PTRACE \
+  -v /data:/data -v /dev/shm:/dev/shm \
+  -v ~/work/InferenceX-dspv4:/workspace \
+  -v ~/work/aiter:/aiter-latest \
+  -e HF_HUB_CACHE=/dev/shm/hf-cache \
+  vllm/vllm-openai-rocm:kimi-k3 sleep infinity
+# image env of note: AITER_ROCM_ARCH="gfx942;gfx950", HIP_FORCE_DEV_KERNARG=1, PYTHON=3.12
+```
+Wiring:
+- **aiter** is imported straight from the `/aiter-latest` bind-mount
+  (`aiter.__file__ = /aiter-latest/aiter` = host `~/work/aiter`) — apply §0a (#4452) on the
+  host and it is live in the container (rebuild the extension for `asm_mla.cu`).
+- **vLLM** is the image's site-packages build; the ASM patches are applied **in place** (below).
+- Model staged in `/dev/shm/hf-cache` (tmpfs) for fast TP8 load; `/workspace` = this repo.
+
+Stage the model once (into /dev/shm):
+```bash
+HF_HUB_CACHE=/dev/shm/hf-cache hf download moonshotai/Kimi-K3
+```
+
+Apply the vLLM ASM patches in place (until #50578 + PR-A + #50618 ship in the image). The
+`_patch_*.py` here edit `dist-packages/vllm/...` idempotently by string-anchor:
+```bash
+python /workspace/_patch_fp8asm.py         # decode pad-to-16            (== vLLM #50578)
+python /workspace/_patch_fp8_prefill.py    # fp8 asm prefill pad-to-16   (PR-A L3)
+python /workspace/_patch_ps_metadata16.py  # PS metadata num_head_k=16   (PR-A L4)
+python /workspace/_patch_wvsplitk.py       # wvSplitK strided contiguity (== vLLM #50618)
+# verify both patch sites present:
+grep -l "PATCH(fp8-prefill-pad)" /usr/local/lib/python3.12/dist-packages/vllm/v1/attention/backends/mla/rocm_aiter_mla.py
+```
+Then build the aiperf venv (§0b) and serve (§1).
 
 ## 0a. aiter change recipe (required to build the ASM MLA env)
 
