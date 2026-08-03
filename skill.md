@@ -50,7 +50,9 @@ HF_HUB_CACHE=/dev/shm/hf-cache hf download moonshotai/Kimi-K3
 ```
 
 Apply the vLLM ASM patches in place (until #50578 + PR-A + #50618 ship in the image). The
-`_patch_*.py` here edit `dist-packages/vllm/...` idempotently by string-anchor:
+`_patch_*.py` are committed on this branch (`xguo/kimik3-fp4-mi355x-vllm-recipe`), so they
+appear at `/workspace/` only when the mounted repo has this branch checked out — a clean
+`main` won't have them. They edit `dist-packages/vllm/...` idempotently by string-anchor:
 ```bash
 python /workspace/_patch_fp8asm.py         # decode pad-to-16            (== vLLM #50578)
 python /workspace/_patch_fp8_prefill.py    # fp8 asm prefill pad-to-16   (PR-A L3)
