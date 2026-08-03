@@ -1,6 +1,6 @@
 ---
 name: kimik3-mi355x-asm
-description: Reusable command lines for Kimi-K3 fp8/bf16 ASM-MLA on MI355X (gfx950, TP8) — serve, IX-CI agentic sweep, GEMM tuning of untuned shapes, untuned-shape collection, and pareto build. Base-folder working notes (not part of the IX recipe PR).
+description: Reusable command lines for Kimi-K3 fp8/bf16 ASM-MLA on MI355X (gfx950, TP8) — env build (aiter #4452 change recipe + aiperf 818c3a5a venv), serve, IX-CI agentic sweep, GEMM tuning of untuned shapes, untuned-shape collection, and pareto build. Base-folder working notes (not part of the IX recipe PR).
 ---
 
 # Kimi-K3 MI355X (gfx950, TP8) — ASM MLA runbook
@@ -16,8 +16,59 @@ metadata) + ROCm/aiter **#4452** (64-bit paged-KV offsets).
 Common vars:
 ```bash
 MODEL_PATH=/dev/shm/hf-cache/models--moonshotai--Kimi-K3/snapshots/9f62e4e9fffbd0a83ddd60e1c209d828994b3569
-AIPERF=/workspace/.aiperf_be758d/bin/aiperf
+AIPERF=/workspace/.aiperf_818c3a5a/bin/aiperf   # 818c3a5a venv — see §0b (NOT .aiperf_be758d)
 export HF_HUB_CACHE=/dev/shm/hf-cache HF_HOME=/dev/shm/hf-cache
+```
+
+## 0a. aiter change recipe (required to build the ASM MLA env)
+
+The ASM MLA path needs aiter with the **large-page_id (>4 GB paged-KV) offset fix,
+ROCm/aiter #4452**, on top of the K3-serving base build. In the container aiter is
+bind-mounted from the host: `~/work/aiter` → `/aiter-latest` (editable-installed, so host
+edits are picked up on re-import).
+
+```bash
+cd ~/work/aiter
+git log --oneline -1                     # base build: 00cbe979f (FHMoE mixed-MoE)
+# Apply ROCm/aiter#4452 — 64-bit paged-KV byte offsets for gfx950 MLA HSACO:
+#   csrc/py_itfs_cu/asm_mla.cu  s_MQA fix (4 lines, gfx950 && max_seqlen_q>=3)
+#   + 26 refreshed hsa/gfx950/mla/*.co  (a16w16 + a8w8 qseqlen4/prefill/decode)
+git fetch <aiter-remote> pull/4452/head:pr-4452 && git cherry-pick pr-4452   # -> HEAD 6fc5733b7
+# (#4341 qh16 fp8 persistent-decode HSACO for large page_id is already MERGED in the base)
+```
+Make the change active in the serve:
+- The `.co` HSACO are loaded **by path at runtime** → refreshing the files is enough for the
+  decode/prefill kernels.
+- `asm_mla.cu` is compiled into the aiter extension → **rebuild** it so the s_MQA fix takes
+  effect:
+  ```bash
+  cd /aiter-latest && pip install -e . --no-build-isolation   # or the one-time JIT core rebuild on first import
+  ```
+- Verify: fresh 470k / 590k single-request prefills complete with no >4 GB paged-KV offset
+  truncation (this is exactly what #4452 fixes).
+
+Canonical, portable build of this exact aiter state (for a fresh MI355X): the
+`k3_gemm_tune/Dockerfile` bakes aiter @ the serve commit — reuse it as the reference build.
+
+(Optional) install the tuned bf16 GEMM config from §4:
+```bash
+cp kimik3_bf16_tuned_gemm.csv /aiter-latest/aiter/configs/model_configs/kimik3_bf16_tuned_gemm.csv
+```
+
+## 0b. aiperf env build (818c3a5a — required for the IX-CI harness)
+
+The IX agentic harness passes `--trace-idle-gap-cap-seconds`, which the older aiperf
+`be758d62` **rejects** (`forbid_trace_idle_gap_cap=True` for `inferencex-agentx-mvp`). Use
+the IX-pinned submodule commit **818c3a5a** (`allow-agentx-trace-idle-cap`), built into an
+isolated venv (must not share site-packages with vLLM):
+```bash
+git submodule update --init utils/aiperf          # -> utils/aiperf @ 818c3a5a
+# in the container (repo mounted at /workspace, uv available):
+uv venv --python 3.11 /workspace/.aiperf_818c3a5a
+uv pip install --python /workspace/.aiperf_818c3a5a/bin/python \
+  -r /workspace/utils/agentic-benchmark/requirements.txt -e /workspace/utils/aiperf \
+  "datasets>=4.7.0" "huggingface_hub[cli]>=0.25.0" urllib3 requests
+/workspace/.aiperf_818c3a5a/bin/aiperf --version   # sanity
 ```
 
 ## 1. Serve (validated uncapped ASM config)
@@ -41,26 +92,31 @@ setsid nohup vllm serve "$MODEL_PATH" --served-model-name moonshotai/Kimi-K3 \
 for i in $(seq 1 144); do curl -s -m5 http://localhost:8888/health -o /dev/null && break; sleep 5; done
 ```
 
-## 2. Agentic sweep — EXACT IX-CI harness (against a live serve)
-Key CI knob: **`--agentic-cache-warmup-duration 600`** (time-bounded warmup). Do **NOT**
-use `--warmup-requests-per-lane` — count-based warmup hangs draining the long-context tail
-at conc≥16. Script: `_sweep_fp8asm_ixci.sh` (loops conc 1/4/8/16/24).
+## 2. Agentic sweep — IX-CI harness (matches build_replay_cmd; against a live serve)
+Use the committed `_sweep_fp8asm_ixci.sh` (needs the §0b aiperf `818c3a5a` venv). It mirrors
+`benchmarks/benchmark_lib.sh:build_replay_cmd`:
 ```bash
-for c in 1 4 8 16 24; do
-  seed=42; [ "$c" = 1 ] && seed=0
-  out="/workspace/k3_fp8asm_ixci_c$c"; rm -rf "$out"; mkdir -p "$out/aiperf_artifacts"
-  timeout 3000 "$AIPERF" profile --scenario inferencex-agentx-mvp --url http://localhost:8888 \
-    --endpoint /v1/chat/completions --endpoint-type chat --streaming --model moonshotai/Kimi-K3 \
-    --concurrency "$c" --benchmark-duration 1200 --stats-interval 30 --random-seed "$seed" \
-    --failed-request-threshold 0.10 --trajectory-start-min-ratio 0.25 --trajectory-start-max-ratio 0.75 \
-    --agentic-cache-warmup-duration 600 --warmup-grace-period 1800 \
-    --use-server-token-count --no-gpu-telemetry --tokenizer-trust-remote-code \
-    --num-dataset-entries 393 --slice-duration 1.0 \
-    --output-artifact-dir "$out/aiperf_artifacts" --public-dataset semianalysis_cc_traces_weka_062126 \
-    > "/workspace/k3_fp8asm_ixci_c$c.log" 2>&1
-  pkill -9 -f "aiperf profile"; sleep 3
-done
+TAG=fp8asm CONC_LIST="1 4 8 16 24" OUT_ROOT=/workspace bash _sweep_fp8asm_ixci.sh
 ```
+The per-conc aiperf invocation it runs:
+```bash
+"$AIPERF" profile --scenario inferencex-agentx-mvp --url http://localhost:8888 \
+  --endpoint /v1/chat/completions --endpoint-type chat --streaming --model moonshotai/Kimi-K3 \
+  --concurrency "$c" --benchmark-duration 1200 --stats-interval 30 --random-seed "$seed" \
+  --failed-request-threshold 0.10 --trajectory-start-min-ratio 0.25 --trajectory-start-max-ratio 0.75 \
+  --warmup-requests-per-lane 10 --trace-idle-gap-cap-seconds 300 --warmup-grace-period 1800 \
+  --use-server-token-count --no-gpu-telemetry --tokenizer-trust-remote-code \
+  --num-dataset-entries 393 --slice-duration 1.0 \
+  --output-artifact-dir "$out/aiperf_artifacts" --public-dataset semianalysis_cc_traces_weka_062126
+```
+Correctness rules (learned the hard way):
+- **`--trace-idle-gap-cap-seconds 300` is required** and needs aiperf ≥ `818c3a5a` (§0b);
+  without the cap the cc-traces trajectories replay full real-world idle gaps and warmup
+  never drains at conc≥16. Do **not** use `--agentic-cache-warmup-duration` (not in
+  build_replay_cmd) or `--unsafe-override`.
+- **No shell `timeout`** — aiperf self-bounds (warmup-grace 1800 + benchmark-duration 1200
+  already = 3000 s before send/export; a tight `timeout` kills a healthy run). The script
+  uses `set -euo pipefail` so a config error stops before any GPU-freeing step.
 
 ## 3. Collect untuned GEMM shapes from the serve log
 Turns the `not found tuned config … bf16_tuned_gemm.csv` warnings into a tuner CSV.
