@@ -1,0 +1,83 @@
+--- a/vllm/v1/attention/backends/mla/rocm_aiter_mla.py	2026-08-03 05:58:33.598865185 -0500
++++ b/vllm/v1/attention/backends/mla/rocm_aiter_mla.py	2026-08-03 05:54:21.039539312 -0500
+@@ -273,7 +273,7 @@
+ 
+         # FP8 MLA prefill (kn_mla_reduce_v1) only supports 16-aligned heads.
+         self._fp8_prefill_enabled = (
+-            _fp8_mla_prefill_supported() and self.num_heads % 16 == 0
++            _fp8_mla_prefill_supported() and (self.num_heads % 16 == 0 or 0 < self.num_heads < 16)
+         )
+         if self._fp8_prefill_enabled:
+             max_prefill_qlen = min(
+@@ -329,7 +329,7 @@
+ 
+         # After kv_b_proj decompression, K has num_heads heads (same as Q).
+         # So gqa_ratio=1 and num_head_k=num_heads for the PS kernel.
+-        num_head_k = self.num_heads
++        num_head_k = max(16, self.num_heads)  # PATCH(fp8-prefill-pad): 16-head PS metadata to match padded q/k/v (gcd(16,256)=16 -> ~960 tiles, not 4032)
+         v_head_dim = self.mla_dims.v_head_dim
+         # gqa_ratio = 1
+         # qlen_granularity = _FP8_PREFILL_TILE_Q // max(gqa_ratio, 1)
+@@ -423,7 +423,7 @@
+         kv_indptr_cpu = qo_indptr_cpu.clone()
+         seq_lens_cpu = (qo_indptr_cpu[1:] - qo_indptr_cpu[:-1]).to(torch.int32)
+ 
+-        num_head_k = self.num_heads
++        num_head_k = max(16, self.num_heads)  # PATCH(fp8-prefill-pad): 16-head PS metadata to match padded q/k/v (gcd(16,256)=16 -> ~960 tiles, not 4032)
+         # gqa_ratio = 1
+         # qhead_granularity = max(gqa_ratio, 1)
+         # qlen_granularity = _FP8_PREFILL_TILE_Q // qhead_granularity
+@@ -775,7 +775,7 @@
+         # Auto-enabled on gfx950 when AITER ships the kernels.
+         # FP8 MLA prefill (kn_mla_reduce_v1) only supports 16-aligned heads.
+         self._fp8_prefill_enabled = (
+-            _fp8_mla_prefill_supported() and self.num_heads % 16 == 0
++            _fp8_mla_prefill_supported() and (self.num_heads % 16 == 0 or 0 < self.num_heads < 16)
+         )
+         if self._fp8_prefill_enabled:
+             from aiter import mla_prefill_ps_asm_fwd, mla_reduce_v1
+@@ -818,7 +818,17 @@
+ 
+         fp8_dtype = current_platform.fp8_dtype()
+         total_q = q.shape[0]
+-        nhead = self.num_heads
++        # PATCH(fp8-prefill-pad): PS asm prefill + mla_reduce_v1 need 16-aligned
++        # heads and the metadata is built for _num_attention_heads=16. K3 has 12
++        # heads/rank -> replicate-pad q/k/v to 16 (heads independent over shared
++        # KV, exact like decode); output sliced back to the real head count.
++        _real_nhead = self.num_heads
++        _pad16 = _real_nhead < 16
++        if _pad16:
++            q = AiterMLAHelper.get_mla_padded_q(_real_nhead, q)
++            k = AiterMLAHelper.get_mla_padded_q(_real_nhead, k)
++            v = AiterMLAHelper.get_mla_padded_q(_real_nhead, v)
++        nhead = 16 if _pad16 else self.num_heads
+         v_head_dim = self.v_head_dim
+         tile_q = _FP8_PREFILL_TILE_Q
+ 
+@@ -845,7 +855,12 @@
+         # Reuse the caller's output buffer to skip the per-call alloc + copy.
+         # The ASM and reduce kernels both write to a [total_q, nhead, v_head_dim]
+         # view, which aliases the [total_q, nhead * v_head_dim] storage of out.
+-        out_3d = out.view(total_q, nhead, v_head_dim)
++        if _pad16:
++            out_3d = torch.empty(
++                total_q, nhead, v_head_dim, dtype=out.dtype, device=out.device
++            )
++        else:
++            out_3d = out.view(total_q, nhead, v_head_dim)
+ 
+         # Per-call scratch (logits, attn_lse, final_lse) is served from the
+         # workspace manager so allocator churn in the prefill hot path is
+@@ -892,6 +907,11 @@
+             final_lse,
+         )
+ 
++        if _pad16:
++            out.view(total_q, _real_nhead, v_head_dim).copy_(
++                out_3d[:, :_real_nhead, :]
++            )
++
+     def forward_mha(
+         self,
+         q: torch.Tensor,
