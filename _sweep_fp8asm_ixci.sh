@@ -21,8 +21,16 @@
 #
 # Runs against an already-alive serve on :PORT (start it from the recipe or
 # _serve_fp8_ms64.sh). Env: TAG (output prefix, default fp8asm), CONC_LIST.
-set -u
-AIPERF="${AIPERF:-/workspace/.aiperf_be758d/bin/aiperf}"
+set -euo pipefail
+# REQUIRES aiperf pinned to the IX submodule commit (utils/aiperf @ 818c3a5a or
+# newer), which allows --trace-idle-gap-cap-seconds for the inferencex-agentx-mvp
+# scenario. The older be758d62 build sets forbid_trace_idle_gap_cap=True and
+# rejects the flag. Build the venv with:
+#   uv venv --python 3.11 /workspace/.aiperf_818c3a5a && \
+#   uv pip install --python /workspace/.aiperf_818c3a5a/bin/python \
+#     -r utils/agentic-benchmark/requirements.txt -e utils/aiperf \
+#     "datasets>=4.7.0" "huggingface_hub[cli]>=0.25.0" urllib3 requests
+AIPERF="${AIPERF:-/workspace/.aiperf_818c3a5a/bin/aiperf}"
 MODEL="${MODEL:-moonshotai/Kimi-K3}"
 PORT="${PORT:-8888}"
 DURATION="${DURATION:-1200}"
