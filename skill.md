@@ -88,6 +88,10 @@ setsid nohup vllm serve "$MODEL_PATH" --served-model-name moonshotai/Kimi-K3 \
   --reasoning-parser kimi_k3 --tool-call-parser kimi_k3 --enable-auto-tool-choice \
   --disable-uvicorn-access-log --max-model-len 1048576 > serve.log 2>&1 &
 # bf16 KV variant: --kv-cache-dtype auto (same asm backend)
+# Optional (KDA gated-RMSNorm fused op): append custom_ops to the compilation-config —
+#   --compilation-config '{"mode":3,"cudagraph_mode":"FULL_AND_PIECEWISE","custom_ops":["+fused_rms_norm_gated"]}'
+#   Capture-verified on gfx950 (clean FULL_AND_PIECEWISE + correct output); perf A/B pending.
+#   In the recipe: set FUSED_RMS_NORM_GATED=1.
 # readiness:
 for i in $(seq 1 144); do curl -s -m5 http://localhost:8888/health -o /dev/null && break; sleep 5; done
 ```

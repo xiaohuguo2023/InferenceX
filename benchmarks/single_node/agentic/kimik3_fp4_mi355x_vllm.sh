@@ -100,6 +100,15 @@ KVDTYPE_ARGS=(
 
 export VLLM_ROCM_USE_AITER_MOE=1
 
+# Optional: force-enable the fused gated-RMSNorm custom op on K3's KDA (gated
+# linear-attention) path. Capture-verified on gfx950 (clean FULL_AND_PIECEWISE
+# capture + correct output); perf A/B vs the default is still pending, so it is
+# OFF by default. Enable with FUSED_RMS_NORM_GATED=1.
+COMPILE_CFG='{"mode":3,"cudagraph_mode":"FULL_AND_PIECEWISE"}'
+if [ "${FUSED_RMS_NORM_GATED:-0}" = "1" ]; then
+    COMPILE_CFG='{"mode":3,"cudagraph_mode":"FULL_AND_PIECEWISE","custom_ops":["+fused_rms_norm_gated"]}'
+fi
+
 echo "Starting vllm server (MI355X/AITER, DSV4-agentic-derived config)..."
 VLLM_CMD=(
     vllm serve "$MODEL_PATH" --served-model-name "$MODEL"
@@ -115,7 +124,7 @@ VLLM_CMD=(
     --moe-backend auto
     --mm-encoder-tp-mode data
     "${KVDTYPE_ARGS[@]}"
-    --compilation-config '{"mode":3,"cudagraph_mode":"FULL_AND_PIECEWISE"}'
+    --compilation-config "$COMPILE_CFG"
     --enable-prefix-caching
     # native hybrid KV (MLA + KDA) — no padding; the fix for the capture fault.
     --no-disable-hybrid-kv-cache-manager
