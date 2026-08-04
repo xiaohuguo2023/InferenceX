@@ -1,6 +1,6 @@
 ---
 name: kimik3-mi355x-asm
-description: Reusable command lines for Kimi-K3 fp8/bf16 ASM-MLA on MI355X (gfx950, TP8) — container bring-up (xguo-k3asm), env build (aiter #4452 change recipe + aiperf 818c3a5a venv), serve, IX-CI agentic sweep, GEMM tuning of untuned shapes, untuned-shape collection, and pareto build. Base-folder working notes (not part of the IX recipe PR).
+description: Reusable command lines for Kimi-K3 fp8/bf16 ASM-MLA on MI355X (gfx950, TP8) — container bring-up (xguo-k3asm), env build (aiter #4452 change recipe + aiperf v1.0.1 venv), serve, IX-CI agentic sweep, GEMM tuning of untuned shapes, untuned-shape collection, and pareto build. Base-folder working notes (not part of the IX recipe PR).
 ---
 
 # Kimi-K3 MI355X (gfx950, TP8) — ASM MLA runbook
@@ -16,7 +16,7 @@ metadata) + ROCm/aiter **#4452** (64-bit paged-KV offsets).
 Common vars:
 ```bash
 MODEL_PATH=/dev/shm/hf-cache/models--moonshotai--Kimi-K3/snapshots/9f62e4e9fffbd0a83ddd60e1c209d828994b3569
-AIPERF=/workspace/.aiperf_818c3a5a/bin/aiperf   # 818c3a5a venv — see §0b (NOT .aiperf_be758d)
+AIPERF=/workspace/.aiperf_v1_0_1/bin/aiperf   # aiperf v1.0.1 (agentx-v1.0.1) — see §0b
 export HF_HUB_CACHE=/dev/shm/hf-cache HF_HOME=/dev/shm/hf-cache
 ```
 
@@ -98,21 +98,21 @@ Canonical, portable build of this exact aiter state (for a fresh MI355X): the
 cp kimik3_bf16_tuned_gemm.csv /aiter-latest/aiter/configs/model_configs/kimik3_bf16_tuned_gemm.csv
 ```
 
-## 0b. aiperf env build (818c3a5a — required for the IX-CI harness)
+## 0b. aiperf env build (v1.0.1 — the current IX pin)
 
-The IX agentic harness passes `--trace-idle-gap-cap-seconds`, which the older aiperf
-`be758d62` **rejects** (`forbid_trace_idle_gap_cap=True` for `inferencex-agentx-mvp`). Use
-the IX-pinned submodule commit **818c3a5a** (`allow-agentx-trace-idle-cap`), built into an
-isolated venv (must not share site-packages with vLLM):
+The IX agentic harness needs `--trace-idle-gap-cap-seconds` (rejected by the old `be758d62`
+build). IX now pins aiperf **v1.0.1** (tag `agentx-v1.0.1`, commit `b7b16cf8`). Build it into
+an isolated venv (must not share site-packages with vLLM):
 ```bash
-git submodule update --init utils/aiperf          # -> utils/aiperf @ 818c3a5a
-# in the container (repo mounted at /workspace, uv available):
-uv venv --python 3.11 /workspace/.aiperf_818c3a5a
-uv pip install --python /workspace/.aiperf_818c3a5a/bin/python \
+git submodule update --init utils/aiperf                 # or: git -C utils/aiperf checkout agentx-v1.0.1
+uv venv --python 3.11 /workspace/.aiperf_v1_0_1
+uv pip install --python /workspace/.aiperf_v1_0_1/bin/python \
   -r /workspace/utils/agentic-benchmark/requirements.txt -e /workspace/utils/aiperf \
   "datasets>=4.7.0" "huggingface_hub[cli]>=0.25.0" urllib3 requests
-/workspace/.aiperf_818c3a5a/bin/aiperf --version   # sanity
+/workspace/.aiperf_v1_0_1/bin/aiperf --version           # sanity (reports 0.12.0; the tag is the truth)
 ```
+Flag note: v1.0.1 uses `--prompt-input-tokens-mean` (older docs/commands say
+`--synthetic-input-tokens-mean` — same meaning). `--sweep-type` is supported.
 
 ## 1. Serve (validated uncapped ASM config)
 ```bash
@@ -126,21 +126,19 @@ setsid nohup vllm serve "$MODEL_PATH" --served-model-name moonshotai/Kimi-K3 \
   --max-num-seqs 64 --max-num-batched-tokens 4096 \
   --trust-remote-code --load-format auto --moe-backend auto \
   --kv-cache-dtype fp8 --attention-backend ROCM_AITER_MLA --mm-encoder-tp-mode data \
-  --compilation-config '{"mode":3,"cudagraph_mode":"FULL_AND_PIECEWISE"}' \
+  --compilation-config '{"mode":3,"cudagraph_mode":"FULL_AND_PIECEWISE","custom_ops":["+fused_rms_norm_gated"]}' \
   --enable-prefix-caching --no-disable-hybrid-kv-cache-manager \
   --reasoning-parser kimi_k3 --tool-call-parser kimi_k3 --enable-auto-tool-choice \
   --disable-uvicorn-access-log --max-model-len 1048576 > serve.log 2>&1 &
 # bf16 KV variant: --kv-cache-dtype auto (same asm backend)
-# Optional (KDA gated-RMSNorm fused op): append custom_ops to the compilation-config —
-#   --compilation-config '{"mode":3,"cudagraph_mode":"FULL_AND_PIECEWISE","custom_ops":["+fused_rms_norm_gated"]}'
-#   Capture-verified on gfx950 (clean FULL_AND_PIECEWISE + correct output); perf A/B pending.
-#   In the recipe: set FUSED_RMS_NORM_GATED=1.
+# +fused_rms_norm_gated (KDA gated-RMSNorm) is ON by default above (capture-verified,
+#   perf-neutral A/B). To disable: drop custom_ops, or FUSED_RMS_NORM_GATED=0 in the recipe.
 # readiness:
 for i in $(seq 1 144); do curl -s -m5 http://localhost:8888/health -o /dev/null && break; sleep 5; done
 ```
 
 ## 2. Agentic sweep — IX-CI harness (matches build_replay_cmd; against a live serve)
-Use the committed `_sweep_fp8asm_ixci.sh` (needs the §0b aiperf `818c3a5a` venv). It mirrors
+Use the committed `_sweep_fp8asm_ixci.sh` (needs the §0b aiperf `v1.0.1` venv). It mirrors
 `benchmarks/benchmark_lib.sh:build_replay_cmd`:
 ```bash
 TAG=fp8asm CONC_LIST="1 4 8 16 24" OUT_ROOT=/workspace bash _sweep_fp8asm_ixci.sh
@@ -157,7 +155,7 @@ The per-conc aiperf invocation it runs:
   --output-artifact-dir "$out/aiperf_artifacts" --public-dataset semianalysis_cc_traces_weka_062126
 ```
 Correctness rules (learned the hard way):
-- **`--trace-idle-gap-cap-seconds 300` is required** and needs aiperf ≥ `818c3a5a` (§0b);
+- **`--trace-idle-gap-cap-seconds 300` is required** and needs aiperf ≥ `v1.0.1` (§0b);
   without the cap the cc-traces trajectories replay full real-world idle gaps and warmup
   never drains at conc≥16. Do **not** use `--agentic-cache-warmup-duration` (not in
   build_replay_cmd) or `--unsafe-override`.
@@ -209,4 +207,47 @@ PY
 ```bash
 pkill -9 -f "vllm serve"; pkill -9 -f "aiperf profile"; pkill -9 -f EngineCore
 # orphaned VRAM: sudo kill -9 $(rocm-smi --showpids | awk 'NR>...') as needed
+# NOTE: never `pkill -f vllm` from an inline shell whose own cmdline contains
+# "vllm"/"EngineCore" — it self-matches (exit 137). Use a script file (_freegpu.sh).
 ```
+
+## 7. Best combinations & key findings (read this first)
+
+**Winning fp8-ASM serve config** (as in §1). Serve knobs that MATTER:
+- `--attention-backend ROCM_AITER_MLA` + `--kv-cache-dtype fp8` — the asm path (needs the
+  image to carry vLLM #50578 + PR-A + ROCm/aiter #4452; else 12 heads/rank break).
+- `--no-disable-hybrid-kv-cache-manager` — K3 MLA+KDA hybrid; **do not omit**.
+- **`--gpu-memory-utilization 0.95`** — always. More KV pool / prefix-cache retention; do
+  **not** drop to 0.8.
+- **Do NOT set `--max-num-batched-tokens 4096`** — it chops long (63k) prefills into ~16
+  tiny chunks. Leave it at the default (8192).
+- **`--compilation-config '{"mode":3,"cudagraph_mode":"FULL_AND_PIECEWISE","custom_ops":["+fused_rms_norm_gated"]}'`**
+  — `+fused_rms_norm_gated` (KDA gated-RMSNorm) is **on by default now**. Plus `--async-scheduling`.
+
+Lower-impact at conc ≤ ~24: `--max-num-seqs` 24/64/128 (non-binding below the concurrency);
+`--moe-backend auto` ≈ `aiter`.
+
+**Two benchmarks — do not confuse them:**
+
+| | **IX perf CI (the metric)** | synthetic 68k-prefix (stress test) |
+|---|---|---|
+| driver | `_sweep_fp8asm_ixci.sh` (§2) | `_run_prefixbench.sh` |
+| scenario | `inferencex-agentx-mvp` (cc-traces) | `--num-prefix-prompts 8 --prompt-prefix-length 63240` |
+| cache model | **warm within a session; first-turn prefix cache-busted** (realistic) | **one 63k prefix shared across all requests** (artificial) |
+| the number | canonical pareto (e.g. fp8 c8 ≈ 2272 tok/s/GPU) | warm ≈ 9–12K, cold ≈ 4.8–6K in tok/s/GPU |
+
+- **IX CI = the agentic scenario.** It warms each trajectory during warmup then profiles from
+  the live warm state (`--trajectory-start-min/max-ratio 0.25/0.75`), and **locks
+  `--cache-bust first_turn_prefix`** so sessions don't share a fake prefix. That is the
+  dashboard number — realistic warm-per-session, not cold-start, not shared-prefix-warm.
+- **Synthetic 68k-prefix** does the opposite (shares a 63k prefix, no cache-bust) to stress
+  prefix caching. Its throughput swings **~2× on cold vs warm cache**: `--warmup-request-count
+  3` can't prime 8 cold 63k prefixes, so the first measured requests eat cold prefills
+  (TTFT-P90 ~33 s, ~half tput). Warm all 8 prefixes first for a stable number. **Not the CI metric.**
+
+**Perf notes (settled this session):**
+- `+fused_rms_norm_gated` is **perf-neutral** on a clean same-serve A/B — now enabled by default.
+- The apparent "9K → 4.8K regression" was **cold-vs-warm prefix cache**, not fp8, not the
+  fused op, not `--max-num-batched-tokens`, not gpu-mem, not the aiperf version — all ruled out.
+- Agentic tput/GPU is input-dominated + heavy-tailed → run-average is cold-start-sensitive;
+  prefer the full conc 1–24 sweep and/or steady-state (post-ramp) slices.
