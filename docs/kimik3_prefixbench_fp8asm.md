@@ -63,11 +63,17 @@ held identical (moe aiter, ms24, default mnbt, gpu 0.95). Run via
 
 | run | conc16 in/GPU | conc16 TTFT / ITL | conc24 in/GPU | conc24 TTFT / ITL |
 |---|--:|--|--:|--|
-| `k3_prefixbench_fp8asm_v101_fused` | _pending_ | _pending_ | _pending_ | _pending_ |
+| `k3_prefixbench_fp8asm_v101_fused` | 4963 (**+4.3%**) | 7111 ms / 57.8 ms | 6479 (**+4.8%**) | 9147 ms / 63.8 ms |
 
-> Chained behind the 1–24 agentic sweep (waits for GPU-free, then runs). Fill this
-> row from `k3_prefixbench_fp8asm_v101_fused/concurrency_*/phases/profiling/profile_export_aiperf.json`
-> once complete; compute Δ% vs the `_gm095` baseline (cold-vs-cold).
+Δ vs the `_gm095` fused-OFF baseline (cold-vs-cold): in-tok/s/GPU **+4.3% / +4.8%**,
+ITL **−4.9% / −9.4%**, TTFT −1.6% / **+10.1%** (conc24 TTFT regressed).
+
+> ⚠️ Single cold run (aiperf: `num_successful=1, std=0, no CI`) against a baseline
+> from a *separate* earlier serve — cache/thermal state differs. The prefixbench
+> swings ~2× cold↔warm, so this +4–5% sits inside the cold-run noise band and is
+> **consistent with fused being perf-neutral** (the clean same-serve A/B finding).
+> For a real verdict, run a same-serve back-to-back fused-on/off A/B or warm-primed
+> multi-run (2026-08-05).
 
 ## Reproduce
 
