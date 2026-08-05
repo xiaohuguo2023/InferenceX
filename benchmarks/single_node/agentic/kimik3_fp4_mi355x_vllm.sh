@@ -118,7 +118,10 @@ VLLM_CMD=(
     --distributed-executor-backend mp
     --gpu-memory-utilization 0.95
     --max-num-seqs "$MAX_NUM_SEQS"
-    --max-num-batched-tokens 4096
+    # max-num-batched-tokens left at vLLM's default (8192 for `vllm serve` on
+    # MI355X). An earlier 4096 halved 63k-prefill throughput and serialized the
+    # long agentic prefills (one prefill chunk/step → Run=1 while requests
+    # queued, dominating warmup wall-time). B300 also uses the default.
     --trust-remote-code
     --load-format auto
     --moe-backend auto

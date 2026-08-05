@@ -11,7 +11,7 @@ COMPILE_CFG='{"mode":3,"cudagraph_mode":"FULL_AND_PIECEWISE","custom_ops":["+fus
 setsid nohup vllm serve "$MODEL_PATH" --served-model-name moonshotai/Kimi-K3 \
   --host 0.0.0.0 --port 8888 --tensor-parallel-size 8 --async-scheduling \
   --distributed-executor-backend mp --gpu-memory-utilization 0.95 \
-  --max-num-seqs 64 --max-model-len 1048576 --max-num-batched-tokens 4096 \
+  --max-num-seqs 64 --max-model-len 1048576 \
   --trust-remote-code --load-format auto --moe-backend auto \
   --kv-cache-dtype fp8 --attention-backend ROCM_AITER_MLA --mm-encoder-tp-mode data \
   --compilation-config "$COMPILE_CFG" \
