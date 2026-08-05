@@ -18,8 +18,24 @@ elif [ -f "$NFS_MODEL/config.json" ]; then
 else
   echo "!! Kimi-K3 model missing (checked $SHM_MODEL and $NFS_MODEL)"; exit 1
 fi
-AIPERF="${AIPERF:-/opt/.aiperf_b7b16cf8/bin/aiperf}"
-[ -x "$AIPERF" ] || { echo "!! aiperf missing at $AIPERF"; exit 1; }
+# aiperf: honor $AIPERF if it points to a real binary, else auto-detect across
+# machines (this box: /workspace/.aiperf_*; others: /opt/.aiperf_*; or on PATH).
+if [ -n "${AIPERF:-}" ] && [ -x "$AIPERF" ]; then
+  :
+elif command -v aiperf >/dev/null 2>&1; then
+  AIPERF="$(command -v aiperf)"
+else
+  AIPERF=""
+  # prefer the v1.0.1 pin (b7b16cf8 == /workspace/.aiperf_v1_0_1) for IX-CI parity,
+  # then any aiperf. Avoids grabbing an older/incompatible build (e.g. be758d).
+  for c in /opt/.aiperf_b7b16cf8/bin/aiperf /opt/.aiperf_*v1_0_1*/bin/aiperf \
+           /workspace/.aiperf_v1_0_1/bin/aiperf /workspace/.aiperf_*b7b16cf8*/bin/aiperf \
+           /opt/.aiperf_*/bin/aiperf /workspace/.aiperf_*/bin/aiperf "$HOME"/.aiperf_*/bin/aiperf; do
+    [ -x "$c" ] && { AIPERF="$c"; break; }
+  done
+  [ -n "$AIPERF" ] || { echo "!! no aiperf found — set AIPERF=/path/to/bin/aiperf (looked: \$AIPERF, PATH, /opt/.aiperf_*, /workspace/.aiperf_*, \$HOME/.aiperf_*)"; exit 1; }
+fi
+echo "using aiperf: $AIPERF"
 OUT="${OUT:-/workspace/k3_prefixbench_fp8asm_v101_fused}"
 
 free_gpu() {
