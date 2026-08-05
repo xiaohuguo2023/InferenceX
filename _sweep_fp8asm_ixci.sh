@@ -48,6 +48,18 @@ else
 fi
 echo "using aiperf: $AIPERF"
 MODEL="${MODEL:-moonshotai/Kimi-K3}"
+# tokenizer: prefer a LOCAL model dir (offline-safe + exact Kimi tokenizer) over
+# the hub id, which aiperf would fetch at runtime and fail on an offline box.
+# A local path load doesn't touch the hub. Override via TOKENIZER; falls back to
+# the hub id only if no local tokenizer is found.
+TOKENIZER="${TOKENIZER:-${MODEL_PATH:-}}"
+if [ ! -f "${TOKENIZER:-}/tokenizer_config.json" ]; then
+  TOKENIZER="$MODEL"
+  for d in /dev/shm/hf-cache/models--moonshotai--Kimi-K3/snapshots/* "${MODEL_SRC:-/shared_nfs/models/Kimi-K3}"; do
+    [ -f "$d/tokenizer_config.json" ] && { TOKENIZER="$d"; break; }
+  done
+fi
+echo "using tokenizer: $TOKENIZER"
 PORT="${PORT:-8888}"
 DURATION="${DURATION:-3600}"
 WARMUP_REQS="${AIPERF_WARMUP_REQUESTS_PER_LANE:-10}"
@@ -85,7 +97,7 @@ run_conc() {
     --trajectory-start-min-ratio 0.25 --trajectory-start-max-ratio 0.75 \
     --warmup-requests-per-lane "$WARMUP_REQS" --trace-idle-gap-cap-seconds "$IDLE_GAP_CAP" \
     --warmup-grace-period "$GRACE" \
-    --use-server-token-count --tokenizer-trust-remote-code --no-gpu-telemetry \
+    --use-server-token-count --tokenizer "$TOKENIZER" --tokenizer-trust-remote-code --no-gpu-telemetry \
     --num-dataset-entries 393 --slice-duration 1.0 \
     --output-artifact-dir "$out/aiperf_artifacts" --public-dataset semianalysis_cc_traces_weka_062126 \
     > "$OUT_ROOT/k3_${TAG}_ixci_c$c.log" 2>&1

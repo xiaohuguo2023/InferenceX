@@ -81,7 +81,7 @@ echo "serve ready (fused) $(date +%T)"
 
 rm -rf "$OUT"; mkdir -p "$OUT"
 "$AIPERF" profile \
-  --model moonshotai/Kimi-K3 --tokenizer builtin \
+  --model moonshotai/Kimi-K3 --tokenizer "$MODEL_PATH" --tokenizer-trust-remote-code \
   --url http://127.0.0.1:8888 --api-key EMPTY --endpoint-type chat --streaming --use-server-token-count \
   --num-prefix-prompts 8 --prompt-prefix-length 63240 \
   --prompt-input-tokens-mean 4760 --prompt-input-tokens-stddev 0 \
