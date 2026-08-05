@@ -118,10 +118,12 @@ VLLM_CMD=(
     --distributed-executor-backend mp
     --gpu-memory-utilization 0.95
     --max-num-seqs "$MAX_NUM_SEQS"
-    # max-num-batched-tokens left at vLLM's default (8192 for `vllm serve` on
-    # MI355X). An earlier 4096 halved 63k-prefill throughput and serialized the
-    # long agentic prefills (one prefill chunk/step → Run=1 while requests
-    # queued, dominating warmup wall-time). B300 also uses the default.
+    # REQUIRED at 4096 for OOM safety: the vLLM default (8192 for `vllm serve`)
+    # doubles the prefill activation arena and, on top of ~72 GiB KV at ms64 /
+    # gpu-mem 0.95 with uncapped 1M context, OOMs during warmup at conc16
+    # (HSA_STATUS_ERROR_OUT_OF_RESOURCES, 0 MB free — validated 2026-08-05).
+    # Do NOT raise without lowering max-num-seqs or gpu-memory-utilization.
+    --max-num-batched-tokens 4096
     --trust-remote-code
     --load-format auto
     --moe-backend auto

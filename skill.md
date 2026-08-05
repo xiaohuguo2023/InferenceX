@@ -123,7 +123,7 @@ export VLLM_ROCM_USE_AITER=1 VLLM_ROCM_USE_AITER_MOE=1 SAFETENSORS_FAST_GPU=1 \
 setsid nohup vllm serve "$MODEL_PATH" --served-model-name moonshotai/Kimi-K3 \
   --host 0.0.0.0 --port 8888 --tensor-parallel-size 8 --async-scheduling \
   --distributed-executor-backend mp --gpu-memory-utilization 0.95 \
-  --max-num-seqs 64 \
+  --max-num-seqs 64 --max-num-batched-tokens 4096 \
   --trust-remote-code --load-format auto --moe-backend auto \
   --kv-cache-dtype fp8 --attention-backend ROCM_AITER_MLA --mm-encoder-tp-mode data \
   --compilation-config '{"mode":3,"cudagraph_mode":"FULL_AND_PIECEWISE","custom_ops":["+fused_rms_norm_gated"]}' \
@@ -219,8 +219,13 @@ pkill -9 -f "vllm serve"; pkill -9 -f "aiperf profile"; pkill -9 -f EngineCore
 - `--no-disable-hybrid-kv-cache-manager` — K3 MLA+KDA hybrid; **do not omit**.
 - **`--gpu-memory-utilization 0.95`** — always. More KV pool / prefix-cache retention; do
   **not** drop to 0.8.
-- **Do NOT set `--max-num-batched-tokens 4096`** — it chops long (63k) prefills into ~16
-  tiny chunks. Leave it at the default (8192).
+- **`--max-num-batched-tokens` is context-dependent — mind the OOM:**
+  - **Agentic serve (ms64, uncapped 1M): keep `4096`.** The default (8192) doubles the prefill
+    activation arena and **OOMs during warmup at conc16** on top of ~72 GiB KV at ms64/gpu-0.95
+    (`HSA_STATUS_ERROR_OUT_OF_RESOURCES`, 0 MB free — validated 2026-08-05). Don't raise it
+    without lowering `--max-num-seqs` or `--gpu-memory-utilization`.
+  - **Synthetic prefixbench (ms24): leave at default (8192).** There it does *not* OOM (lower
+    ms) and 4096 would chop the 63k prefill into ~16 tiny chunks (~half prefill throughput).
 - **`--compilation-config '{"mode":3,"cudagraph_mode":"FULL_AND_PIECEWISE","custom_ops":["+fused_rms_norm_gated"]}'`**
   — `+fused_rms_norm_gated` (KDA gated-RMSNorm) is **on by default now**. Plus `--async-scheduling`.
 
