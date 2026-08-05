@@ -2,8 +2,10 @@
 # Stage a minimal build context (aiter without .git/build caches) + the shape CSV,
 # then build the tuning image. Run this on a box that has ~/work/aiter @ 00cbe979f.
 set -euo pipefail
-AITER_SRC="${AITER_SRC:-$HOME/work/aiter}"
-CSV="${CSV:-$HOME/work/InferenceX-dspv4/kimik3_bf16_tuning_gemm.csv}"
+USER_HOME="${SPUR_USER_HOME:-/home/$(id -un)}"
+export HOME="$USER_HOME"
+AITER_SRC="${AITER_SRC:-$USER_HOME/work/aiter}"
+CSV="${CSV:-$USER_HOME/work/InferenceX/k3_gemm_tune/kimik3_bf16_tuning_gemm_v2.csv}"
 TAG="${TAG:-k3-bf16-gemm-tune:gfx950}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 

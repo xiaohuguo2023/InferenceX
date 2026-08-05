@@ -1,0 +1,122 @@
+[
+  {
+    "hardware": "b300",
+    "conc": 1,
+    "metrics": {
+      "tput_per_gpu": 1140.13793,
+      "mean_tpot": 0.01035,
+      "mean_ttft": 2.53032,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "b300",
+    "conc": 2,
+    "metrics": {
+      "tput_per_gpu": 1180.74353,
+      "mean_tpot": 0.01088,
+      "mean_ttft": 1.53022,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "b300",
+    "conc": 4,
+    "metrics": {
+      "tput_per_gpu": 1720.31783,
+      "mean_tpot": 0.01393,
+      "mean_ttft": 1.3465,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "b300",
+    "conc": 8,
+    "metrics": {
+      "tput_per_gpu": 2285.41497,
+      "mean_tpot": 0.02625,
+      "mean_ttft": 1.42752,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "b300",
+    "conc": 16,
+    "metrics": {
+      "tput_per_gpu": 2916.9884,
+      "mean_tpot": 0.07816,
+      "mean_ttft": 9.05299,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "b300",
+    "conc": 24,
+    "metrics": {
+      "tput_per_gpu": 3568.24024,
+      "mean_tpot": 0.0806,
+      "mean_ttft": 24.47055,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "b200",
+    "conc": 1,
+    "metrics": {
+      "tput_per_gpu": 348.30987,
+      "mean_tpot": 0.01374,
+      "mean_ttft": 5.95268,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "b200",
+    "conc": 2,
+    "metrics": {
+      "tput_per_gpu": 421.23589,
+      "mean_tpot": 0.01747,
+      "mean_ttft": 5.65089,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "b200",
+    "conc": 4,
+    "metrics": {
+      "tput_per_gpu": 546.34289,
+      "mean_tpot": 0.03478,
+      "mean_ttft": 9.60519,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "b200",
+    "conc": 8,
+    "metrics": {
+      "tput_per_gpu": 868.26213,
+      "mean_tpot": 0.06809,
+      "mean_ttft": 9.79725,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "b200",
+    "conc": 16,
+    "metrics": {
+      "tput_per_gpu": 1050.95542,
+      "mean_tpot": 0.15689,
+      "mean_ttft": 14.29078,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "b200",
+    "conc": 32,
+    "metrics": {
+      "tput_per_gpu": 723.82387,
+      "mean_tpot": 0.28158,
+      "mean_ttft": 176.14661,
+      "offload_mode": "off"
+    }
+  }
+]

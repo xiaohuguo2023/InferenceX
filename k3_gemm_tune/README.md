@@ -32,8 +32,46 @@ docker run --rm --device /dev/kfd --device /dev/dri --group-add video \
   -v $PWD:/work k3-bf16-gemm-tune:gfx950
 # -> ./kimik3_bf16_tuned_gemm.csv
 ```
-Knobs (env): `LIBTYPE=all|flydsl|asm|...` (default all + hipBLASLt), `INPUT_CSV=...`,
-`OUTPUT_CSV=/work/...`. First run does a ~10s one-time aiter-core JIT rebuild.
+Knobs (env): `TUNE_LIBTYPE_PROFILE=safe|n896|full` (default **safe**),
+`LIBTYPE=...` (override), `INPUT_CSV=...`, `OUTPUT_CSV=/work/...`.
+First run does a ~10s one-time aiter-core JIT rebuild.
+
+### Libtype profiles (avoid GPU faults during tuning)
+
+| Profile | Backends | When to use |
+|---------|----------|-------------|
+| **safe** (default) | flydsl, hipblaslt, skinny | Main 481 shapes — no opus/asm |
+| **n896** | + opus | MoE `N=896,K=7168` only (asm skipped via N%tileN patch) |
+| **full** | + opus, asm | Small-M only: `_patch_gemm_tune_safe.py` skips asm/opus when `M > 2048` |
+
+Opus already has host rules (`kid_rejects_shape`, 4g_safe, K-parity) in aiter; large-M
+prefill (4096/32768 × 1024) still GPU-faults some opus/asm kernels under mp_tuner.
+Plain `torch.mm` is fine — faults are backend-specific.
+
+Shape guard env (used when profile includes asm/opus): `AITER_TUNE_ASM_MAX_M=2048`,
+`AITER_TUNE_OPUS_MAX_M=2048`, `AITER_TUNE_DISABLE_ASM=1`, `AITER_TUNE_DISABLE_OPUS=1`.
+
+### N=896 MoE shapes (gfx950)
+MoE expert projection uses `N=896, K=7168`. The asm `256×256` tile rejects `896 % 256 ≠ 0`,
+and hipBLASLt can enumerate ~240k solutions per shape. `tune.sh` applies live-mount patches:
+- `_patch_gemm_n896.py`: skip asm when `N % tileN != 0`; cap hipBLASLt fast-mode
+- `_patch_gemm_tune_safe.py`: skip asm/opus when `M > AITER_TUNE_*_MAX_M` (default 2048)
+
+Legacy fallback: `./setup_and_tune.sh tune-split` (two-phase CSV split).
+
+### Checkpoint / resume
+
+Each shard writes append-only progress to `shards/kimik3_bf16_tuned_main_sN.csv`.
+The aiter tuner loads that file as `--tuned_file` and **skips shapes already tuned**.
+
+```bash
+./checkpoint_status.sh              # tuned vs remaining per shard
+./checkpoint_compact.sh             # dedupe output CSVs (keep last winner per shape)
+SKIP_SPLIT=1 CHECKPOINT_COMPACT=1 NUM_SHARDS=4 SHARD=2 ./tune_shard.sh bg
+```
+
+On restart, keep existing output CSVs on NFS — do not delete them. Use `SKIP_SPLIT=1`
+so shard input CSVs are not reshuffled.
 
 ## Install the result on the serving box
 ```bash

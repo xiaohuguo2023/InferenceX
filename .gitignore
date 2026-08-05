@@ -1,3 +1,23 @@
 **/__pycache__/**
 **/.coverage
 experimental/multiturn/vllm_benchmark/results/
+
+# Local Kimi-K3 benchmark runtime artifacts
+/*.log
+/*.lock
+/.venv-plot/
+/archive_sweep_*/
+/k3_*_ixci_c*/
+/k3_fixed_isl_*/
+/k3_prefixbench_fp8asm_v101_fused/
+/k3_gemm_tune/*.log
+/k3_gemm_tune/*.tzst
+/k3_gemm_tune/shards/
+/k3_gemm_tune/spur-*.out
+/spur-*.out
+/k3_gemm_tune/kimik3_bf16_tuned_main.csv
+/k3_gemm_tune/kimik3_bf16_tuned_n896.csv
+/k3_gemm_tune/kimik3_bf16_tuning_main.csv
+/k3_gemm_tune/kimik3_bf16_tuning_n896.csv
+/k3_gemm_tune/kimik3_bf16_uncovered_shapes.csv
+/docs/kimik3_pareto/pareto_Kimi-K3_agentic_*.png

@@ -1,0 +1,16 @@
+{
+  "K3 MI355X (bf16 ASM, prior sweep)": {
+    "1": {"tput_per_gpu": 1909, "tpot_ms": 28.6},
+    "4": {"tput_per_gpu": 937, "tpot_ms": 30.0},
+    "8": {"tput_per_gpu": 1883, "tpot_ms": 34.9},
+    "16": {"tput_per_gpu": 3588, "tpot_ms": 52.0},
+    "24": {"tput_per_gpu": 1222, "tpot_ms": 218.0}
+  },
+  "K3 MI355X (fp8 TRITON, prior sweep)": {
+    "1": {"tput_per_gpu": 951, "tpot_ms": 36.0},
+    "4": {"tput_per_gpu": 1012, "tpot_ms": 37.0},
+    "8": {"tput_per_gpu": 1912, "tpot_ms": 51.0},
+    "16": {"tput_per_gpu": 3097, "tpot_ms": 72.0},
+    "24": {"tput_per_gpu": 925, "tpot_ms": 278.0}
+  }
+}

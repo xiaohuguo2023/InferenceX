@@ -4,12 +4,12 @@ x = Interactivity (1000/mean_TPOT, tok/s/user); y = Token Throughput per GPU.
 MI355X points come from the local AIPerf conc sweep (k3_sweep_c*/); B300/B200
 come from the InferenceX dashboard (/tmp/k3_b300.json). Mirrors
 ~/work/sweep_gptoss_output/v023_final/plot_ours_pareto.py."""
-import json, sys
+import json, os, sys
 from pathlib import Path
-sys.path.insert(0, "/home/xiaohugu/work/sweep_gptoss_output")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from plot_pareto_3way import plot_combined, _pareto_frontier
 
-ROOT = Path("/home/xiaohugu/work/InferenceX-dspv4")
+ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "docs" / "kimik3_pareto"; OUT.mkdir(parents=True, exist_ok=True)
 SHAPE = (0, 0, "K3 agentic (cc-traces)")   # single agentic "shape"
 NGPU = 8
@@ -35,7 +35,8 @@ def load_mi(dirfmt, label):
         print(f"  {label} conc{c:>2}: tput/gpu={total/NGPU:6.0f}  TPOT={tpot:5.1f}ms  interact={1000/tpot:5.1f}")
     return s
 
-mi_fp8_fused = load_mi("k3_fp8asm_fused_v101_ixci_c{c}", "MI355X fp8 ASM +fused (v1.0.1)")
+MI_TAG = os.environ.get("K3_MI_TAG", "fp8asm_ms64_ixci_cold_tuned_mbt4k")
+mi_fp8_fused = load_mi(f"k3_{MI_TAG}_ixci_c{{c}}", "MI355X fp8 ASM +fused+tuned (mbt4k)")
 mi_fp8asm  = load_mi("k3_fp8asm_sweep_c{c}",    "MI355X fp8 ASM (native, 900s)")
 mi_bf16asm = load_mi("k3_bf16asm2_sweep_c{c}",  "MI355X bf16 ASM (native, 900s)")
 
@@ -70,12 +71,14 @@ series = {
     "K3 B200 (dynamo-vLLM)":   nv_series("b200"),
 }
 styles = {
-    "K3 MI355X (fp8 ASM +fused, v1.0.1)": {"color": "#e11d48", "marker": "*", "linestyle": "-"},
-    "K3 MI355X (fp8 ASM, native)": {"color": "#ef4444", "marker": "o", "linestyle": ":"},
-    "K3 MI355X (bf16 ASM, native)": {"color": "#a78bfa", "marker": "D", "linestyle": "-"},
-    "K3 B300 (vLLM, non-MTP)": {"color": "#22c55e", "marker": "s", "linestyle": "--"},
-    "K3 B300 (vLLM, MTP)":     {"color": "#15803d", "marker": "P", "linestyle": "-."},
-    "K3 B200 (dynamo-vLLM)":   {"color": "#38bdf8", "marker": "^", "linestyle": "--"},
+    # InferenceX dark-theme vendor colors: AMD hue zone 12–42; NVIDIA 120–170.
+    # Points use the dashboard's precision shapes and 2px monotone rooflines.
+    "K3 MI355X (fp8 ASM +fused, v1.0.1)": {"color": "#f53e39", "marker": "D", "linestyle": "-"},
+    "K3 MI355X (fp8 ASM, native)": {"color": "#f53e39", "marker": "o", "linestyle": ":"},
+    "K3 MI355X (bf16 ASM, native)": {"color": "#f53e39", "marker": "^", "linestyle": "--"},
+    "K3 B300 (vLLM, non-MTP)": {"color": "#92cb61", "marker": "s", "linestyle": "-"},
+    "K3 B300 (vLLM, MTP)":     {"color": "#92cb61", "marker": "P", "linestyle": "--"},
+    "K3 B200 (dynamo-vLLM)":   {"color": "#007b3f", "marker": "s", "linestyle": "-"},
 }
 series = {k: v for k, v in series.items() if v}   # drop empty
 plot_combined(series, out_dir=OUT, title_prefix="Kimi-K3 agentic — MI355X vs B300/B200",
