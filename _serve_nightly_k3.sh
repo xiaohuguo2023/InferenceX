@@ -92,11 +92,19 @@ GPU_MEM_UTIL="${GPU_MEM_UTIL:-0.88}"
 MAX_MODEL_LEN="${MAX_MODEL_LEN:-1048576}"
 SERVE_LOG="${SERVE_LOG:-/workspace/serve_nightly_k3.log}"
 
+# KV_CACHE_MEMORY (bytes) pins the KV allocation instead of deriving it from the
+# utilization fraction. Needed on this nightly because the ~10.3 GiB/GPU graph
+# pool escapes the KV sizing, so a requested 0.95 measured 0.986 effective; the
+# server's own startup line reports the value that actually fits.
+KV_CACHE_ARGS=()
+[ -n "${KV_CACHE_MEMORY:-}" ] && KV_CACHE_ARGS=(--kv-cache-memory "$KV_CACHE_MEMORY")
+
 setsid nohup vllm serve "$MODEL_PATH" --served-model-name moonshotai/Kimi-K3 \
   --host 0.0.0.0 --port 8888 --tensor-parallel-size 8 --async-scheduling \
   --distributed-executor-backend mp --gpu-memory-utilization "$GPU_MEM_UTIL" \
   --max-num-seqs "$MAX_NUM_SEQS" --max-model-len "$MAX_MODEL_LEN" \
   --max-num-batched-tokens "$MAX_NUM_BATCHED_TOKENS" \
+  "${KV_CACHE_ARGS[@]}" \
   --trust-remote-code --load-format auto --moe-backend aiter \
   --kv-cache-dtype fp8 --attention-backend ROCM_AITER_MLA --mm-encoder-tp-mode data \
   --compilation-config "$COMPILE_CFG" \
