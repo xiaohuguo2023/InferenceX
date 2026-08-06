@@ -129,16 +129,44 @@ verify && echo "[patch] all 4 vLLM ASM patches OK" || { echo "[patch] FAILED" >&
 }
 
 do_setup() {
-  docker exec "$CTR" bash -lc '
+  docker exec \
+    -e K3_GEMM_CSV="${K3_GEMM_CSV:-/workspace/k3_gemm_tune/kimik3_bf16_tuned_gemm.csv}" \
+    "$CTR" bash -lc '
 set -euo pipefail
 LOCAL_AITER=/opt/aiter-local
 echo "[setup] staging node-local aiter from /aiter-latest..."
 rm -rf "$LOCAL_AITER"
 cp -a /aiter-latest "$LOCAL_AITER"
+# aiter JIT-compiles cpp_itfs template ops (e.g. top_k_top_p sampling, hit during
+# vLLM memory profiling) against CK headers under 3rdparty. An uninitialized or
+# partially copied submodule only surfaces mid-startup as a FileNotFoundError on
+# the include dir, so repair it here from the bind mount.
+if [ ! -d "$LOCAL_AITER/3rdparty/composable_kernel/include" ]; then
+  echo "[setup] composable_kernel missing in staged aiter; re-copying from /aiter-latest..."
+  if [ -d /aiter-latest/3rdparty/composable_kernel/include ]; then
+    mkdir -p "$LOCAL_AITER/3rdparty/composable_kernel"
+    cp -a /aiter-latest/3rdparty/composable_kernel/. "$LOCAL_AITER/3rdparty/composable_kernel/"
+  else
+    echo "[setup] ERROR: /aiter-latest/3rdparty/composable_kernel is empty; run" >&2
+    echo "[setup]        git -C \$AITER submodule update --init 3rdparty/composable_kernel" >&2
+    exit 1
+  fi
+fi
+# Do not inherit process-owned JIT batons from the shared checkout. Stale
+# top-level and nested build locks block rank 0 until the other TP ranks time
+# out in RCCL.
+python3 - <<'"'"'PY'"'"'
+from pathlib import Path
+
+build = Path("/opt/aiter-local/aiter/jit/build")
+for lock in build.rglob("lock*"):
+    if lock.is_file() or lock.is_symlink():
+        lock.unlink()
+PY
 # The final tuner output lives on the shared /workspace mount. Install it into
 # the node-local aiter copy explicitly; SPUR_USER_HOME may point /aiter-latest at
 # a different checkout than /home/$USER/work/aiter on the login node.
-FINAL_K3_GEMM=/workspace/k3_gemm_tune/kimik3_bf16_tuned_gemm.csv
+FINAL_K3_GEMM="$K3_GEMM_CSV"
 LOCAL_K3_GEMM="$LOCAL_AITER/aiter/configs/model_configs/kimik3_bf16_tuned_gemm.csv"
 [ -f "$FINAL_K3_GEMM" ] || { echo "ERROR: missing $FINAL_K3_GEMM" >&2; exit 1; }
 cp "$FINAL_K3_GEMM" "$LOCAL_K3_GEMM"
@@ -294,7 +322,7 @@ do_serve() {
 
 do_sweep() {
   local tag="${1:-$SWEEP_TAG}"
-  docker exec "$CTR" bash -lc "cd /workspace && HF_HUB_OFFLINE=1 HF_DATASETS_OFFLINE=1 TAG=$tag CONC_LIST=\"${CONC_LIST:-1}\" DURATION=\"${DURATION:-3600}\" AIPERF=$AIPERF_VENV/bin/aiperf OUT_ROOT=/workspace SWEEP_LOCK=\"/workspace/.k3_agentic_${tag}_c${CONC_LIST:-1}.lock\" bash _sweep_fp8asm_ixci.sh"
+  docker exec "$CTR" bash -lc "cd /workspace && TAG=$tag CONC_LIST=\"${CONC_LIST:-1}\" DURATION=\"${DURATION:-3600}\" AIPERF=$AIPERF_VENV/bin/aiperf OUT_ROOT=/workspace SWEEP_LOCK=\"/workspace/.k3_agentic_${tag}_c${CONC_LIST:-1}.lock\" bash _sweep_fp8asm_ixci.sh"
 }
 
 wait_for_serve() {
