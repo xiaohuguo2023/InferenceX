@@ -12,7 +12,7 @@ set -uo pipefail
 cd /workspace
 PORT="${PORT:-8889}"
 NUM_SPEC="${NUM_SPEC:-2}"
-GPU_MEM="${GPU_MEM:-0.88}"; MAX_NUM_SEQS="${MAX_NUM_SEQS:-64}"; MNBT="${MNBT:-4096}"
+GPU_MEM="${GPU_MEM:-0.88}"; MAX_NUM_SEQS="${MAX_NUM_SEQS:-16}"; MNBT="${MNBT:-4096}"
 # Spec-decode TARGET backend.
 #
 # NOTE (fp8+DSpark is architecturally unrunnable on this nightly):
@@ -49,6 +49,19 @@ DRAFT_PATH="${DRAFT_PATH:-$(ls -d "$DCACHE"/*/ 2>/dev/null | head -1)}"; DRAFT_P
 if [ -z "$DRAFT_PATH" ] || [ ! -f "$DRAFT_PATH/config.json" ]; then
   echo "!! DSpark draft not staged at $DCACHE — falling back to HF id Inferact/Kimi-K3-DSpark"
   DRAFT_PATH="Inferact/Kimi-K3-DSpark"
+else
+  # Refuse to start if the draft is still non-causal (cudagraph OOB source).
+  if ! python3 - "$DRAFT_PATH/config.json" <<'PY'
+import json, sys
+c = json.load(open(sys.argv[1]))
+if c.get("dflash_config", {}).get("causal") is not True:
+    raise SystemExit("dflash_config.causal is not true — run _k3_dspark_fp8asm_apply_patches.sh")
+print("draft causal OK")
+PY
+  then
+    echo "!! draft must be forced causal before serve — run _k3_dspark_fp8asm_apply_patches.sh"
+    exit 1
+  fi
 fi
 echo "MODEL_PATH=$MODEL_PATH"
 echo "DRAFT_PATH=$DRAFT_PATH  NUM_SPEC=$NUM_SPEC  PORT=$PORT"
@@ -59,13 +72,12 @@ echo "DRAFT_PATH=$DRAFT_PATH  NUM_SPEC=$NUM_SPEC  PORT=$PORT"
 DRAFT_BACKEND="${DRAFT_BACKEND:-ROCM_AITER_MLA}"
 SPEC_CFG=$(printf '{"model":"%s","num_speculative_tokens":%s,"method":"dspark","attention_backend":"%s","draft_sample_method":"probabilistic","rejection_sample_method":"block"}' "$DRAFT_PATH" "$NUM_SPEC" "$DRAFT_BACKEND")
 
-# cudagraph mode + capture-size cap. TRITON_MLA only advertises
-# UNIFORM_SINGLE_TOKEN_DECODE cudagraph support, so under spec vLLM auto-degrades
-# FULL_AND_PIECEWISE -> PIECEWISE anyway; PIECEWISE capture of the folded spec
-# verify batch hit a GPU memory-access fault around M~304. MAX_CG caps the
-# capture sizes to dodge the large-M OOB (batches above the cap run outside the
-# graph, NOT eager-everywhere). Default keeps the doc mode; set MAX_CG to a small
-# ceiling (e.g. 64) to test the capture-fault hypothesis.
+# cudagraph mode + optional capture-size cap. fp8-asm DSpark MUST use
+# MAX_NUM_SEQS=16 (recipe default above) — not the agentic 2*CONC ladder.
+# With NUM_SPEC=2, vLLM derives max_cudagraph_capture_size = 16*(1+N)*2 = 96,
+# so PIECEWISE capture still walks M=96..72..8; the fp8 asm verify kernel OOBs
+# when max_num_seqs is large (M~304 at 64 seqs). MAX_CG overrides the ceiling
+# for experiments (batches above the cap run outside the graph, not eager).
 CUDAGRAPH_MODE="${CUDAGRAPH_MODE:-FULL_AND_PIECEWISE}"
 MAX_CG="${MAX_CG:-}"
 if [ -n "$MAX_CG" ]; then
@@ -74,17 +86,23 @@ else
   COMPILE_CFG=$(printf '{"cudagraph_mode":"%s","custom_ops":["+fused_rms_norm_gated"]}' "$CUDAGRAPH_MODE")
 fi
 
+MERGED_GEMM_CSV=/opt/aiter-local/aiter/configs/merged_bf16_tuned_gemm.csv
+if [ -z "${AITER_CONFIG_GEMM_BF16:-}" ] && [ -f "$MERGED_GEMM_CSV" ]; then
+  export AITER_CONFIG_GEMM_BF16="$MERGED_GEMM_CSV"
+fi
+
 export VLLM_ROCM_USE_AITER=1 VLLM_ROCM_USE_AITER_MOE=1 SAFETENSORS_FAST_GPU=1 \
        GPU_ARCHS=gfx950 VLLM_ENGINE_READY_TIMEOUT_S=3600 VLLM_HTTP_TIMEOUT_KEEP_ALIVE=900 \
        AITER_SITUV2_A8W4=1 VLLM_ROCM_USE_AITER_MOE_SITUV2_A8W4=1 \
-       VLLM_USE_BREAKABLE_CUDAGRAPH=0
+       VLLM_USE_BREAKABLE_CUDAGRAPH=0 \
+       VLLM_ROCM_AITER_MLA_ASM_PADDING="${VLLM_ROCM_AITER_MLA_ASM_PADDING:-asm}"
 
 LOG=/workspace/serve_k3_bench_spec${NUM_SPEC}.log
 setsid nohup vllm serve "$MODEL_PATH" --served-model-name Kimi-K3 \
   --host 0.0.0.0 --port "$PORT" --tensor-parallel-size 8 --async-scheduling \
   --distributed-executor-backend mp --gpu-memory-utilization "$GPU_MEM" \
   --max-num-seqs "$MAX_NUM_SEQS" --max-model-len 1048576 --max-num-batched-tokens "$MNBT" \
-  --trust-remote-code --load-format auto --moe-backend auto \
+  --trust-remote-code --load-format auto --moe-backend aiter \
   --kv-cache-dtype "$KV_CACHE_DTYPE" --attention-backend "$ATTN_BACKEND" --mm-encoder-tp-mode data \
   --compilation-config "$COMPILE_CFG" \
   "${EAGER_ARG[@]}" \

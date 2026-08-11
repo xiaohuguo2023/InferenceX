@@ -5,7 +5,13 @@
 # Measures out tok/s + latency; acceptance length is read from the serve log.
 #   PORT=8890 bash _bench_k3_dspark_fp8asm.sh
 set -euo pipefail
-AIPERF="${AIPERF:-/workspace/.aiperf_venv/bin/aiperf}"
+AIPERF="${AIPERF:-}"
+if [ -z "$AIPERF" ] || [ ! -x "$AIPERF" ]; then
+  for c in /opt/.aiperf_*/bin/aiperf /workspace/.aiperf_*/bin/aiperf; do
+    [ -x "$c" ] && { AIPERF="$c"; break; }
+  done
+fi
+[ -n "$AIPERF" ] && [ -x "$AIPERF" ] || { echo "!! no aiperf found"; exit 1; }
 PORT="${PORT:-8890}"
 URL="http://127.0.0.1:${PORT}"
 TOK=/dev/shm/hf-cache/models--moonshotai--Kimi-K3/snapshots/9f62e4e9fffbd0a83ddd60e1c209d828994b3569

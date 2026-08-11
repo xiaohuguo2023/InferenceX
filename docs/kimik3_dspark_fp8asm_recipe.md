@@ -91,17 +91,30 @@ continuing.
 
 ---
 
-## 2. Container note (host repo is NOT mounted)
+## 2. Container setup (host repo mounted at `/workspace`)
 
-Container `xguo-k3nc` does not mount the host repo. Copy scripts in and edit
-package files via `docker exec`:
+Use `setup_benchmark.sh` with the **DSpark nightly image** (not `kimi-k3`):
 
 ```bash
-# copy a script into the container workspace
+# on compute node
+export K3_CTR=k3-dspark-benchmark
+./setup_benchmark.sh start-dspark    # nightly-cb8104839...
+./setup_benchmark.sh setup-dspark    # aiter + aiperf + triton 3.7 + draft + all patches
+./setup_benchmark.sh verify-dspark-patches
+./setup_benchmark.sh serve-dspark    # PORT=8890 NUM_SPEC=2 by default
+```
+
+`setup-dspark` applies **both** stacks in order:
+1. InferenceX fp8-asm patches (decode #50578, prefill PR-A, PS metadata16, skip K3 fp8 PS, wvSplitK #50618)
+2. DSpark enablement (`_k3_dspark_fp8asm_apply_patches.sh`: draft causal, aiter table key 80, dspark qlen, persistent gate, KDA PR#27)
+
+Manual / legacy container (`xguo-k3nc`, no mount): copy scripts in and edit package files via `docker exec`:
+
+```bash
 docker cp _serve_k3_bench_spec.sh   xguo-k3nc:/workspace/
 docker cp _bench_k3_dspark_fp8asm.sh xguo-k3nc:/workspace/
-# apply the §4 patches from inside
-docker exec -it xguo-k3nc bash
+docker cp _k3_dspark_fp8asm_apply_patches.sh xguo-k3nc:/workspace/
+docker exec -it xguo-k3nc bash -lc 'bash /workspace/_k3_dspark_fp8asm_apply_patches.sh'
 ```
 
 All §4 snippets are meant to run **inside** the container. Every one is
@@ -311,13 +324,16 @@ s2 = s.replace(
     "    if state_indices.ndim != 1:\n"
     '        raise ValueError("`state_indices` must be one-dimensional.")')
 changed |= s2 != s; s = s2
-# 4) launch: pass the stride
-if "stride_indices_seq=state_indices.stride(0)," not in s:
+# 4) launch: pass the stride (skip if nightly already ships it)
+import re
+if not re.search(r"stride_indices_seq=\w+\.stride\(0\)", s):
     s = s.replace("        stride_state_token=initial_state.stride(0),\n",
                   "        stride_state_token=initial_state.stride(0),\n"
                   "        stride_indices_seq=state_indices.stride(0),\n", 1)
     changed = True
-open(F, "w").write(s); py_compile.compile(F, doraise=True)
+if changed:
+    open(F, "w").write(s)
+py_compile.compile(F, doraise=True)
 print("KDA PR#27 applied" if changed else "KDA PR#27 already present")
 PY
 ```
@@ -358,7 +374,17 @@ Notes:
 - **NO `--enforce-eager`.** Real perf needs cudagraphs; the patches make FULL +
   PIECEWISE capture cleanly under spec. Eager is for debug only.
 - `GPU_MEM=0.88` / `MAX_NUM_SEQS=16` are the validated concessions for the 1M
-  context pool at TP8. Raise cautiously.
+  context pool at TP8. **Do not use the agentic `MAX_NUM_SEQS=2*CONC` ladder**
+  for DSpark serve — a large seq cap widens the PIECEWISE capture batch and the
+  fp8 asm verify kernel writes past its arena (write-to-read-only-page on all
+  GPUs). `_serve_k3_bench_spec.sh` defaults to 16; always export explicitly.
+- With `NUM_SPEC=2`, vLLM still derives `max_cudagraph_capture_size = 96`
+  (`16 × (1+N) × 2`), so aiter GEMM lines during capture will show `M:72`,
+  `M:80`, … — that is normal at the recipe cap, not evidence of a missing seq
+  limit. The loaded kernel `mla_a8w8_qh16_qseqlen4_…_ps` is the **correct**
+  DSpark verify kernel; `qseqlen4` is not a qlen-sizing mismatch.
+- Wire tuned GEMM when available (perf-only, not a fault blocker):
+  `export AITER_CONFIG_GEMM_BF16=/opt/aiter-local/aiter/configs/merged_bf16_tuned_gemm.csv`
 - To free the GPUs between runs (a bare `pkill "vllm serve"` does NOT work):
   `pkill -9 -f spawn_main; pkill -9 -f VllmWorker; pkill -9 -f EngineCore; pkill -9 -f "vllm serve"`
   then confirm each GPU is back to the ~0.28 GiB idle baseline.
