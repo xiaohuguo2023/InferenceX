@@ -124,6 +124,13 @@ export VLLM_ROCM_USE_AITER=1 VLLM_ROCM_USE_AITER_MOE=1 SAFETENSORS_FAST_GPU=1 \
        VLLM_USE_BREAKABLE_CUDAGRAPH=0 \
        VLLM_ROCM_AITER_MLA_ASM_PADDING="${VLLM_ROCM_AITER_MLA_ASM_PADDING:-asm}"
 
+# Optional torch profiler. Set PROFILE_DIR=/path to enable; then drive it with
+# curl -X POST /start_profile ... load ... /stop_profile (per-rank .pt.trace.json.gz
+# flush to PROFILE_DIR). This build honors --profiler-config, NOT the
+# VLLM_TORCH_PROFILER_DIR env. Analyze with analyze_dsv4_trace.py / backend_breakdown.py.
+PROFILE_DIR="${PROFILE_DIR:-}"
+PROFILE_ARG=(); [ -n "$PROFILE_DIR" ] && { mkdir -p "$PROFILE_DIR"; PROFILE_ARG=(--profiler-config.profiler=torch --profiler-config.torch_profiler_dir="$PROFILE_DIR"); }
+
 LOG=/workspace/serve_k3_bench_spec${NUM_SPEC}.log
 setsid nohup vllm serve "$MODEL_PATH" --served-model-name Kimi-K3 \
   --host 0.0.0.0 --port "$PORT" --tensor-parallel-size 8 --async-scheduling \
@@ -133,6 +140,7 @@ setsid nohup vllm serve "$MODEL_PATH" --served-model-name Kimi-K3 \
   --kv-cache-dtype "$KV_CACHE_DTYPE" --attention-backend "$ATTN_BACKEND" --mm-encoder-tp-mode data \
   "${KVMEM_ARG[@]}" \
   --compilation-config "$COMPILE_CFG" \
+  "${PROFILE_ARG[@]}" \
   "${EAGER_ARG[@]}" \
   --speculative-config "$SPEC_CFG" \
   --enable-prefix-caching --enable-prompt-tokens-details --no-disable-hybrid-kv-cache-manager \
