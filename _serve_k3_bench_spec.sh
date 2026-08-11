@@ -95,10 +95,22 @@ KVMEM_ARG=(); [ -n "$KV_CACHE_MEMORY" ] && KVMEM_ARG=(--kv-cache-memory "$KV_CAC
 
 CUDAGRAPH_MODE="${CUDAGRAPH_MODE:-FULL_AND_PIECEWISE}"
 MAX_CG="${MAX_CG:-}"
+# cudagraph_capture_sizes — pin explicitly so DSpark decode (M = 3*conc tokens/step,
+# uniform_decode_query_len = 1+num_spec = 3) lands on FULL decode graphs at every
+# benchmark concurrency. vLLM derives the FULL/decode graph set as round_up(size,3)
+# over this ladder; the AUTO ladder [1,2,4,8,16,24,32,40,...] leaves gaps at 12 and
+# 36 (8->9,16->18 skip 12; 32->33,40->42 skip 36), so conc-4 (12 tok) and conc-12
+# (36 tok) silently fall to a PIECEWISE graph -> attention runs eager every step ->
+# get_mla_metadata_v1 + eager MLA on the host critical path (~75 ms ITL bubble; GPU
+# at ~370 W launch-bound). Adding 12 and 36 gives exact FULL decode graphs (num_reqs
+# 4 and 12), where get_mla_metadata_v1 takes the fast uniform branch. Rule to extend:
+# for a new concurrency C, ensure a size s with round_up(s,3)==3*C exists (add 3*C).
+# The rest of the list reproduces vLLM's auto ladder (setting this disables auto-gen).
+CAPTURE_SIZES="${CAPTURE_SIZES:-1,2,4,8,12,16,24,32,36,40,48,56,64,72,80,88,96,104,112,120,128,136,144,152,160,168,176,184,192,200,208,216,224,232,240,248,256,272,288,304,320,336,352,368,384}"
 if [ -n "$MAX_CG" ]; then
-  COMPILE_CFG=$(printf '{"cudagraph_mode":"%s","custom_ops":["+fused_rms_norm_gated"],"max_cudagraph_capture_size":%s}' "$CUDAGRAPH_MODE" "$MAX_CG")
+  COMPILE_CFG=$(printf '{"cudagraph_mode":"%s","custom_ops":["+fused_rms_norm_gated"],"cudagraph_capture_sizes":[%s],"max_cudagraph_capture_size":%s}' "$CUDAGRAPH_MODE" "$CAPTURE_SIZES" "$MAX_CG")
 else
-  COMPILE_CFG=$(printf '{"cudagraph_mode":"%s","custom_ops":["+fused_rms_norm_gated"]}' "$CUDAGRAPH_MODE")
+  COMPILE_CFG=$(printf '{"cudagraph_mode":"%s","custom_ops":["+fused_rms_norm_gated"],"cudagraph_capture_sizes":[%s]}' "$CUDAGRAPH_MODE" "$CAPTURE_SIZES")
 fi
 
 MERGED_GEMM_CSV=/opt/aiter-local/aiter/configs/merged_bf16_tuned_gemm.csv
