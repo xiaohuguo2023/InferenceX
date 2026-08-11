@@ -78,6 +78,21 @@ SPEC_CFG=$(printf '{"model":"%s","num_speculative_tokens":%s,"method":"dspark","
 # so PIECEWISE capture still walks M=96..72..8; the fp8 asm verify kernel OOBs
 # when max_num_seqs is large (M~304 at 64 seqs). MAX_CG overrides the ceiling
 # for experiments (batches above the cap run outside the graph, not eager).
+# KV-cache memory pin (bytes). At gpu_memory_utilization=0.95 with TP8 K3-fp4,
+# weights alone are ~201 GiB of the 273.6 GiB budget. vLLM's auto-sizer hands the
+# leftover to KV using only the *profiled* peak-activation estimate (~5.5 GiB) as
+# headroom. That estimate is far below the REAL prefill peak: MNBT=16384 chunks x
+# up-to-64 concurrent 68k-token requests + DSpark verify buffers spike much
+# higher, so the process OOMs to "0 MB free" — at init if KV is sized to the edge,
+# or mid-benchmark once real traffic hits the peak (VllmWorker died at conc-48).
+# The fix is NOT to touch the mandated knobs (gpu_mem 0.95 / seqs 64 / MNBT /
+# FULL_AND_PIECEWISE) but to shrink KV so a large physical headroom remains for
+# those runtime spikes. Prefix caching stores the 63,911-tok prefix ONCE, so this
+# workload needs only ~350k KV tokens (~6 GiB); 32 GiB (~2M tokens) is >5x that
+# while leaving ~32 GiB physical headroom for the prefill/verify activation peak.
+KV_CACHE_MEMORY="${KV_CACHE_MEMORY:-34359738368}"
+KVMEM_ARG=(); [ -n "$KV_CACHE_MEMORY" ] && KVMEM_ARG=(--kv-cache-memory "$KV_CACHE_MEMORY")
+
 CUDAGRAPH_MODE="${CUDAGRAPH_MODE:-FULL_AND_PIECEWISE}"
 MAX_CG="${MAX_CG:-}"
 if [ -n "$MAX_CG" ]; then
@@ -104,6 +119,7 @@ setsid nohup vllm serve "$MODEL_PATH" --served-model-name Kimi-K3 \
   --max-num-seqs "$MAX_NUM_SEQS" --max-model-len 1048576 --max-num-batched-tokens "$MNBT" \
   --trust-remote-code --load-format auto --moe-backend aiter \
   --kv-cache-dtype "$KV_CACHE_DTYPE" --attention-backend "$ATTN_BACKEND" --mm-encoder-tp-mode data \
+  "${KVMEM_ARG[@]}" \
   --compilation-config "$COMPILE_CFG" \
   "${EAGER_ARG[@]}" \
   --speculative-config "$SPEC_CFG" \
