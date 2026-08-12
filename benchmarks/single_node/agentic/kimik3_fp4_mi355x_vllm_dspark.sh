@@ -105,6 +105,21 @@ export AIPERF_HTTP_TCP_USER_TIMEOUT=900000
 # DSpark fp8-asm: fold the qlen>1 spec verify onto the asm path (pad 12->16).
 export VLLM_ROCM_AITER_MLA_ASM_PADDING=asm
 
+# Pin the tuned/patched BF16 GEMM catalog (mirrors _serve_k3_bench_spec.sh:116-119).
+# Without this, aiter re-merges configs/model_configs/*bf16_tuned_gemm*.csv into
+# /tmp/aiter_configs/bf16_tuned_gemm.csv and reads THAT — i.e. the FlyDSL->torch
+# decode reroute (docs/kimik3_conc24_regression_allreduce.md) is silently NOT in
+# effect on the agentic path. Point at the patched merged catalog explicitly.
+# (Perf/routing fix for decode; it does NOT by itself address the prefill HSA
+# fault — see docs/kimik3_hsa_fault_agentic_launcher.md.)
+MERGED_GEMM_CSV="${AITER_MERGED_GEMM_CSV:-/opt/aiter-local/aiter/configs/merged_bf16_tuned_gemm.csv}"
+if [ -z "${AITER_CONFIG_GEMM_BF16:-}" ] && [ -f "$MERGED_GEMM_CSV" ]; then
+    export AITER_CONFIG_GEMM_BF16="$MERGED_GEMM_CSV"
+    echo "AITER_CONFIG_GEMM_BF16=$AITER_CONFIG_GEMM_BF16"
+else
+    echo "WARN: AITER_CONFIG_GEMM_BF16 unset and $MERGED_GEMM_CSV missing — decode GEMM reroute NOT active" >&2
+fi
+
 # ---- Resolve traces + install AIPerf (isolated venv) ------------------------
 resolve_trace_source
 install_agentic_deps
