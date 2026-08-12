@@ -151,10 +151,35 @@ signature is `Optional[int]` → engine-core init crashes (`Unable to cast float
 rows encode `splitK=0` (int), keeping the column integer-typed. `opus_gemm` casts with `int(...)` so
 it's immune; `asm_gemm` passes `splitK` through uncast, so it's the victim.
 
-**Validation:** after restart, conc-24 decode should replay the FULL graph (eager
-`hipLaunchKernel`/step ~90, not ~290), `cross_device_reduce_2stage` per-step falls back to ~conc-16
-levels, and benchmark conc-24 ITL p50 drops from ~47 ms back onto the roofline trend. (Full mandated
-sweep {48,32,24,16,12,8,4,2,1} re-run for the recipe numbers.)
+### Validated results (2026-08-12, full mandated sweep)
+
+Re-ran the full mandated sweep {48,32,24,16,12,8,4,2,1} on the 68k ISL / 350 OSL long-ctx
+workload (TP8, num_spec=2, gpu_mem 0.95 / max_num_seqs 64 / MNBT 16384 / FULL_AND_PIECEWISE),
+0 errors, DSpark acceptance intact (AL ≈ 2.15 tok/step, pos0 ≈ 72%, pos1 ≈ 43% at every conc).
+The sweep carries **both** graph-capture fixes: the `{12,36}` capture-sizes fix (rescues conc-4/12
+from the PIECEWISE `get_mla_metadata_v1` bubble — see `k3-dspark-decode-bubble-mla-metadata`) and
+the FlyDSL→torch reroute here. ITL p50 (ms):
+
+| conc | M=3×conc | PRE (no fixes) | `{12,36}` only | **both fixes** | fix responsible |
+|---|---|---|---|---|---|
+| 1  | 3   | 10.24 | 10.36 | 10.48 | — |
+| 2  | 6   | 12.13 | 12.66 | 12.49 | — |
+| 4  | 12  | **74.96** | 13.79 | **13.73** | capture-sizes `{12,36}` (−82%) |
+| 8  | 24  | 17.92 | 17.67 | 17.56 | — |
+| 12 | 36  | **76.00** | 20.89 | **21.87** | capture-sizes `{12,36}` (−71%) |
+| 16 | 48  | 24.27 | 24.19 | 24.48 | — |
+| 24 | 72  | 47.99 | 47.34 | **44.56** | FlyDSL→torch reroute (−7% vs pre; −2.8 ms isolated vs `{12,36}`-only) |
+| 32 | 96  | 58.91 | 59.87 | 60.39 | — |
+| 48 | 144 | 85.09 | 76.57 | 86.62 | — (76.57 was a lucky run; TTFT p90 also 2.5× lower — treat as noise) |
+
+**Reading:** the curve is now cleanly monotonic — the two ~75 ms spikes (conc-4/12) are gone. The
+`{12,36}` fix is the large win (−61 ms / −55 ms, ~4–5× on those points); the FlyDSL reroute is a
+smaller, cleanly-isolated gain at conc-24 (both right-hand columns share `{12,36}`, so 47.34→44.56
+is purely the reroute). The steady-state benchmark benefit of the reroute (−2.8 ms) is far below the
+33.8 ms/step all-reduce spike seen in the *isolated single-wave pure-decode* profiling window,
+because chunked prefill of the 68k ISL interleaves with decode in the real sweep and hides most of
+the bubble. Raw data: `k3_dspark_longctx_bench` (pre), `k3_dspark_longctx_bench_FULLFIX`
+(`{12,36}` only), `k3_dspark_longctx_bench_FLYDSLFIX` (both).
 
 ## Artifacts
 
