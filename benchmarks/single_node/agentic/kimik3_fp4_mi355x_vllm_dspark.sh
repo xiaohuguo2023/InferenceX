@@ -148,11 +148,16 @@ case "${KV_OFFLOAD_BACKEND:-}" in
         ;;
 esac
 
-# DSpark-safe headroom: the qlen=1+2*num_spec verify block widens the activation
-# arena vs plain decode, so default lower than the non-spec launcher's 64.
-# Override via MAX_NUM_SEQS / GPU_MEMORY_UTILIZATION.
-MAX_NUM_SEQS="${MAX_NUM_SEQS:-16}"
-GPU_MEMORY_UTILIZATION="${GPU_MEMORY_UTILIZATION:-0.88}"
+# Aligned to the mandated single-box DSpark config (_serve_k3_bench_spec.sh):
+# gpu_mem 0.95, max_num_seqs 64, MNBT 16384. Validated with the split-K
+# cudagraph-safety fix + KV pin; do NOT diverge without re-validating. All three
+# stay env-overridable. NOTE: with KV-offload (SimpleCPUOffloadConnector) + full
+# ~131K context, 0.95 leaves less physical headroom than the single-box KV-pin
+# setup — watch server.log for OOM/hipMalloc if the offload path is enabled here
+# (see docs/kimik3_hsa_fault_agentic_launcher.md).
+MAX_NUM_SEQS="${MAX_NUM_SEQS:-64}"
+GPU_MEMORY_UTILIZATION="${GPU_MEMORY_UTILIZATION:-0.95}"
+MAX_NUM_BATCHED_TOKENS="${MAX_NUM_BATCHED_TOKENS:-16384}"
 
 # --- fp8 KV on K3 (dense MLA) via the ASM persistent MLA path -----------------
 KVDTYPE_ARGS=(
@@ -183,7 +188,7 @@ VLLM_CMD=(
     --distributed-executor-backend mp
     --gpu-memory-utilization "$GPU_MEMORY_UTILIZATION"
     --max-num-seqs "$MAX_NUM_SEQS"
-    --max-num-batched-tokens 4096
+    --max-num-batched-tokens "$MAX_NUM_BATCHED_TOKENS"
     --trust-remote-code
     --load-format auto
     --moe-backend auto
