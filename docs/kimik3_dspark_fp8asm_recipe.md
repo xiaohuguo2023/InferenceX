@@ -42,7 +42,16 @@ exactly **five** things:
 5. **`VLLM_ROCM_AITER_MLA_ASM_PADDING=asm`** at serve time — pads 12→16 heads and
    folds the qlen>1 verify onto the asm path.
 
-Plus one correctness improvement (not the blocker): **KDA stride fix** (§4.4).
+Plus one correctness improvement (not the blocker): **KDA stride fix** (§4.5).
+
+Plus one **decode-perf** fix (not a blocker, but required for a flat ITL curve):
+**reroute the decode-range FlyDSL dense GEMMs to torch** (§4.6). At `M = 3×conc = 72`
+(conc-24) the K3 dense BF16 GEMMs `(N,K) ∈ {(1024,7168),(384,7168),(7168,512)}` route to
+aiter FlyDSL, whose per-call Python launcher + split-K semaphore path runs **eager inside
+the FULL decode cudagraph** → decode is launch-bound → TP ranks desync → all-reduce spin
+(conc-24 ITL p50 ~47 ms, off-trend). Fix = convert those FlyDSL rows (all `M≤192`) to a
+native torch row in `merged_bf16_tuned_gemm.csv` via `_patch_flydsl_decode_to_torch.sh`.
+Full analysis: `docs/kimik3_conc24_regression_allreduce.md`.
 
 ---
 
@@ -338,7 +347,27 @@ print("KDA PR#27 applied" if changed else "KDA PR#27 already present")
 PY
 ```
 
-### 4.6 verify the patches
+### 4.6 FlyDSL decode GEMM reroute (decode perf — flat ITL curve)
+
+At `M = 3×conc ≤ 192` the K3 dense BF16 GEMMs `(N,K) ∈ {(1024,7168),(384,7168),(7168,512)}`
+match `libtype=="flydsl"` rows in `merged_bf16_tuned_gemm.csv`. FlyDSL's per-call Python
+launcher + split-K semaphore path is not cudagraph-capturable in the decode static-buffer
+FULL path, so at M=72 (conc-24) those GEMMs run **eager every decode step** → launch-bound
+decode → TP rank desync → `cross_device_reduce_2stage` spin (conc-24 ITL p50 ~47 ms,
+off-trend). Reroute them to a native torch row (rocBLAS/hipBLASLt Cijk, captured) — exactly
+what conc-16/48 already fall back to.
+
+```bash
+# from the host repo (edits the in-container CSV; idempotent; backs up to .pre_flydsl_fix.bak)
+CONTAINER=k3-dspark-benchmark bash /workspace/_patch_flydsl_decode_to_torch.sh
+```
+
+Do NOT leave `splitK` empty when hand-editing: `pandas.read_csv` turns the empty cell to NaN,
+floats the whole column, and pre-existing `asm` rows then pass `splitK=3.0` to
+`aiter::_gemm_a16w16_asm` (Optional[int]) → engine-core init crash. Native torch rows use
+`splitK=0`. Full analysis: `docs/kimik3_conc24_regression_allreduce.md`.
+
+### 4.7 verify the patches
 
 ```bash
 D=/usr/local/lib/python3.12/dist-packages
@@ -348,6 +377,8 @@ echo "aiter get()    = $(grep -c 'get_block_n_fp8.get(' /root/aiter/aiter/mla.py
 echo "dspark qlen    = $(grep -c 'method == \"dspark\"' "$R")                        (expect >=1)"
 echo "asm gate       = $(grep -c 'uses_asm_decode' "$R")                            (expect >=2)"
 echo "kda stride     = $(grep -c 'stride_indices_seq' "$D/vllm/models/kimi_k3/amd/ops/third_party/kda/fused_recurrent.py")  (expect >=3)"
+CSV=/opt/aiter-local/aiter/configs/merged_bf16_tuned_gemm.csv
+echo "flydsl reroute = $(awk -F, '\$11=="flydsl" && \$3<=192 && (((\$4==1024||\$4==384)&&\$5==7168)||(\$4==7168&&\$5==512))' "$CSV" | wc -l)  (expect 0)"
 python -c "import vllm.v1.attention.backends.mla.rocm_aiter_mla; print('IMPORT_OK')"
 ```
 
@@ -470,6 +501,8 @@ Sweep = ISL 1024 / OSL 256 (ignore_eos), concurrency 1 / 8 / 16. Validated
 | `.../mla/rocm_aiter_mla.py` | dspark `_mtp_decode_qlen = 2*num_spec+1` | 4.3 |
 | `.../mla/rocm_aiter_mla.py` | broadened `use_persistent_metadata` gate | 4.4 |
 | `.../kda/fused_recurrent.py` | PR #27 stride-aware state_indices | 4.5 |
+| `/opt/aiter-local/aiter/configs/merged_bf16_tuned_gemm.csv` | decode-range FlyDSL dense rows → native torch | 4.6 |
 
 Host-side scripts (copy into `/workspace`): `_serve_k3_bench_spec.sh` (§5),
-`_bench_k3_dspark_fp8asm.sh` (§7).
+`_bench_k3_dspark_fp8asm.sh` (§7), `_patch_flydsl_decode_to_torch.sh` (§4.6),
+`_dspark_longctx_bench.sh` (long-ctx aiperf sweep).
