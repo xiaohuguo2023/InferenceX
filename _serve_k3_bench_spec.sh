@@ -70,7 +70,26 @@ echo "DRAFT_PATH=$DRAFT_PATH  NUM_SPEC=$NUM_SPEC  PORT=$PORT"
 # path like the target. ROCM_AITER_MLA (post PR #51011) accepts fp8 query and
 # routes small-head verify to the asm fold.
 DRAFT_BACKEND="${DRAFT_BACKEND:-ROCM_AITER_MLA}"
-SPEC_CFG=$(printf '{"model":"%s","num_speculative_tokens":%s,"method":"dspark","attention_backend":"%s","draft_sample_method":"probabilistic","rejection_sample_method":"block"}' "$DRAFT_PATH" "$NUM_SPEC" "$DRAFT_BACKEND")
+# Rejection sampling method:
+#   block (default) = REAL target-vs-draft verify (correct output, real ~2.4 AL,
+#                     with the real acceptance tail). Our honest internal number.
+#   synthetic       = AgentX-PRESCRIBED methodology. Draft+target still run (same
+#                     compute) but accept/reject is pinned to the committed golden
+#                     AL, removing draft-quality variance. This is what BOTH the
+#                     official MI355X recipe (PR #2508) and the B300 baseline
+#                     (kimik3_fp4_b300_vllm_mtp.sh) publish — synthetic-vs-synthetic
+#                     is the only apples-to-apples comparison. Golden AL (K=2,
+#                     thinking_on) = 2.51 per
+#                     golden_al_distribution/kimik3_dspark_probabilistic_sample_method_block_rejection_sample_method.yaml.
+#                     Set SYNTHETIC_ACCEPT_LEN to enable (2.51 for NUM_SPEC=2;
+#                     3.00 for 3, 3.84 for 7 — see the golden YAML).
+if [ -n "${SYNTHETIC_ACCEPT_LEN:-}" ]; then
+    SPEC_CFG=$(printf '{"model":"%s","num_speculative_tokens":%s,"method":"dspark","attention_backend":"%s","draft_sample_method":"probabilistic","rejection_sample_method":"synthetic","synthetic_acceptance_length":%s}' "$DRAFT_PATH" "$NUM_SPEC" "$DRAFT_BACKEND" "$SYNTHETIC_ACCEPT_LEN")
+    echo "SPEC rejection=SYNTHETIC (AgentX golden AL=$SYNTHETIC_ACCEPT_LEN) — matches PR#2508 / B300 baseline"
+else
+    SPEC_CFG=$(printf '{"model":"%s","num_speculative_tokens":%s,"method":"dspark","attention_backend":"%s","draft_sample_method":"probabilistic","rejection_sample_method":"block"}' "$DRAFT_PATH" "$NUM_SPEC" "$DRAFT_BACKEND")
+    echo "SPEC rejection=block (REAL verify) — honest internal number, NOT AgentX-comparable; set SYNTHETIC_ACCEPT_LEN=2.51 for the published methodology"
+fi
 
 # cudagraph mode + optional capture-size cap. fp8-asm DSpark MUST use
 # MAX_NUM_SEQS=16 (recipe default above) — not the agentic 2*CONC ladder.
