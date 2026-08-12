@@ -77,7 +77,9 @@ PY
 fetch_dashboard() {
   tmp=$(mktemp)
   echo "Fetching Kimi-K3 from $DASHBOARD_API ..."
-  curl -fsSL "$DASHBOARD_API" -o "$tmp"
+  # --compressed: the dashboard serves gzip; without it the body is raw gzip
+  # bytes and json.load chokes on 0x8b (UnicodeDecodeError).
+  curl -fsSL --compressed "$DASHBOARD_API" -o "$tmp"
   python3 - "$tmp" "$OUT" <<'PY'
 import json, sys
 from pathlib import Path
@@ -105,6 +107,11 @@ def norm_row(r):
         "spec_method": r.get("spec_method") or "none",
         "metrics": {
             "tput_per_gpu": float(m["tput_per_gpu"]),
+            # mean_itl is the directly-measured streamed inter-token gap and is the
+            # dashboard's own interactivity basis (mean_intvty == 1000/mean_itl).
+            # mean_tpot is (e2e-TTFT)/(n-1), which DEGENERATES for long-ISL agentic
+            # traces (prefill dominates e2e≈TTFT) — do NOT use it for interactivity.
+            "mean_itl": float(m.get("mean_itl", m.get("mean_tpot", 0))),
             "mean_tpot": float(m["mean_tpot"]),
             "mean_ttft": float(m.get("mean_ttft", 0)),
             "offload_mode": off,
@@ -119,11 +126,11 @@ out.write_text(json.dumps(rows, indent=2))
 print(f"Wrote {len(rows)} rows -> {out}")
 for x in sorted(rows, key=lambda r: (r["hardware"], r["conc"])):
     m = x["metrics"]
-    tpot_ms = m["mean_tpot"] * 1000
+    itl_ms = m["mean_itl"] * 1000   # interactivity basis (NOT mean_tpot; see norm_row)
     print(
         f"  {x['hardware']} c{x['conc']:>2} off={m['offload_mode']:>3}: "
-        f"tput/gpu={m['tput_per_gpu']:7.0f} TPOT={tpot_ms:5.1f}ms "
-        f"interact={1000/tpot_ms:5.1f}"
+        f"tput/gpu={m['tput_per_gpu']:7.0f} ITL={itl_ms:6.1f}ms "
+        f"interact={1000/itl_ms:6.1f}"
     )
 PY
   rm -f "$tmp"

@@ -35,6 +35,13 @@ def load_mi(dirfmt, label):
         print(f"  {label} conc{c:>2}: tput/gpu={total/NGPU:6.0f}  TPOT={tpot:5.1f}ms  interact={1000/tpot:5.1f}")
     return s
 
+# Featured MI355X series: DSpark spec-decode (num_spec=2) on the fixed
+# k3-dspark-benchmark container (FlyDSL->torch reroute, {12,36} capture sizes,
+# split-K cudagraph-safety, KV pin). This is the fair analogue to B300-MTP
+# (both speculative decoding). Override the tag via K3_DSPARK_TAG.
+DSPARK_TAG = os.environ.get("K3_DSPARK_TAG", "dspark_ns2_ixci")
+mi_dspark  = load_mi(f"k3_{DSPARK_TAG}_ixci_c{{c}}", "MI355X fp8 ASM DSpark ns2")
+
 MI_TAG = os.environ.get("K3_MI_TAG", "fp8asm_ms64_ixci_cold_tuned_mbt4k")
 mi_fp8_fused = load_mi(f"k3_{MI_TAG}_ixci_c{{c}}", "MI355X fp8 ASM +fused+tuned (mbt4k)")
 mi_fp8asm  = load_mi("k3_fp8asm_sweep_c{c}",    "MI355X fp8 ASM (native, 900s)")
@@ -54,7 +61,13 @@ def nv_series(hw, spec=None):
             continue
         if spec is not None and r.get("spec_method") != spec:
             continue
-        m = r["metrics"]; tpot = m.get("mean_tpot", 0) * 1000
+        # Use ITL (streamed inter-token gap), NOT mean_tpot: for long-ISL agentic
+        # traces mean_tpot=(e2e-TTFT)/(n-1) degenerates (prefill dominates so
+        # e2e≈TTFT), inflating B300-MTP interactivity ~6x. mean_itl matches the
+        # dashboard's own mean_intvty and is the same quantity as our aiperf
+        # inter_token_latency on the MI355X side. Fall back to mean_tpot only if
+        # an older json lacks mean_itl (B200 non-spec: itl==tpot anyway).
+        m = r["metrics"]; tpot = (m.get("mean_itl") or m.get("mean_tpot", 0)) * 1000
         if tpot <= 0:
             continue
         off = m.get("offload_mode", r.get("offload_mode", ""))
@@ -63,19 +76,18 @@ def nv_series(hw, spec=None):
     return s
 
 series = {
-    "K3 MI355X (fp8 ASM +fused, v1.0.1)": mi_fp8_fused,
-    "K3 MI355X (fp8 ASM, native)": mi_fp8asm,
-    "K3 MI355X (bf16 ASM, native)": mi_bf16asm,
+    "K3 MI355X (fp8 ASM DSpark ns2)": mi_dspark,
+    "K3 MI355X (fp8 ASM, non-spec)": mi_fp8asm,
     "K3 B300 (vLLM, non-MTP)": nv_series("b300", "none"),
     "K3 B300 (vLLM, MTP)":     nv_series("b300", "mtp"),
     "K3 B200 (dynamo-vLLM)":   nv_series("b200"),
 }
 styles = {
     # InferenceX dark-theme vendor colors: AMD hue zone 12–42; NVIDIA 120–170.
-    # Points use the dashboard's precision shapes and 2px monotone rooflines.
-    "K3 MI355X (fp8 ASM +fused, v1.0.1)": {"color": "#f53e39", "marker": "D", "linestyle": "-"},
-    "K3 MI355X (fp8 ASM, native)": {"color": "#f53e39", "marker": "o", "linestyle": ":"},
-    "K3 MI355X (bf16 ASM, native)": {"color": "#f53e39", "marker": "^", "linestyle": "--"},
+    # Featured DSpark series is the bold red diamond solid; non-spec is a lighter
+    # dotted reference showing the spec-decode uplift.
+    "K3 MI355X (fp8 ASM DSpark ns2)": {"color": "#f53e39", "marker": "D", "linestyle": "-"},
+    "K3 MI355X (fp8 ASM, non-spec)": {"color": "#f5a29f", "marker": "o", "linestyle": ":"},
     "K3 B300 (vLLM, non-MTP)": {"color": "#92cb61", "marker": "s", "linestyle": "-"},
     "K3 B300 (vLLM, MTP)":     {"color": "#92cb61", "marker": "P", "linestyle": "--"},
     "K3 B200 (dynamo-vLLM)":   {"color": "#007b3f", "marker": "s", "linestyle": "-"},
