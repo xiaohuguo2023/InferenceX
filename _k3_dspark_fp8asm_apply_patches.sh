@@ -368,7 +368,39 @@ py_compile.compile(F, doraise=True)
 print("  KDA PR#27 applied" if changed else "  KDA PR#27 already present")
 PY
 
+say "6b/7 KV-offload eagle-annotation on hybrid path (vLLM PR #52047)"
+# K3 (MLA + Mamba KDA) + DSpark draft + CPU KV-offload: the hybrid grouping path
+# never annotates the draft KV group, so the offload scheduler's flag-all fallback
+# wrongly treats Mamba groups as draft groups and suppresses external prefix-cache
+# READS -> c16 TTFT cliff. Port #52047 to annotate ONLY the true draft group.
+KVU="$D/vllm/v1/core/kv_cache_utils.py"
+if grep -q '_annotate_eagle_groups_from_draft_spec' "$KVU"; then
+  echo "  #52047 draft-group annotation already present"
+elif [ -f /workspace/_patch_eagle_annotation_52047.py ]; then
+  python3 /workspace/_patch_eagle_annotation_52047.py
+else
+  echo "  !! _patch_eagle_annotation_52047.py not staged in /workspace — skipping"
+fi
+
+say "6c/7 KV-offload full-attention eagle PREFIX-VETO fix (offload READ path)"
+# The offload scheduler's _lookup() runs num_hit_chunks -= 1 for the full-attention
+# eagle group even though (unlike the SWA path) it never over-queries an extra
+# chunk, dropping a verified prompt chunk and vetoing <=1-chunk prefixes -> dead
+# offload reads / TTFT never drops. Gate the decrement on SWA only (safe: with
+# offload_prompt_only the full-attention group never stores a volatile chunk).
+# A/B: OFFLOAD_EAGLE_PREFIX_VETO=1 restores upstream behavior.
+SCH="$D/vllm/distributed/kv_transfer/kv_connector/v1/offloading/scheduler.py"
+if grep -q 'OFFLOAD_EAGLE_PREFIX_VETO' "$SCH"; then
+  echo "  eagle prefix-veto fix already present"
+elif [ -f /workspace/_patch_offload_eagle_prefix_veto.py ]; then
+  python3 /workspace/_patch_offload_eagle_prefix_veto.py
+else
+  echo "  !! _patch_offload_eagle_prefix_veto.py not staged in /workspace — skipping"
+fi
+
 say "7/7 verify"
+echo "eagle #52047   = $(grep -c '_annotate_eagle_groups_from_draft_spec' "$D/vllm/v1/core/kv_cache_utils.py")            (expect 2: 1 def + 1 call)"
+echo "eagle veto fix = $(grep -c 'OFFLOAD_EAGLE_PREFIX_VETO' "$D/vllm/distributed/kv_transfer/kv_connector/v1/offloading/scheduler.py")            (expect 2: 1 comment + 1 guard)"
 echo "aiter 80-key   = $(grep -c '80: 64' "$AITER")                (expect >=1)"
 echo "aiter get()    = $(grep -c 'get_block_n_fp8.get(' "$AITER")   (expect 1)"
 echo "dspark qlen    = $(grep -c 'method == \"dspark\"' "$R")        (expect >=1)"

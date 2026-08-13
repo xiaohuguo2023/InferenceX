@@ -112,6 +112,20 @@ fi
 KV_CACHE_MEMORY="${KV_CACHE_MEMORY:-34359738368}"
 KVMEM_ARG=(); [ -n "$KV_CACHE_MEMORY" ] && KVMEM_ARG=(--kv-cache-memory "$KV_CACHE_MEMORY")
 
+# Optional CPU KV-cache offload — the MI355X analogue of the NV B300-MTP
+# offload_mode="on" arm. On the long-ISL agentic corpus, at conc>=8 the on-device
+# KV pin saturates (peak ~97-100%), the shared prefix gets evicted (prefix-cache
+# hit collapses ~75%->15%), prefill recompute explodes and TTFT/throughput fall off
+# a cliff. Spilling evicted KV blocks to host keeps the prefix resident so the hit
+# rate (and thus throughput) holds. Activates ONLY when KV_OFFLOADING_SIZE (total
+# GiB summed across all TP ranks) is set; empty default => no offload, so this is a
+# no-op for any run that doesn't opt in (in-flight sweeps are unaffected).
+KV_OFFLOADING_SIZE="${KV_OFFLOADING_SIZE:-}"
+KVOFF_ARG=()
+[ -n "$KV_OFFLOADING_SIZE" ] && KVOFF_ARG=(--kv-offloading-size "$KV_OFFLOADING_SIZE" \
+  --kv-offloading-backend "${KV_OFFLOADING_BACKEND:-native}")
+[ -n "$KV_OFFLOADING_SIZE" ] && echo "KV OFFLOAD on: ${KV_OFFLOADING_SIZE} GiB total (backend=${KV_OFFLOADING_BACKEND:-native})"
+
 CUDAGRAPH_MODE="${CUDAGRAPH_MODE:-FULL_AND_PIECEWISE}"
 MAX_CG="${MAX_CG:-}"
 # cudagraph_capture_sizes — pin explicitly so DSpark decode (M = 3*conc tokens/step,
@@ -154,10 +168,11 @@ LOG=/workspace/serve_k3_bench_spec${NUM_SPEC}.log
 setsid nohup vllm serve "$MODEL_PATH" --served-model-name Kimi-K3 \
   --host 0.0.0.0 --port "$PORT" --tensor-parallel-size 8 --async-scheduling \
   --distributed-executor-backend mp --gpu-memory-utilization "$GPU_MEM" \
-  --max-num-seqs "$MAX_NUM_SEQS" --max-model-len 1048576 --max-num-batched-tokens "$MNBT" \
+  --max-num-seqs "$MAX_NUM_SEQS" --max-model-len "${MAX_MODEL_LEN:-1048576}" --max-num-batched-tokens "$MNBT" \
   --trust-remote-code --load-format auto --moe-backend aiter \
   --kv-cache-dtype "$KV_CACHE_DTYPE" --attention-backend "$ATTN_BACKEND" --mm-encoder-tp-mode data \
   "${KVMEM_ARG[@]}" \
+  "${KVOFF_ARG[@]}" \
   --compilation-config "$COMPILE_CFG" \
   "${PROFILE_ARG[@]}" \
   "${EAGER_ARG[@]}" \
