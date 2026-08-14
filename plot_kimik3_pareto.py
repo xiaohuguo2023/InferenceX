@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """Dashboard-style Pareto for Kimi-K3 agentic: MI355X (ours) vs B300 vs B200.
-x = Interactivity (1000/mean_TPOT, tok/s/user); y = Token Throughput per GPU.
-MI355X points come from the local AIPerf conc sweep (k3_sweep_c*/); B300/B200
-come from the InferenceX dashboard (/tmp/k3_b300.json). Mirrors
+x = Interactivity (1000/mean_ITL, tok/s/user); y = Token Throughput per GPU.
+MI355X points come from the local AIPerf conc sweep (k3_sweep_c*/). NV baselines
+(B300/B200/GB200/H200) come from the InferenceX dashboard, refreshed via
+fetch_nv_agentic_baselines.sh into docs/kimik3_pareto/k3_nv_agentic_dashboard.json
+(committed, durable) with a /tmp/k3_b300.json fallback. The dashboard's own
+published interactivity (mean_intvty) == 1000/mean_ITL, the SAME quantity we plot
+for MI355X (aiperf inter_token_latency), so the axis is apples-to-apples. Mirrors
 ~/work/sweep_gptoss_output/v023_final/plot_ours_pareto.py."""
 import json, os, sys
 from pathlib import Path
@@ -13,6 +17,13 @@ ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "docs" / "kimik3_pareto"; OUT.mkdir(parents=True, exist_ok=True)
 SHAPE = (0, 0, "K3 agentic (cc-traces)")   # single agentic "shape"
 NGPU = 8
+
+# NV baselines: prefer the committed dashboard snapshot (durable across reboots),
+# fall back to the ephemeral /tmp copy that fetch_nv_agentic_baselines.sh writes.
+# Override with NV_JSON=... to point at a fresh fetch.
+NV_JSON = os.environ.get("NV_JSON") or next(
+    (p for p in (OUT / "k3_nv_agentic_dashboard.json", Path("/tmp/k3_b300.json"))
+     if p.exists()), OUT / "k3_nv_agentic_dashboard.json")
 
 def g(v):  # AIPerf metric dict -> avg
     return v.get("avg") if isinstance(v, dict) else v
@@ -38,9 +49,30 @@ def load_mi(dirfmt, label):
 # Featured MI355X series: DSpark spec-decode (num_spec=2) on the fixed
 # k3-dspark-benchmark container (FlyDSL->torch reroute, {12,36} capture sizes,
 # split-K cudagraph-safety, KV pin). This is the fair analogue to B300-MTP
-# (both speculative decoding). Override the tag via K3_DSPARK_TAG.
-DSPARK_TAG = os.environ.get("K3_DSPARK_TAG", "dspark_ns2_ixci")
-mi_dspark  = load_mi(f"k3_{DSPARK_TAG}_ixci_c{{c}}", "MI355X fp8 ASM DSpark ns2")
+# (both speculative decoding). Default = the AgentX synthetic-acceptance arm
+# (golden AL 2.51), which is the apples-to-apples match for the dashboard's
+# B300-MTP (synthetic) numbers; override via K3_DSPARK_TAG (e.g. dspark_ns2_ixci
+# for the real-verify arm).
+DSPARK_TAG = os.environ.get("K3_DSPARK_TAG", "dspark_synth251_ixci")
+# Label honestly by acceptance policy: a "synth" tag is the AgentX synthetic
+# acceptance arm (golden AL 2.51) — comparable to B300-MTP; anything else is the
+# real spec-decode verify arm (num_spec=2). Never present synthetic as real.
+if "synth" in DSPARK_TAG.lower():
+    DSPARK_LABEL = "K3 MI355X (fp8 ASM DSpark, synthetic AL 2.51)"
+else:
+    DSPARK_LABEL = "K3 MI355X (fp8 ASM DSpark, real verify ns2)"
+mi_dspark  = load_mi(f"k3_{DSPARK_TAG}_ixci_c{{c}}", DSPARK_LABEL)
+
+# Chained KV-offload arm of the same synthetic DSpark sweep (conc 8/16/24). This
+# is the true analogue of B300-MTP, which reports offload_mode="on": spilling
+# evicted KV to host keeps the shared agentic prefix resident at high conc, so it
+# is the fair high-throughput comparison. Distinct tag/dirs; no-op until it lands.
+DSPARK_OFF_TAG = os.environ.get("K3_DSPARK_OFF_TAG", "dspark_synth251_off_ixci")
+if "synth" in DSPARK_OFF_TAG.lower():
+    DSPARK_OFF_LABEL = "K3 MI355X (fp8 ASM DSpark, synthetic AL 2.51, KV-offload)"
+else:
+    DSPARK_OFF_LABEL = "K3 MI355X (fp8 ASM DSpark, real verify ns2, KV-offload)"
+mi_dspark_off = load_mi(f"k3_{DSPARK_OFF_TAG}_ixci_c{{c}}", DSPARK_OFF_LABEL)
 
 MI_TAG = os.environ.get("K3_MI_TAG", "fp8asm_ms64_ixci_cold_tuned_mbt4k")
 mi_fp8_fused = load_mi(f"k3_{MI_TAG}_ixci_c{{c}}", "MI355X fp8 ASM +fused+tuned (mbt4k)")
@@ -53,9 +85,9 @@ mi_bf16asm = load_mi("k3_bf16asm2_sweep_c{c}",  "MI355X bf16 ASM (native, 900s)"
 def nv_series(hw, spec=None):
     s = {}
     try:
-        rows = json.load(open("/tmp/k3_b300.json"))
+        rows = json.load(open(NV_JSON))
     except FileNotFoundError:
-        print("  [warn] /tmp/k3_b300.json missing — re-fetch dashboard"); return s
+        print(f"  [warn] NV baseline {NV_JSON} missing — run fetch_nv_agentic_baselines.sh"); return s
     for r in rows:
         if r.get("hardware") != hw:
             continue
@@ -76,7 +108,8 @@ def nv_series(hw, spec=None):
     return s
 
 series = {
-    "K3 MI355X (fp8 ASM DSpark ns2)": mi_dspark,
+    DSPARK_LABEL: mi_dspark,
+    DSPARK_OFF_LABEL: mi_dspark_off,
     "K3 MI355X (fp8 ASM, non-spec)": mi_fp8asm,
     "K3 B300 (vLLM, non-MTP)": nv_series("b300", "none"),
     "K3 B300 (vLLM, MTP)":     nv_series("b300", "mtp"),
@@ -86,7 +119,8 @@ styles = {
     # InferenceX dark-theme vendor colors: AMD hue zone 12–42; NVIDIA 120–170.
     # Featured DSpark series is the bold red diamond solid; non-spec is a lighter
     # dotted reference showing the spec-decode uplift.
-    "K3 MI355X (fp8 ASM DSpark ns2)": {"color": "#f53e39", "marker": "D", "linestyle": "-"},
+    DSPARK_LABEL: {"color": "#f53e39", "marker": "D", "linestyle": "-"},
+    DSPARK_OFF_LABEL: {"color": "#b0201c", "marker": "d", "linestyle": "--"},
     "K3 MI355X (fp8 ASM, non-spec)": {"color": "#f5a29f", "marker": "o", "linestyle": ":"},
     "K3 B300 (vLLM, non-MTP)": {"color": "#92cb61", "marker": "s", "linestyle": "-"},
     "K3 B300 (vLLM, MTP)":     {"color": "#92cb61", "marker": "P", "linestyle": "--"},

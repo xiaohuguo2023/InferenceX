@@ -1,0 +1,1226 @@
+[
+  {
+    "hardware": "b200",
+    "conc": 1,
+    "spec_method": "none",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-07-29",
+    "metrics": {
+      "tput_per_gpu": 348.30987,
+      "mean_itl": 0.013736598595003518,
+      "mean_tpot": 0.01374,
+      "mean_ttft": 5.95268,
+      "mean_intvty": 72.79822534551857,
+      "mean_full_response_intvty": 72.79822534551857,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "b200",
+    "conc": 2,
+    "spec_method": "none",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-07-29",
+    "metrics": {
+      "tput_per_gpu": 421.23589,
+      "mean_itl": 0.017477263314414807,
+      "mean_tpot": 0.01747,
+      "mean_ttft": 5.65089,
+      "mean_intvty": 57.21719596541326,
+      "mean_full_response_intvty": 57.21719596541326,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "b200",
+    "conc": 4,
+    "spec_method": "none",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-07-29",
+    "metrics": {
+      "tput_per_gpu": 546.34289,
+      "mean_itl": 0.03478730029478217,
+      "mean_tpot": 0.03478,
+      "mean_ttft": 9.60519,
+      "mean_intvty": 28.746122623088183,
+      "mean_full_response_intvty": 28.746122623088183,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "b200",
+    "conc": 8,
+    "spec_method": "none",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-07-29",
+    "metrics": {
+      "tput_per_gpu": 868.26213,
+      "mean_itl": 0.06812217386758132,
+      "mean_tpot": 0.06809,
+      "mean_ttft": 9.79725,
+      "mean_intvty": 14.679508054805195,
+      "mean_full_response_intvty": 14.679508054805195,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "b200",
+    "conc": 16,
+    "spec_method": "none",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-07-29",
+    "metrics": {
+      "tput_per_gpu": 1050.95542,
+      "mean_itl": 0.15688925647730365,
+      "mean_tpot": 0.15689,
+      "mean_ttft": 14.29078,
+      "mean_intvty": 6.373922743044326,
+      "mean_full_response_intvty": 6.373922743044326,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "b200",
+    "conc": 32,
+    "spec_method": "none",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-07-29",
+    "metrics": {
+      "tput_per_gpu": 723.82387,
+      "mean_itl": 0.28158841277702934,
+      "mean_tpot": 0.28158,
+      "mean_ttft": 176.14661,
+      "mean_intvty": 3.551282491129462,
+      "mean_full_response_intvty": 3.551282491129462,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "b300",
+    "conc": 1,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-11",
+    "metrics": {
+      "tput_per_gpu": 1689.95,
+      "mean_itl": 0.00556,
+      "mean_tpot": 0.00116,
+      "mean_ttft": 1.37193,
+      "mean_intvty": 179.85611510791367,
+      "mean_full_response_intvty": 179.89651,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "b300",
+    "conc": 2,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-11",
+    "metrics": {
+      "tput_per_gpu": 1879.208,
+      "mean_itl": 0.00649,
+      "mean_tpot": 0.00262,
+      "mean_ttft": 0.90949,
+      "mean_intvty": 154.08320493066256,
+      "mean_full_response_intvty": 154.16973,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "b300",
+    "conc": 4,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-11",
+    "metrics": {
+      "tput_per_gpu": 2890.33956,
+      "mean_itl": 0.00745,
+      "mean_tpot": 0.00285,
+      "mean_ttft": 0.94021,
+      "mean_intvty": 134.2281879194631,
+      "mean_full_response_intvty": 134.25017,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "b300",
+    "conc": 8,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-11",
+    "metrics": {
+      "tput_per_gpu": 3771.57616,
+      "mean_itl": 0.01765,
+      "mean_tpot": 0.00574,
+      "mean_ttft": 2.49261,
+      "mean_intvty": 56.657223796033996,
+      "mean_full_response_intvty": 56.64619,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "b300",
+    "conc": 1,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-11",
+    "metrics": {
+      "tput_per_gpu": 1687.29941,
+      "mean_itl": 0.00557,
+      "mean_tpot": 0.00096,
+      "mean_ttft": 1.38105,
+      "mean_intvty": 179.53321364452424,
+      "mean_full_response_intvty": 179.44618,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "b300",
+    "conc": 2,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-11",
+    "metrics": {
+      "tput_per_gpu": 1885.59577,
+      "mean_itl": 0.00668,
+      "mean_tpot": 0.00273,
+      "mean_ttft": 0.92048,
+      "mean_intvty": 149.7005988023952,
+      "mean_full_response_intvty": 149.58947,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "b300",
+    "conc": 4,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-11",
+    "metrics": {
+      "tput_per_gpu": 2862.06031,
+      "mean_itl": 0.008,
+      "mean_tpot": 0.00325,
+      "mean_ttft": 0.92824,
+      "mean_intvty": 125.0,
+      "mean_full_response_intvty": 124.93012,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "b300",
+    "conc": 8,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-11",
+    "metrics": {
+      "tput_per_gpu": 4508.42402,
+      "mean_itl": 0.01293,
+      "mean_tpot": 0.00419,
+      "mean_ttft": 0.96602,
+      "mean_intvty": 77.33952049497293,
+      "mean_full_response_intvty": 77.34014,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "b300",
+    "conc": 16,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-11",
+    "metrics": {
+      "tput_per_gpu": 5291.43112,
+      "mean_itl": 0.0252,
+      "mean_tpot": 0.00773,
+      "mean_ttft": 7.2647,
+      "mean_intvty": 39.682539682539684,
+      "mean_full_response_intvty": 39.69002,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "gb200",
+    "conc": 1,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 781.35383,
+      "mean_itl": 0.005820698871586323,
+      "mean_tpot": 0.0058,
+      "mean_ttft": 3.62654,
+      "mean_intvty": 171.80067584005914,
+      "mean_full_response_intvty": 171.80067584005914,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "gb200",
+    "conc": 2,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 832.74997,
+      "mean_itl": 0.009016791398497918,
+      "mean_tpot": 0.00883,
+      "mean_ttft": 2.89618,
+      "mean_intvty": 110.90419593898858,
+      "mean_full_response_intvty": 110.90419593898858,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "gb200",
+    "conc": 4,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 367.09191,
+      "mean_itl": 0.044416578257375515,
+      "mean_tpot": 0.04428,
+      "mean_ttft": 3.93578,
+      "mean_intvty": 22.514116107850942,
+      "mean_full_response_intvty": 22.514116107850942,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "gb200",
+    "conc": 8,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 517.81913,
+      "mean_itl": 0.13203121305898216,
+      "mean_tpot": 0.12486,
+      "mean_ttft": 17.57243,
+      "mean_intvty": 7.5739666161612185,
+      "mean_full_response_intvty": 7.5739666161612185,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "gb200",
+    "conc": 8,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 302.61466,
+      "mean_itl": 0.10838257582602201,
+      "mean_tpot": 0.10518,
+      "mean_ttft": 88.84167,
+      "mean_intvty": 9.226575327063836,
+      "mean_full_response_intvty": 9.226575327063836,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "gb200",
+    "conc": 16,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 255.28992,
+      "mean_itl": 0.151672285145264,
+      "mean_tpot": 0.14769,
+      "mean_ttft": 349.18448,
+      "mean_intvty": 6.5931623502754695,
+      "mean_full_response_intvty": 6.5931623502754695,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "gb200",
+    "conc": 24,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 464.83684,
+      "mean_itl": 0.09115731161052261,
+      "mean_tpot": 0.089,
+      "mean_ttft": 211.94861,
+      "mean_intvty": 10.970047079411307,
+      "mean_full_response_intvty": 10.970047079411307,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "gb200",
+    "conc": 32,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 371.78013,
+      "mean_itl": 0.11296239459616315,
+      "mean_tpot": 0.10942,
+      "mean_ttft": 247.17887,
+      "mean_intvty": 8.852503557267594,
+      "mean_full_response_intvty": 8.852503557267594,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "gb200",
+    "conc": 32,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 1258.83073,
+      "mean_itl": 0.43830256487391084,
+      "mean_tpot": 0.42976,
+      "mean_ttft": 361.1101,
+      "mean_intvty": 2.2815289714028393,
+      "mean_full_response_intvty": 2.2815289714028393,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "gb200",
+    "conc": 64,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 1337.12685,
+      "mean_itl": 0.4905171070069988,
+      "mean_tpot": 0.48121,
+      "mean_ttft": 572.08332,
+      "mean_intvty": 2.0386648818462754,
+      "mean_full_response_intvty": 2.0386648818462754,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "gb200",
+    "conc": 96,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 1090.33035,
+      "mean_itl": 0.4717899665923511,
+      "mean_tpot": 0.45912,
+      "mean_ttft": 609.3477,
+      "mean_intvty": 2.119587254520924,
+      "mean_full_response_intvty": 2.119587254520924,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "gb200",
+    "conc": 128,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 1476.58962,
+      "mean_itl": 0.4127112998328254,
+      "mean_tpot": 0.40256,
+      "mean_ttft": 614.24027,
+      "mean_intvty": 2.4230012611844267,
+      "mean_full_response_intvty": 2.4230012611844267,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "gb200",
+    "conc": 192,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 1218.83341,
+      "mean_itl": 0.4603161545240598,
+      "mean_tpot": 0.45384,
+      "mean_ttft": 651.43806,
+      "mean_intvty": 2.1724199556583934,
+      "mean_full_response_intvty": 2.1724199556583934,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "gb200",
+    "conc": 256,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 1515.52114,
+      "mean_itl": 0.42403100968190427,
+      "mean_tpot": 0.41363,
+      "mean_ttft": 905.91335,
+      "mean_intvty": 2.358318087986468,
+      "mean_full_response_intvty": 2.358318087986468,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "gb200",
+    "conc": 128,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 1078.288,
+      "mean_itl": 0.4773194225090216,
+      "mean_tpot": 0.46962,
+      "mean_ttft": 589.03654,
+      "mean_intvty": 2.0950331221459972,
+      "mean_full_response_intvty": 2.0950331221459972,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "gb200",
+    "conc": 192,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 1316.5539,
+      "mean_itl": 0.4180407761302149,
+      "mean_tpot": 0.41125,
+      "mean_ttft": 770.56484,
+      "mean_intvty": 2.392111145847915,
+      "mean_full_response_intvty": 2.392111145847915,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "gb200",
+    "conc": 256,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 1653.2147,
+      "mean_itl": 0.4076613456400756,
+      "mean_tpot": 0.39815,
+      "mean_ttft": 840.48168,
+      "mean_intvty": 2.4530164821731724,
+      "mean_full_response_intvty": 2.4530164821731724,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "gb200",
+    "conc": 384,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 1339.23819,
+      "mean_itl": 0.45206614776409426,
+      "mean_tpot": 0.44256,
+      "mean_ttft": 892.9136,
+      "mean_intvty": 2.212065656643326,
+      "mean_full_response_intvty": 2.212065656643326,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 1,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 69.87149,
+      "mean_itl": 0.1765813723566268,
+      "mean_tpot": 0.17532,
+      "mean_ttft": 8.80532,
+      "mean_intvty": 5.663111497289662,
+      "mean_full_response_intvty": 5.663111497289662,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 1,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 67.62136,
+      "mean_itl": 0.190115917170467,
+      "mean_tpot": 0.18409,
+      "mean_ttft": 3.82921,
+      "mean_intvty": 5.259948850591781,
+      "mean_full_response_intvty": 5.259948850591781,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 2,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 56.83748,
+      "mean_itl": 0.1827711010457869,
+      "mean_tpot": 0.18194,
+      "mean_ttft": 8.16422,
+      "mean_intvty": 5.47132448334644,
+      "mean_full_response_intvty": 5.47132448334644,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 2,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 56.78213,
+      "mean_itl": 0.1828088754203614,
+      "mean_tpot": 0.18119,
+      "mean_ttft": 3.9515,
+      "mean_intvty": 5.470193926309878,
+      "mean_full_response_intvty": 5.470193926309878,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 3,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 75.30728,
+      "mean_itl": 0.19218327646709335,
+      "mean_tpot": 0.19062,
+      "mean_ttft": 9.2827,
+      "mean_intvty": 5.20336638225244,
+      "mean_full_response_intvty": 5.20336638225244,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 3,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 74.38737,
+      "mean_itl": 0.20216621173870272,
+      "mean_tpot": 0.20112,
+      "mean_ttft": 9.33246,
+      "mean_intvty": 4.946424980710859,
+      "mean_full_response_intvty": 4.946424980710859,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 4,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 87.62383,
+      "mean_itl": 0.19445627901642387,
+      "mean_tpot": 0.19347,
+      "mean_ttft": 7.94183,
+      "mean_intvty": 5.1425441495542525,
+      "mean_full_response_intvty": 5.1425441495542525,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 4,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 77.1117,
+      "mean_itl": 0.24654337496120515,
+      "mean_tpot": 0.24569,
+      "mean_ttft": 19.38127,
+      "mean_intvty": 4.0560814102482174,
+      "mean_full_response_intvty": 4.0560814102482174,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 5,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 91.30114,
+      "mean_itl": 0.2148172490244137,
+      "mean_tpot": 0.21408,
+      "mean_ttft": 30.00594,
+      "mean_intvty": 4.6551196635348,
+      "mean_full_response_intvty": 4.6551196635348,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 5,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 91.94298,
+      "mean_itl": 0.21774452856001195,
+      "mean_tpot": 0.21703,
+      "mean_ttft": 40.18064,
+      "mean_intvty": 4.5925379003238325,
+      "mean_full_response_intvty": 4.5925379003238325,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 6,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 111.99946,
+      "mean_itl": 0.26202136092502337,
+      "mean_tpot": 0.26077,
+      "mean_ttft": 37.07438,
+      "mean_intvty": 3.816482734345262,
+      "mean_full_response_intvty": 3.816482734345262,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 6,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 104.97152,
+      "mean_itl": 0.25972356736064744,
+      "mean_tpot": 0.2581,
+      "mean_ttft": 53.1981,
+      "mean_intvty": 3.8502474386986147,
+      "mean_full_response_intvty": 3.8502474386986147,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 7,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 126.79947,
+      "mean_itl": 0.2854708771445176,
+      "mean_tpot": 0.2841,
+      "mean_ttft": 21.12937,
+      "mean_intvty": 3.5029842973921195,
+      "mean_full_response_intvty": 3.5029842973921195,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 7,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 121.47138,
+      "mean_itl": 0.26035070523691867,
+      "mean_tpot": 0.25835,
+      "mean_ttft": 54.4703,
+      "mean_intvty": 3.840972887282951,
+      "mean_full_response_intvty": 3.840972887282951,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 8,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 142.23284,
+      "mean_itl": 0.2724125789907446,
+      "mean_tpot": 0.27027,
+      "mean_ttft": 18.1411,
+      "mean_intvty": 3.6709024366821756,
+      "mean_full_response_intvty": 3.6709024366821756,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 8,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 126.20408,
+      "mean_itl": 0.29502816731154735,
+      "mean_tpot": 0.29232,
+      "mean_ttft": 68.94804,
+      "mean_intvty": 3.389506870183036,
+      "mean_full_response_intvty": 3.389506870183036,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 10,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 154.91462,
+      "mean_itl": 0.29588092106305003,
+      "mean_tpot": 0.29484,
+      "mean_ttft": 21.11448,
+      "mean_intvty": 3.379738025713755,
+      "mean_full_response_intvty": 3.379738025713755,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 10,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 126.53461,
+      "mean_itl": 0.30278780257534915,
+      "mean_tpot": 0.3003,
+      "mean_ttft": 118.35514,
+      "mean_intvty": 3.302642944975132,
+      "mean_full_response_intvty": 3.302642944975132,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 12,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 221.34256,
+      "mean_itl": 0.4337711075457162,
+      "mean_tpot": 0.43213,
+      "mean_ttft": 43.94216,
+      "mean_intvty": 2.30536331858988,
+      "mean_full_response_intvty": 2.30536331858988,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 12,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 78.83973,
+      "mean_itl": 0.360684152510218,
+      "mean_tpot": 0.35902,
+      "mean_ttft": 437.4429,
+      "mean_intvty": 2.772508836444292,
+      "mean_full_response_intvty": 2.772508836444292,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 14,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 187.84021,
+      "mean_itl": 0.44847894809232214,
+      "mean_tpot": 0.4482,
+      "mean_ttft": 53.56513,
+      "mean_intvty": 2.2297590650657337,
+      "mean_full_response_intvty": 2.2297590650657337,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 16,
+    "spec_method": "mtp",
+    "offload_mode": "off",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 169.72616,
+      "mean_itl": 0.4660587684363992,
+      "mean_tpot": 0.46389,
+      "mean_ttft": 68.37919,
+      "mean_intvty": 2.1456521531714623,
+      "mean_full_response_intvty": 2.1456521531714623,
+      "offload_mode": "off"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 8,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 137.99839,
+      "mean_itl": 0.2912246786801511,
+      "mean_tpot": 0.29018,
+      "mean_ttft": 13.83647,
+      "mean_intvty": 3.4337749277707643,
+      "mean_full_response_intvty": 3.4337749277707643,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 10,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 163.91905,
+      "mean_itl": 0.2969938372139382,
+      "mean_tpot": 0.29533,
+      "mean_ttft": 9.91539,
+      "mean_intvty": 3.3670732341818073,
+      "mean_full_response_intvty": 3.3670732341818073,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 12,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 208.99481,
+      "mean_itl": 0.4442200166961216,
+      "mean_tpot": 0.44115,
+      "mean_ttft": 27.22905,
+      "mean_intvty": 2.251136739486622,
+      "mean_full_response_intvty": 2.251136739486622,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 14,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 188.51863,
+      "mean_itl": 0.4595049121675434,
+      "mean_tpot": 0.45896,
+      "mean_ttft": 45.03816,
+      "mean_intvty": 2.176255298953981,
+      "mean_full_response_intvty": 2.176255298953981,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 16,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 159.20636,
+      "mean_itl": 0.5124369774299807,
+      "mean_tpot": 0.5128,
+      "mean_ttft": 59.64242,
+      "mean_intvty": 1.9514594848624869,
+      "mean_full_response_intvty": 1.9514594848624869,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 18,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 176.54173,
+      "mean_itl": 0.4826564013582879,
+      "mean_tpot": 0.4798,
+      "mean_ttft": 49.7661,
+      "mean_intvty": 2.0718672686942674,
+      "mean_full_response_intvty": 2.0718672686942674,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 20,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 188.51176,
+      "mean_itl": 0.5732708023467802,
+      "mean_tpot": 0.56797,
+      "mean_ttft": 94.53321,
+      "mean_intvty": 1.7443762980886734,
+      "mean_full_response_intvty": 1.7443762980886734,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 22,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 187.43688,
+      "mean_itl": 0.6187510104667545,
+      "mean_tpot": 0.61596,
+      "mean_ttft": 115.65354,
+      "mean_intvty": 1.6161589768486204,
+      "mean_full_response_intvty": 1.6161589768486204,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 24,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 194.82275,
+      "mean_itl": 0.6609027782200175,
+      "mean_tpot": 0.65701,
+      "mean_ttft": 149.87314,
+      "mean_intvty": 1.5130818525127996,
+      "mean_full_response_intvty": 1.5130818525127996,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 26,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 263.81277,
+      "mean_itl": 0.5148750507208111,
+      "mean_tpot": 0.5124,
+      "mean_ttft": 124.95491,
+      "mean_intvty": 1.9422187938608158,
+      "mean_full_response_intvty": 1.9422187938608158,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 28,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 231.198,
+      "mean_itl": 0.6135177360061397,
+      "mean_tpot": 0.61017,
+      "mean_ttft": 132.65852,
+      "mean_intvty": 1.6299447290795073,
+      "mean_full_response_intvty": 1.6299447290795073,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 30,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 223.6957,
+      "mean_itl": 0.6295195133664244,
+      "mean_tpot": 0.62519,
+      "mean_ttft": 174.34298,
+      "mean_intvty": 1.5885131100263925,
+      "mean_full_response_intvty": 1.5885131100263925,
+      "offload_mode": "on"
+    }
+  },
+  {
+    "hardware": "h200",
+    "conc": 32,
+    "spec_method": "mtp",
+    "offload_mode": "on",
+    "isl": null,
+    "osl": null,
+    "date": "2026-08-07",
+    "metrics": {
+      "tput_per_gpu": 180.25836,
+      "mean_itl": 0.6474178705738292,
+      "mean_tpot": 0.64327,
+      "mean_ttft": 299.94099,
+      "mean_intvty": 1.5445974623988443,
+      "mean_full_response_intvty": 1.5445974623988443,
+      "offload_mode": "on"
+    }
+  }
+]

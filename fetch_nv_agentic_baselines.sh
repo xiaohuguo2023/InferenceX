@@ -88,49 +88,63 @@ src, out = Path(sys.argv[1]), Path(sys.argv[2])
 raw = json.loads(src.read_text())
 
 def norm_row(r):
+    # Keep ALL NV hardware and BOTH offload arms; the plotter filters per-series.
     hw = (r.get("hardware") or "").lower()
-    if hw not in ("b300", "b200"):
+    if hw not in ("b300", "b200", "gb200", "h200"):
         return None
     if r.get("benchmark_type") != "agentic_traces":
         return None
+    if r.get("conc") is None:
+        return None
     off = r.get("offload_mode") or r.get("metrics", {}).get("offload_mode") or "none"
-    # B300: DRAM offload (full ~131K context). B200: GPU-resident TP8×PP2 only today.
-    if hw == "b300" and off != "on":
-        return None
-    if hw == "b200" and off != "off":
-        return None
     m = r["metrics"]
     return {
         "hardware": hw,
         "conc": int(r["conc"]),
         # Kept top-level so the plotter can split MTP from non-MTP arms.
         "spec_method": r.get("spec_method") or "none",
+        "offload_mode": off,
+        "isl": r.get("isl"), "osl": r.get("osl"), "date": r.get("date"),
         "metrics": {
-            "tput_per_gpu": float(m["tput_per_gpu"]),
+            "tput_per_gpu": float(m.get("tput_per_gpu", 0)),
             # mean_itl is the directly-measured streamed inter-token gap and is the
-            # dashboard's own interactivity basis (mean_intvty == 1000/mean_itl).
-            # mean_tpot is (e2e-TTFT)/(n-1), which DEGENERATES for long-ISL agentic
-            # traces (prefill dominates e2e≈TTFT) — do NOT use it for interactivity.
+            # dashboard's own interactivity basis: CONFIRMED mean_intvty == 1000/mean_itl
+            # across all NV rows (2026-08-14). mean_tpot is (e2e-TTFT)/(n-1), which
+            # DEGENERATES for long-ISL agentic traces (prefill dominates e2e≈TTFT) and
+            # on MTP rows inflates 1/tpot ~5-6x — do NOT use it for interactivity.
             "mean_itl": float(m.get("mean_itl", m.get("mean_tpot", 0))),
-            "mean_tpot": float(m["mean_tpot"]),
+            "mean_tpot": float(m.get("mean_tpot", 0)),
             "mean_ttft": float(m.get("mean_ttft", 0)),
+            # dashboard's own published interactivity (== 1000/mean_itl); kept for fidelity.
+            "mean_intvty": float(m.get("mean_intvty", 0)),
+            "mean_full_response_intvty": float(m.get("mean_full_response_intvty", 0)),
             "offload_mode": off,
         },
     }
 
 rows = [x for x in (norm_row(r) for r in raw) if x]
 if not rows:
-    sys.stderr.write("No Kimi-K3 B300/B200 agentic rows in dashboard response\n")
+    sys.stderr.write("No Kimi-K3 NV agentic rows in dashboard response\n")
     sys.exit(1)
+rows.sort(key=lambda r: (r["hardware"], r["spec_method"], r["offload_mode"], r["conc"]))
 out.write_text(json.dumps(rows, indent=2))
-print(f"Wrote {len(rows)} rows -> {out}")
-for x in sorted(rows, key=lambda r: (r["hardware"], r["conc"])):
+# Durable committed copy so a reboot (which wipes /tmp) doesn't strand the plot.
+durable = Path(__file__).resolve().parent / "docs" / "kimik3_pareto" / "k3_nv_agentic_dashboard.json" \
+    if "__file__" in globals() else Path("docs/kimik3_pareto/k3_nv_agentic_dashboard.json")
+try:
+    durable.parent.mkdir(parents=True, exist_ok=True)
+    durable.write_text(json.dumps(rows, indent=2))
+    print(f"Wrote {len(rows)} rows -> {out}  and  {durable}")
+except Exception as e:
+    print(f"Wrote {len(rows)} rows -> {out}  (durable copy failed: {e})")
+for x in rows:
     m = x["metrics"]
     itl_ms = m["mean_itl"] * 1000   # interactivity basis (NOT mean_tpot; see norm_row)
+    iv = 1000/itl_ms if itl_ms else 0
     print(
-        f"  {x['hardware']} c{x['conc']:>2} off={m['offload_mode']:>3}: "
+        f"  {x['hardware']:>5} c{x['conc']:>3} {x['spec_method']:>4} off={m['offload_mode']:>3}: "
         f"tput/gpu={m['tput_per_gpu']:7.0f} ITL={itl_ms:6.1f}ms "
-        f"interact={1000/itl_ms:6.1f}"
+        f"interact={iv:6.1f} (dash={m['mean_intvty']:6.1f})"
     )
 PY
   rm -f "$tmp"
