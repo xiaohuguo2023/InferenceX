@@ -89,7 +89,12 @@ _vram_max_gib() {
 # count of live vLLM procs; self-exclude the matching shell via $$ (its cmdline
 # contains the pattern) so we never count/kill ourselves.
 _vllm_procs() {
-  docker exec "$CONTAINER" bash -lc 'me=$$; pgrep -f "vllm|EngineCore|VllmWorker|multiprocessing.spawn" 2>/dev/null | grep -vx "$me" | wc -l' 2>/dev/null || echo 0
+  # Bracket-regex ([v]llm) so this counting shell doesn't self-match; then RE-READ each
+  # candidate's /proc/cmdline and match an UNBRACKETED token. That excludes (a) the
+  # permanent [vllm] <defunct> zombies (empty cmdline; PID1 `sleep infinity` never reaps)
+  # and (b) the transient $(pgrep) command-substitution subshell (its cmdline carries the
+  # bracketed pattern, not "vllm") -> race-proof, so a clean serve never reads as live.
+  docker exec "$CONTAINER" bash -lc 'me=$$; n=0; for p in $(pgrep -f "[v]llm|[E]ngineCore|[V]llmWorker|[m]ultiprocessing.spawn" 2>/dev/null); do [ "$p" = "$me" ] && continue; cl=$(cat /proc/$p/cmdline 2>/dev/null | tr "\0" " "); case "$cl" in *vllm*|*EngineCore*|*VllmWorker*|*multiprocessing.spawn*) n=$((n+1)) ;; esac; done; echo $n' 2>/dev/null || echo 0
 }
 
 kill_serve() {
@@ -101,7 +106,7 @@ kill_serve() {
   # SIGKILL only if graceful stalls. Self-exclude via $$ so we never signal this shell.
   docker exec "$CONTAINER" bash -lc '
     me=$$
-    for p in $(pgrep -f "vllm|EngineCore|VllmWorker|multiprocessing.spawn"); do
+    for p in $(pgrep -f "[v]llm|[E]ngineCore|[V]llmWorker|[m]ultiprocessing.spawn"); do
       [ "$p" = "$me" ] && continue; kill -TERM "$p" 2>/dev/null
     done; exit 0' 2>/dev/null || true
   local clean=0 used
@@ -116,7 +121,7 @@ kill_serve() {
     log "graceful teardown incomplete (VRAM=$(_vram_max_gib) GiB) -> SIGKILL fallback"
     docker exec "$CONTAINER" bash -lc '
       me=$$
-      for p in $(pgrep -f "vllm|EngineCore|VllmWorker|multiprocessing.spawn"); do
+      for p in $(pgrep -f "[v]llm|[E]ngineCore|[V]llmWorker|[m]ultiprocessing.spawn"); do
         [ "$p" = "$me" ] && continue; kill -9 "$p" 2>/dev/null
       done; exit 0' 2>/dev/null || true
     for _ in $(seq 1 12); do

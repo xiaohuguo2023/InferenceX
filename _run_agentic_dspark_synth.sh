@@ -23,7 +23,16 @@ CONTAINER="${CONTAINER:-k3-dspark-benchmark}"
 CONC_LIST="${CONC_LIST:-1 2 4 8 16 24}"
 PORT="${PORT:-8891}"
 DURATION="${DURATION:-3600}"
-TAG="${TAG:-dspark_synth251_ixci}"
+# Optional CPU KV-cache offload (the B300-MTP offload_mode="on" analogue). Total
+# GiB summed across all 8 TP ranks; empty => no offload. When set, default the TAG
+# to the _off variant so the Pareto's offload arm reads these dirs.
+KV_OFFLOADING_SIZE="${KV_OFFLOADING_SIZE:-}"
+KV_OFFLOADING_BACKEND="${KV_OFFLOADING_BACKEND:-native}"
+if [ -n "$KV_OFFLOADING_SIZE" ]; then
+  TAG="${TAG:-dspark_synth251_off_ixci}"
+else
+  TAG="${TAG:-dspark_synth251_ixci}"
+fi
 NUM_SPEC="${NUM_SPEC:-2}"
 # AgentX golden AL for this (model, thinking_on, K) — do NOT substitute another
 # value; it is the prescribed acceptance target for the comparison.
@@ -41,7 +50,12 @@ _vram_max_gib() {
   docker exec "$CONTAINER" bash -lc "rocm-smi --showmeminfo vram 2>/dev/null | grep -i 'Used Memory' | awk '{g=\$NF/1073741824; if (g>m) m=g} END{printf \"%.0f\", m}'" 2>/dev/null || echo 999
 }
 _vllm_procs() {
-  docker exec "$CONTAINER" bash -lc 'me=$$; pgrep -f "vllm|EngineCore|VllmWorker|multiprocessing.spawn" 2>/dev/null | grep -vx "$me" | wc -l' 2>/dev/null || echo 0
+  # Bracket-regex ([v]llm) so this counting shell doesn't self-match; then RE-READ each
+  # candidate's /proc/cmdline and match an UNBRACKETED token. That excludes (a) the
+  # permanent [vllm] <defunct> zombies (empty cmdline; PID1 `sleep infinity` never reaps)
+  # and (b) the transient $(pgrep) command-substitution subshell (its cmdline carries the
+  # bracketed pattern, not "vllm") -> race-proof, so a clean serve never reads as live.
+  docker exec "$CONTAINER" bash -lc 'me=$$; n=0; for p in $(pgrep -f "[v]llm|[E]ngineCore|[V]llmWorker|[m]ultiprocessing.spawn" 2>/dev/null); do [ "$p" = "$me" ] && continue; cl=$(cat /proc/$p/cmdline 2>/dev/null | tr "\0" " "); case "$cl" in *vllm*|*EngineCore*|*VllmWorker*|*multiprocessing.spawn*) n=$((n+1)) ;; esac; done; echo $n' 2>/dev/null || echo 0
 }
 kill_serve() {
   # GRACEFUL drain first (SIGTERM -> wait -> SIGKILL fallback). A hard SIGKILL
@@ -50,7 +64,7 @@ kill_serve() {
   # them. Self-exclude the killing shell via $$. Check MAX VRAM across all 8 GPUs.
   docker exec "$CONTAINER" bash -lc '
     me=$$
-    for p in $(pgrep -f "vllm|EngineCore|VllmWorker|multiprocessing.spawn"); do
+    for p in $(pgrep -f "[v]llm|[E]ngineCore|[V]llmWorker|[m]ultiprocessing.spawn"); do
       [ "$p" = "$me" ] && continue; kill -TERM "$p" 2>/dev/null
     done; exit 0' 2>/dev/null || true
   local used
@@ -64,7 +78,7 @@ kill_serve() {
   log "graceful teardown incomplete (VRAM=$(_vram_max_gib) GiB) -> SIGKILL fallback"
   docker exec "$CONTAINER" bash -lc '
     me=$$
-    for p in $(pgrep -f "vllm|EngineCore|VllmWorker|multiprocessing.spawn"); do
+    for p in $(pgrep -f "[v]llm|[E]ngineCore|[V]llmWorker|[m]ultiprocessing.spawn"); do
       [ "$p" = "$me" ] && continue; kill -9 "$p" 2>/dev/null
     done; exit 0' 2>/dev/null || true
   for _ in $(seq 1 12); do
@@ -75,6 +89,7 @@ kill_serve() {
 }
 
 log "SYNTHETIC-ACCEPTANCE sweep: golden AL=$SYNTHETIC_ACCEPT_LEN (K=$NUM_SPEC), TAG=$TAG"
+log "KV offload: ${KV_OFFLOADING_SIZE:+${KV_OFFLOADING_SIZE} GiB total (backend=$KV_OFFLOADING_BACKEND)}${KV_OFFLOADING_SIZE:-OFF}"
 for c in $CONC_LIST; do
   log "########## conc=$c : cold DSpark serve (synthetic AL=$SYNTHETIC_ACCEPT_LEN) ##########"
   kill_serve
@@ -83,6 +98,7 @@ for c in $CONC_LIST; do
       -e NUM_SPEC="$NUM_SPEC" -e PORT="$PORT" -e GPU_MEM="$GPU_MEM" \
       -e MAX_NUM_SEQS="$MAX_NUM_SEQS" -e MNBT="$MNBT" \
       -e SYNTHETIC_ACCEPT_LEN="$SYNTHETIC_ACCEPT_LEN" \
+      -e KV_OFFLOADING_SIZE="$KV_OFFLOADING_SIZE" -e KV_OFFLOADING_BACKEND="$KV_OFFLOADING_BACKEND" \
       "$CONTAINER" bash /workspace/_serve_k3_bench_spec.sh; then
     log "ERROR: serve failed to come up for conc=$c — aborting"
     docker exec "$CONTAINER" bash -lc "tail -40 /workspace/serve_k3_bench_spec${NUM_SPEC}.log" || true
@@ -96,6 +112,16 @@ for c in $CONC_LIST; do
       -e SWEEP_LOCK="/workspace/.k3_agentic_${TAG}_c${c}.lock" \
       "$CONTAINER" bash /workspace/_sweep_fp8asm_ixci.sh || {
         log "WARN: agentic point conc=$c returned non-zero (see k3_${TAG}_ixci_c${c}.log)"; }
+  # Snapshot spec-decode + offload counters BEFORE teardown (offload arm needs the
+  # external_hits / load / store bytes to prove reads engaged). No-op if serve is down.
+  docker exec "$CONTAINER" bash -lc "curl -s http://localhost:$PORT/metrics 2>/dev/null > /workspace/k3_${TAG}_ixci_c${c}/metrics_final.txt" 2>/dev/null || true
+  if [ -n "$KV_OFFLOADING_SIZE" ]; then
+    docker exec "$CONTAINER" bash -lc '
+      m=$(cat /workspace/k3_'"${TAG}"'_ixci_c'"${c}"'/metrics_final.txt 2>/dev/null)
+      s(){ printf "%s\n" "$m" | grep -E "$1" | grep -v "#" | awk "{x+=\$NF} END{printf \"%.0f\", x}"; }
+      echo "  [offload] external_hits=$(s external_prefix_cache_hits_total) load_bytes=$(s "kv_offload_total_bytes_total\{.*CPU_to_GPU") store_bytes=$(s "kv_offload_store_bytes_total|kv_offload_total_bytes_total\{.*GPU_to_CPU")"
+    ' 2>/dev/null || true
+  fi
   log "conc=$c complete"
 done
 
