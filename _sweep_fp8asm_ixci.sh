@@ -87,11 +87,20 @@ prepare_out_dir() {
 
 run_conc() {
   local c="$1" seed=42
+  # conc-1's single lane is unspawnable at seed 42 (EmptyTracePoolError); the
+  # dataset sampler yields a valid conc-1 root at seed 0. Overridable via SEED.
+  [ "$c" = "1" ] && seed=0
+  seed="${SEED:-$seed}"
   local out="$OUT_ROOT/k3_${TAG}_ixci_c$c"
   prepare_out_dir "$out"
+  # UNSAFE_OVERRIDE=1 converts the scenario invariants (e.g. duration>=900) to
+  # warnings so a short DURATION works for a plumbing/validation run. Such a run
+  # is marked submission_valid=false — do NOT use it for reported numbers.
+  local OVERRIDE_ARG=(); [ "${UNSAFE_OVERRIDE:-0}" = "1" ] && OVERRIDE_ARG=(--unsafe-override)
   echo "=== ${TAG}-IXCI conc=$c seed=$seed start $(date +%T) ==="
   "$AIPERF" profile --scenario inferencex-agentx-mvp --url "http://localhost:$PORT" \
     --endpoint /v1/chat/completions --endpoint-type chat --streaming --model "$MODEL" \
+    "${OVERRIDE_ARG[@]}" \
     --concurrency "$c" --benchmark-duration "$DURATION" --stats-interval 30 --random-seed "$seed" \
     --failed-request-threshold "$FAIL_THRESH" \
     --trajectory-start-min-ratio 0.25 --trajectory-start-max-ratio 0.75 \

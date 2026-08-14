@@ -80,15 +80,50 @@ wait_for_gpu_free() {
   done
 }
 
+# max "Used Memory" across ALL 8 GPUs, GiB (leftover VRAM often sits on a non-0
+# rank, e.g. cuda:3, so a head -1 GPU0 check can falsely report "drained" while
+# another rank still holds 22 GiB and the next gpu_mem=0.95 serve then fails).
+_vram_max_gib() {
+  docker exec "$CONTAINER" bash -lc "rocm-smi --showmeminfo vram 2>/dev/null | grep -i 'Used Memory' | awk '{g=\$NF/1073741824; if (g>m) m=g} END{printf \"%.0f\", m}'" 2>/dev/null || echo 999
+}
+# count of live vLLM procs; self-exclude the matching shell via $$ (its cmdline
+# contains the pattern) so we never count/kill ourselves.
+_vllm_procs() {
+  docker exec "$CONTAINER" bash -lc 'me=$$; pgrep -f "vllm|EngineCore|VllmWorker|multiprocessing.spawn" 2>/dev/null | grep -vx "$me" | wc -l' 2>/dev/null || echo 0
+}
+
 kill_serve() {
+  # GRACEFUL drain FIRST. The native KV-offload backend allocates pinned host + GPU
+  # staging buffers; a hard SIGKILL skips vLLM's shutdown so those buffers are never
+  # released and the ROCm driver does NOT reclaim them on process death -> ~30 GiB/GPU
+  # of orphaned VRAM that ONLY a node reboot clears. SIGTERM lets each proc run its
+  # cleanup (connector.close / torch HIP teardown) and free its memory. Escalate to
+  # SIGKILL only if graceful stalls. Self-exclude via $$ so we never signal this shell.
   docker exec "$CONTAINER" bash -lc '
-    for p in $(pgrep -f "vllm|multiprocessing.spawn|EngineCore|Worker"); do kill -9 $p 2>/dev/null; done' 2>/dev/null || true
-  for _ in $(seq 1 15); do
+    me=$$
+    for p in $(pgrep -f "vllm|EngineCore|VllmWorker|multiprocessing.spawn"); do
+      [ "$p" = "$me" ] && continue; kill -TERM "$p" 2>/dev/null
+    done; exit 0' 2>/dev/null || true
+  local clean=0 used
+  for _ in $(seq 1 18); do          # up to ~90s for graceful exit + VRAM drain
     sleep 5
-    local used
-    used=$(docker exec "$CONTAINER" bash -lc "rocm-smi --showmeminfo vram 2>/dev/null | grep -i 'Used Memory' | head -1 | awk '{printf \"%.0f\", \$NF/1073741824}'" 2>/dev/null || echo 999)
-    [ "${used:-999}" -le 20 ] 2>/dev/null && { log "VRAM drained (${used} GiB)"; break; }
+    used=$(_vram_max_gib)
+    if [ "$(_vllm_procs)" = "0" ] && [ "${used:-999}" -le 20 ] 2>/dev/null; then
+      log "graceful teardown clean (procs=0, max VRAM ${used} GiB)"; clean=1; break
+    fi
   done
+  if [ "$clean" != "1" ]; then      # graceful stalled -> hard-kill survivors
+    log "graceful teardown incomplete (VRAM=$(_vram_max_gib) GiB) -> SIGKILL fallback"
+    docker exec "$CONTAINER" bash -lc '
+      me=$$
+      for p in $(pgrep -f "vllm|EngineCore|VllmWorker|multiprocessing.spawn"); do
+        [ "$p" = "$me" ] && continue; kill -9 "$p" 2>/dev/null
+      done; exit 0' 2>/dev/null || true
+    for _ in $(seq 1 12); do
+      sleep 5; used=$(_vram_max_gib)
+      [ "${used:-999}" -le 20 ] 2>/dev/null && { log "VRAM drained after SIGKILL (max ${used} GiB)"; break; }
+    done
+  fi
   docker exec "$CONTAINER" bash -lc 'rm -f /dev/shm/vllm_offload_*.mmap 2>/dev/null' 2>/dev/null || true
 }
 

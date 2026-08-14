@@ -37,16 +37,39 @@ AIPERF="${AIPERF:-/workspace/.aiperf_v1_0_1/bin/aiperf}"
 
 log() { echo "[$(date +%T)] $*"; }
 
+_vram_max_gib() {
+  docker exec "$CONTAINER" bash -lc "rocm-smi --showmeminfo vram 2>/dev/null | grep -i 'Used Memory' | awk '{g=\$NF/1073741824; if (g>m) m=g} END{printf \"%.0f\", m}'" 2>/dev/null || echo 999
+}
+_vllm_procs() {
+  docker exec "$CONTAINER" bash -lc 'me=$$; pgrep -f "vllm|EngineCore|VllmWorker|multiprocessing.spawn" 2>/dev/null | grep -vx "$me" | wc -l' 2>/dev/null || echo 0
+}
 kill_serve() {
+  # GRACEFUL drain first (SIGTERM -> wait -> SIGKILL fallback). A hard SIGKILL
+  # skips vLLM's shutdown so GPU buffers can be orphaned and the ROCm driver won't
+  # reclaim them (~30 GiB/GPU) -> only a reboot clears it. SIGTERM lets it free
+  # them. Self-exclude the killing shell via $$. Check MAX VRAM across all 8 GPUs.
   docker exec "$CONTAINER" bash -lc '
-    for p in $(pgrep -f "vllm|multiprocessing.spawn|multiprocessing-fork|resource_tracker|EngineCore|Worker"); do
-      kill -9 $p 2>/dev/null; done
-  ' 2>/dev/null || true
-  for _ in $(seq 1 15); do
+    me=$$
+    for p in $(pgrep -f "vllm|EngineCore|VllmWorker|multiprocessing.spawn"); do
+      [ "$p" = "$me" ] && continue; kill -TERM "$p" 2>/dev/null
+    done; exit 0' 2>/dev/null || true
+  local used
+  for _ in $(seq 1 18); do          # up to ~90s for graceful exit + VRAM drain
     sleep 5
-    local used
-    used=$(docker exec "$CONTAINER" bash -lc "rocm-smi --showmeminfo vram 2>/dev/null | grep -i 'Used Memory' | head -1 | awk '{printf \"%.0f\", \$NF/1073741824}'" 2>/dev/null || echo 999)
-    [ "${used:-999}" -le 20 ] 2>/dev/null && { log "VRAM drained (${used} GiB)"; return 0; }
+    used=$(_vram_max_gib)
+    if [ "$(_vllm_procs)" = "0" ] && [ "${used:-999}" -le 20 ] 2>/dev/null; then
+      log "graceful teardown clean (procs=0, max VRAM ${used} GiB)"; return 0
+    fi
+  done
+  log "graceful teardown incomplete (VRAM=$(_vram_max_gib) GiB) -> SIGKILL fallback"
+  docker exec "$CONTAINER" bash -lc '
+    me=$$
+    for p in $(pgrep -f "vllm|EngineCore|VllmWorker|multiprocessing.spawn"); do
+      [ "$p" = "$me" ] && continue; kill -9 "$p" 2>/dev/null
+    done; exit 0' 2>/dev/null || true
+  for _ in $(seq 1 12); do
+    sleep 5; used=$(_vram_max_gib)
+    [ "${used:-999}" -le 20 ] 2>/dev/null && { log "VRAM drained after SIGKILL (${used} GiB)"; return 0; }
   done
   log "WARN: VRAM did not fully drain"
 }
