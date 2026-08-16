@@ -16,7 +16,7 @@ set -x
 # prefill also needs ROCm/aiter #4452 (64-bit paged-KV offsets) for >4GB KV.
 #
 # Validated base image (carries the vLLM patches + AITER build above):
-#   vllm/vllm-openai-rocm:nightly-cb8104839c141609d99f1254459ef3a4f1bd4263
+#   vllm/vllm-openai-rocm:nightly-8efa13b700f1836657699cae2503dc2feab27fa0
 # Pinned in configs/amd-master.yaml (kimik3-fp4-mi355x-vllm-agentic).
 #
 # Required env vars: MODEL, TP, CONC, KV_OFFLOADING, TOTAL_CPU_DRAM_GB, RESULT_DIR, DURATION
@@ -77,6 +77,13 @@ OFFLOAD_ARGS=()
 case "${KV_OFFLOAD_BACKEND:-}" in
     "")
         require_agentic_kv_offload_none
+        ;;
+    native)
+        require_agentic_kv_offload_backend native
+        OFFLOAD_ARGS=(
+            --kv-offloading-size "${KV_OFFLOADING_SIZE:-$TOTAL_CPU_DRAM_GB}"
+            --kv-offloading-backend native
+        )
         ;;
     vllm-simple)
         require_agentic_kv_offload_backend vllm-simple
