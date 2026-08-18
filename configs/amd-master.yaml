@@ -624,7 +624,7 @@ dsr1-fp8-mi355x-sglang-disagg-mtp:
           - "DECODE_MTP_SIZE=2"
 
 kimik3-fp4-mi355x-vllm-agentic-mtp:
-  image: vllm/vllm-openai-rocm:nightly-311b3513af33bc29b4acb2fde2e9313e5e9966a0
+  image: vllm/vllm-openai-rocm:nightly-aa9903490c616dc6871e5acc62cec7bb1e5e9434
   model: moonshotai/Kimi-K3
   model-prefix: kimik3
   runner: cluster:mi355x-amds
@@ -1293,7 +1293,7 @@ kimik3-fp4-mi355x-vllm-agentic:
   # vLLM ASM-MLA patches K3's 12-head/rank fp8 attention needs) via
   # benchmarks/single_node/agentic/apply_k3_fp4_fp8asm_dspark_patches.sh. K3 ships as the
   # out-of-tree vllm.models.kimi_k3 plugin, present in this nightly.
-  image: vllm/vllm-openai-rocm:nightly-311b3513af33bc29b4acb2fde2e9313e5e9966a0
+  image: vllm/vllm-openai-rocm:nightly-aa9903490c616dc6871e5acc62cec7bb1e5e9434
   model: moonshotai/Kimi-K3
   model-prefix: kimik3
   runner: cluster:mi355x-amds
@@ -1322,7 +1322,7 @@ kimik3-fp4-mi355x-vllm-agentic-dspark:
   # kimik3_fp4_mi355x_vllm_mtp.sh, which forces the draft causal (the ROCm fp8-asm
   # requirement) and serves the mandated DSpark config (gpu-mem 0.95 / seqs 64 /
   # MNBT 16384 / FULL_AND_PIECEWISE / KV pin 32 GiB).
-  image: vllm/vllm-openai-rocm:nightly-311b3513af33bc29b4acb2fde2e9313e5e9966a0
+  image: vllm/vllm-openai-rocm:nightly-aa9903490c616dc6871e5acc62cec7bb1e5e9434
   model: moonshotai/Kimi-K3
   model-prefix: kimik3
   runner: cluster:mi355x-amds
