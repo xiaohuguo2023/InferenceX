@@ -18,7 +18,10 @@ from pathlib import Path
 
 
 aiter_root = Path(os.environ.get("LOCAL_AITER", "/opt/aiter-local"))
-path = aiter_root / "csrc/py_itfs_cu/asm_gemm_a16w16.cu"
+# Stock nightly image aiter lives under dist-packages (no /opt/aiter-local).
+# RECIPE=latest-k7 fanout sets SPLITK_CU to aiter_meta/.../asm_gemm_a16w16.cu.
+_cu = os.environ.get("SPLITK_CU") or os.environ.get("CU")
+path = Path(_cu) if _cu else (aiter_root / "csrc/py_itfs_cu/asm_gemm_a16w16.cu")
 text = path.read_text()
 
 include_old = '#include <cmath>\n#include <memory>\n'
