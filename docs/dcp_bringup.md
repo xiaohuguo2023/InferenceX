@@ -84,37 +84,54 @@ Every hunk is gated on `non_causal_multi_token_decode`, which is set at exactly
 one site (`models/kimi_k3/nvidia/dspark_mla.py:81`) and marks the DSpark draft
 group. **The target attention group is untouched in both arms.**
 
-That bounds what the patch can possibly buy. In particular it does **not** lift
-the DCP prefix-cache penalty:
+**Whether that can move the prefix-cache rate is genuinely unresolved**, and the
+two lines of evidence disagree. Do not quote either one as settled:
 
-* `resolve_dcp_kv_block_size` still returns `block_size * dcp_world_size` for the
-  target group, i.e. 1,536 x 8 = **12,288 tokens** with or without the patch.
-* `HybridKVCacheCoordinator.find_longest_cache_hit`
-  (`v1/core/kv_cache_coordinator.py:757`) is a fixed-point loop in which
-  `curr_hit_length` only ever shrinks — the combined hit is the **minimum across
-  KV groups**. The coarse target group therefore floors the hit length regardless
-  of what the draft group does.
+*Source reading says it should not.* The draft and target MLA groups share the
+same `cache_config`, so they have the same base block size, and `MLAAttentionSpec`
+subclasses `FullAttentionSpec`, so both are DCP-scaled in the coordinator.
+`resolve_dcp_kv_block_size` therefore returns 1,536 x 8 = **12,288 tokens** for the
+target in both arms, and `HybridKVCacheCoordinator.find_longest_cache_hit`
+(`v1/core/kv_cache_coordinator.py:757`) is a fixed-point loop in which
+`curr_hit_length` only ever shrinks — the combined hit is the **minimum across
+groups**. On that reading the coarse target floors the hit length whatever the
+draft does, and the patch should be worth ~0.
 
-So the ~20 pp agentic prefix-cache loss in §7 is a **target**-group property and
-should be expected to be identical in both arms. Do not run the agentic benchmark
-expecting this patch to move it. The claims worth testing are the draft-side ones:
-acceptance length, decode ITL, and the KV capacity cost of replicating the draft
-(5 MLA layers x 576 B/token: ~2,880 B/tok/rank replicated vs ~360 sharded).
+*Measurement says otherwise.* On the long-context sweep, dropping these same three
+core hunks swung the conc-16 prefix-cache rate from **90.2% to 15.0%** — a 75 pp
+effect attributed to this patch by a whole-directory diff of `vllm/v1/core/`
+between two nightlies that differ by nothing else. That is far too large to be
+noise.
+
+So the source read above is incomplete — something downstream of the per-group
+block size (the `scheduler_block_size` LCM, `hash_block_size`, the alignment
+tokens, or the hybrid Mamba/KDA group's interaction) is carrying the effect. Until
+that is pinned down, treat the agentic cache-rate question as **open**, and settle
+it with the pre-check below rather than with an argument.
+
+Independently of that, the patch has draft-side effects worth measuring on their
+own: acceptance length, decode ITL, and the KV capacity cost of replicating the
+draft (5 MLA layers x 576 B/token: ~2,880 B/tok/rank replicated vs ~360 sharded).
 
 #### Pre-check before spending a GPU-hour
 
-Confirm the geometry directly instead of inferring it from a benchmark. Under each
-arm, on a booted serve:
+Resolve the disagreement above by measuring the geometry, not by running an
+hour-long benchmark. Under **each** arm, on a booted serve, record the per-group
+block sizes and the cache counters:
 
 ```bash
 docker exec k3-dcp bash -lc '
   curl -s http://127.0.0.1:8890/metrics |
     grep -E "prefix_cache_(queries|hits)_total|gpu_cache_usage"'
-grep -iE "GPU KV cache size|Maximum concurrency" /tmp/serve_k3_dcp7.log
+grep -iE "GPU KV cache size|Maximum concurrency|block_size|scheduler_block_size" \
+  /tmp/serve_k3_dcp7.log
 ```
 
-If the target group's effective block span reads 12,288 in both arms — it should —
-the agentic cache-rate hypothesis is closed without running the benchmark.
+Read three numbers per arm: the **target** group's effective block span, the
+**scheduler** block size (the LCM across groups), and the prefix-cache hit ratio.
+If the target span is 12,288 in both arms but the hit ratio still moves, the
+scheduler LCM is the mechanism — which would also mean the effect is real and the
+agentic run is worth doing. If nothing moves, the question is closed for free.
 
 ## 4. Serve
 
@@ -276,11 +293,15 @@ the pool-of-1 long-context microbench that same effect is worth only ~2.25 pp; o
 varied-length agentic traces it is ~20 pp. That gap is the single biggest DCP lever
 for the agentic story.
 
-Closing it means changing the **target** group's block granularity — not
-`K3-DCP-DRAFT-REPL`, which only touches the draft group (see §3b). Candidate
-levers are upstream's replay-boundary retention work (vLLM #51295, #50897, #53917,
-all unmerged as of 2026-09-01; #53598's own PR body reports 15.60% actual hits
-without retention against 71.90% with it) or a smaller base attention block size.
+Two candidate levers, neither yet demonstrated on the agentic corpus:
+
+* Upstream's replay-boundary retention work — vLLM #51295, #50897, #53917, all
+  unmerged as of 2026-09-01. #53598's own PR body reports 15.60% actual hits
+  without retention against 71.90% with it.
+* `K3-DCP-DRAFT-REPL`, whose applicability here is **open** — see §3b. It swings
+  the long-context conc-16 cache rate by 75 pp, but the source read predicts no
+  effect on the target group's granularity. Settle that with the §3b pre-check
+  before spending agentic GPU-hours on it.
 
 ### How to evaluate `K3-DCP-DRAFT-REPL`
 
