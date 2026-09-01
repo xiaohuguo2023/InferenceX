@@ -110,56 +110,90 @@ python3 _dspark_perf_diag.py /workspace/k3_dcp8 --tp 8
 
 ### InferenceX agentic
 
+The canonical definition of this benchmark is **not** a hand-written aiperf
+command. It is `benchmarks/benchmark_lib.sh` (`build_agentic_replay_cmd`, around
+line 3246) driven by the recipe block in `configs/amd-master.yaml`. Read those
+first; the flag set below is derived from them and will drift.
+
+**Use the pinned aiperf.** CI builds it from the `utils/aiperf` submodule with
+`uv`, editable, on Python 3.11 — the "version" of the benchmark *is* that
+submodule commit. Currently `754356e9` = `agentx-v1.0.5` (package version
+`0.12.0`). Do not use the ad-hoc `/workspace/.aiperf_*` venvs.
+
+```bash
+git submodule update --init utils/aiperf     # -> agentx-v1.0.5
+docker exec k3-dcp bash -lc '
+  uv venv --python 3.11 /tmp/aiperf-venv &&
+  uv pip install --python /tmp/aiperf-venv/bin/python -e /workspace/utils/aiperf'
+```
+
 **Do not use `_run_agentic_dspark.sh` for a DCP run** — it tears down with
 `kill -9`, which is exactly what strands the dma-bufs. Drive aiperf directly
 against the already-warm serve from §4, once per concurrency.
 
-Use **aiperf 0.8.0** (`/workspace/.aiperf_venv`). 0.12.0 dropped
-`--warmup-requests-per-lane`, and the `.aiperf_v1_0_1` / `.aiperf_818c3a5a` venvs
-have broken interpreters. Note this is a *different* aiperf from the long-context
-sweep above, which pins `v012_dev193`.
-
 ```bash
-CONC=1                                  # we ran 1 and 4
+CONC=1
 ROOT=/workspace/k3_dcp8_ns7_ixci_c$CONC
-TOK=$(ls -d /dev/shm/hf-cache/models--moonshotai--Kimi-K3/snapshots/*/ | head -1)
 
 docker exec k3-dcp bash -lc "cd /workspace &&
-  /workspace/.aiperf_venv/bin/aiperf profile \
-    --scenario 'inferencex-agentx-mvp' \
-    --public-dataset 'semianalysis_cc_traces_weka_062126' \
-    --url 'http://localhost:8890' --endpoint '/v1/chat/completions' \
-    --endpoint-type 'chat' --streaming --model 'Kimi-K3' \
-    --concurrency $CONC --benchmark-duration 900 \
-    --unsafe-override --stats-interval 30 --random-seed 0 \
-    --failed-request-threshold 0.1 \
+  export AIPERF_DATASET_CONFIGURATION_TIMEOUT=1800 \
+         AIPERF_SERVICE_PROFILE_CONFIGURE_TIMEOUT=1800 \
+         AIPERF_UI_REALTIME_METRICS_ENABLED=true \
+         AIPERF_DATASET_WEKA_LIVE_ASSISTANT_RESPONSES=0 &&
+  /tmp/aiperf-venv/bin/aiperf profile --scenario inferencex-agentx-mvp \
+    --public-dataset semianalysis_cc_traces_weka_062126 \
+    --url http://localhost:8890 --endpoint /v1/chat/completions \
+    --endpoint-type chat --streaming \
+    --model moonshotai/Kimi-K3 --tokenizer moonshotai/Kimi-K3 \
+    --tokenizer-trust-remote-code \
+    --concurrency $CONC --benchmark-duration 3600 \
+    --stats-interval 30 --random-seed 42 \
+    --failed-request-threshold 0.10 \
     --trajectory-start-min-ratio 0.25 --trajectory-start-max-ratio 0.75 \
-    --warmup-requests-per-lane 10 --warmup-grace-period 600 \
+    --warmup-requests-per-lane 10 --warmup-grace-period 1800 \
     --trace-idle-gap-cap-seconds 300 --use-server-token-count \
-    --tokenizer '$TOK' --tokenizer-trust-remote-code \
-    --no-gpu-telemetry --num-dataset-entries 393 --slice-duration 1.0 \
-    --output-artifact-dir '$ROOT/aiperf_artifacts'"
+    --no-gpu-telemetry --max-context-length \$MAX_MODEL_LEN \
+    --num-dataset-entries 393 --slice-duration 1.0 \
+    --output-artifact-dir $ROOT/aiperf_artifacts"
 ```
 
-Gotchas:
+Rules that decide whether the run counts:
 
-* The scenario **rejects `--benchmark-duration` below 900 s.** Budget ~25 min per
-  point including warmup.
-* **Resolve the tokenizer snapshot at run time**, as above. Older scripts hardcode
-  `9f62e4e9…`, which no longer exists after a `/dev/shm` wipe; the live one at the
-  time of our run was `a590ce09…`.
-* The scenario silently rewrites four flags — `timing_mode=agentic_replay`,
+* **`--random-seed 42`**, not 0. **`--benchmark-duration 3600`** (the
+  `benchmark-tmpl.yml` default), not 900. **`--warmup-grace-period 1800`**, not 600.
+* **Never pass `--unsafe-override` on a run you intend to report.** CI adds it only
+  when `duration < 900` or `AIPERF_UNSAFE_OVERRIDE=true`, and it stamps
+  `submission_valid: false`.
+* Since `agentx-v1.0.4`/`v1.0.5` the scenario enforces a post-run coverage gate:
+  TTFT **or** ITL observations must span ≥95% of the profiling phase, else the run
+  exits non-zero with `insufficient_profile_metric_coverage`. Both of those
+  releases exist specifically to stop low-concurrency runs failing spuriously, so
+  conc-1/conc-4 arms need `v1.0.5` to be judged fairly.
+* Pass the **HF model id** as `--tokenizer`, not a `/dev/shm` snapshot path.
+  Snapshot hashes change on every re-download.
+* The scenario silently rewrites four settings — `timing_mode=agentic_replay`,
   `extra_inputs.ignore_eos=true`, `--cache-bust=first_turn_prefix`,
-  `--system-idle-gap-cap-seconds=10.0`. Expect them in the log; they are not errors.
-* Read results from `$ROOT/aiperf_artifacts/profile_export_console.txt`; the exact
-  CLI of any past run is preserved under `"cli_command"` in
-  `profile_export_aiperf.json`.
-* Compare against a **non-DCP control of the same duration and seed**. Our recorded
-  baseline ran 3600 s against DCP's 900 s, so per-request prompt lengths differ;
-  the conclusion survived a length-matched slice, but the control was never run
-  formally.
-* Agentic AL is ~1.4–1.6 for both arms. Do **not** compare it to the ~2.4 of the
-  long-context microbench — that workload is `ignore_eos` synthetic.
+  `--system-idle-gap-cap-seconds=10.0`. Expect them in the log; not errors.
+* Results: `$ROOT/aiperf_artifacts/profile_export_console.txt`. The exact CLI of any
+  past run is preserved under `"cli_command"` in `profile_export_aiperf.json`,
+  alongside `"aiperf_version"` — check both before trusting a comparison.
+
+Recipe shape, from `configs/amd-master.yaml`
+(`kimik3-fp4-mi355x-vllm-agentic-mtp`, same image as §1):
+
+| | |
+|---|---|
+| conc 1 | `kv-offloading: none`, `dram-utilization: 0.60` |
+| conc 4, 8, 10, 12, 14 | `kv-offloading: dram` via LMCache `0.5.5.dev60+rocm7.2` |
+
+The vLLM recipe carries **no `dcp-size`** at any concurrency. The companion ATOM
+recipe (`kimik3-fp4-mi355x-atom-agentic-mtp`) uses `dcp-size: 8` only from
+**conc-8 upward**, on the stated reasoning that decode there is KV-bandwidth-bound
+over 100k+ contexts. So conc-1/conc-4 is outside the regime anyone claims DCP helps
+— worth knowing before reading a DCP conc-1 TTFT regression as a defect.
+
+Agentic AL is ~1.4–1.6 for both arms. Do **not** compare it to the ~2.4 of the
+long-context microbench — that workload is `ignore_eos` synthetic.
 
 ### Accuracy gate
 
@@ -185,6 +219,16 @@ stranded — that does **not** self-clear and it blocks `modprobe -r` (the leak
 blocks its own remedy). Report the number rather than escalating.
 
 ## 7. Known result on this configuration
+
+> **Caveat: the recorded numbers below are not a valid AgentX submission.** They
+> were produced with aiperf **0.8.0**, which predates the scenario validity gate
+> entirely — `profile_export_aiperf.json` carries no `submission_valid` field at
+> all. They also used `--random-seed 0` (canonical is 42), `--benchmark-duration
+> 900` (canonical is 3600), `--warmup-grace-period 600` (canonical is 1800), and
+> passed `--unsafe-override` unnecessarily. The non-DCP baseline they are compared
+> against ran the canonical 3600 s. Treat the direction as informative and re-run
+> both arms under §5 before reporting anything.
+
 
 DCP8 + DSpark nspec-7 runs the IX agentic benchmark cleanly, at throughput parity
 (+3.6% output tok/s at conc-4), with acceptance slightly *better* than the non-DCP
