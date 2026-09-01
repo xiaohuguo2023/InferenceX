@@ -108,13 +108,62 @@ docker exec k3-dcp bash -lc 'cd /workspace &&
 python3 _dspark_perf_diag.py /workspace/k3_dcp8 --tp 8
 ```
 
-InferenceX agentic (`inferencex-agentx-mvp` / `semianalysis_cc_traces_weka_062126`):
-drive aiperf directly against the warm serve. **Do not use
-`_run_agentic_dspark.sh` for a DCP run** — it tears down with `kill -9`, which is
-exactly what strands the dma-bufs. The scenario also rejects
-`--benchmark-duration` below 900 s.
+### InferenceX agentic
 
-Accuracy gate: `bash _gsm8k_k3.sh` in **block** acceptance mode.
+**Do not use `_run_agentic_dspark.sh` for a DCP run** — it tears down with
+`kill -9`, which is exactly what strands the dma-bufs. Drive aiperf directly
+against the already-warm serve from §4, once per concurrency.
+
+Use **aiperf 0.8.0** (`/workspace/.aiperf_venv`). 0.12.0 dropped
+`--warmup-requests-per-lane`, and the `.aiperf_v1_0_1` / `.aiperf_818c3a5a` venvs
+have broken interpreters. Note this is a *different* aiperf from the long-context
+sweep above, which pins `v012_dev193`.
+
+```bash
+CONC=1                                  # we ran 1 and 4
+ROOT=/workspace/k3_dcp8_ns7_ixci_c$CONC
+TOK=$(ls -d /dev/shm/hf-cache/models--moonshotai--Kimi-K3/snapshots/*/ | head -1)
+
+docker exec k3-dcp bash -lc "cd /workspace &&
+  /workspace/.aiperf_venv/bin/aiperf profile \
+    --scenario 'inferencex-agentx-mvp' \
+    --public-dataset 'semianalysis_cc_traces_weka_062126' \
+    --url 'http://localhost:8890' --endpoint '/v1/chat/completions' \
+    --endpoint-type 'chat' --streaming --model 'Kimi-K3' \
+    --concurrency $CONC --benchmark-duration 900 \
+    --unsafe-override --stats-interval 30 --random-seed 0 \
+    --failed-request-threshold 0.1 \
+    --trajectory-start-min-ratio 0.25 --trajectory-start-max-ratio 0.75 \
+    --warmup-requests-per-lane 10 --warmup-grace-period 600 \
+    --trace-idle-gap-cap-seconds 300 --use-server-token-count \
+    --tokenizer '$TOK' --tokenizer-trust-remote-code \
+    --no-gpu-telemetry --num-dataset-entries 393 --slice-duration 1.0 \
+    --output-artifact-dir '$ROOT/aiperf_artifacts'"
+```
+
+Gotchas:
+
+* The scenario **rejects `--benchmark-duration` below 900 s.** Budget ~25 min per
+  point including warmup.
+* **Resolve the tokenizer snapshot at run time**, as above. Older scripts hardcode
+  `9f62e4e9…`, which no longer exists after a `/dev/shm` wipe; the live one at the
+  time of our run was `a590ce09…`.
+* The scenario silently rewrites four flags — `timing_mode=agentic_replay`,
+  `extra_inputs.ignore_eos=true`, `--cache-bust=first_turn_prefix`,
+  `--system-idle-gap-cap-seconds=10.0`. Expect them in the log; they are not errors.
+* Read results from `$ROOT/aiperf_artifacts/profile_export_console.txt`; the exact
+  CLI of any past run is preserved under `"cli_command"` in
+  `profile_export_aiperf.json`.
+* Compare against a **non-DCP control of the same duration and seed**. Our recorded
+  baseline ran 3600 s against DCP's 900 s, so per-request prompt lengths differ;
+  the conclusion survived a length-matched slice, but the control was never run
+  formally.
+* Agentic AL is ~1.4–1.6 for both arms. Do **not** compare it to the ~2.4 of the
+  long-context microbench — that workload is `ignore_eos` synthetic.
+
+### Accuracy gate
+
+`bash _gsm8k_k3.sh`, in **block** acceptance mode.
 
 ## 6. Teardown — SIGTERM only, never `-9`
 
