@@ -59,8 +59,7 @@ All three are anchor-guarded and idempotent; each takes `--revert`.
 `_patch_dcp_draft_repl.diff` makes the DSpark **draft** KV group run replicated
 (cp=1) while the target stays DCP8-sharded. Upstream's invariant (vLLM #52188 /
 #53598) is that the draft group keeps the process DCP size, so this is a knowing
-divergence — it exists because DCP's 8x-scaled block granularity (1,536 -> 12,288
-tokens) is what costs the agentic prefix-cache hit rate. Apply it to compare:
+divergence. Apply it to compare:
 
 ```bash
 cd $V && patch -p1 < /workspace/_patch_dcp_draft_repl.diff        # apply
@@ -78,6 +77,44 @@ single_type_kv_cache_manager}.py` on the lookup/allocation paths.
 
 The diff is generated against the *unpatched* 1dc464d files; if the image moves,
 regenerate rather than force-applying.
+
+#### What this patch does and does not change
+
+Every hunk is gated on `non_causal_multi_token_decode`, which is set at exactly
+one site (`models/kimi_k3/nvidia/dspark_mla.py:81`) and marks the DSpark draft
+group. **The target attention group is untouched in both arms.**
+
+That bounds what the patch can possibly buy. In particular it does **not** lift
+the DCP prefix-cache penalty:
+
+* `resolve_dcp_kv_block_size` still returns `block_size * dcp_world_size` for the
+  target group, i.e. 1,536 x 8 = **12,288 tokens** with or without the patch.
+* `HybridKVCacheCoordinator.find_longest_cache_hit`
+  (`v1/core/kv_cache_coordinator.py:757`) is a fixed-point loop in which
+  `curr_hit_length` only ever shrinks — the combined hit is the **minimum across
+  KV groups**. The coarse target group therefore floors the hit length regardless
+  of what the draft group does.
+
+So the ~20 pp agentic prefix-cache loss in §7 is a **target**-group property and
+should be expected to be identical in both arms. Do not run the agentic benchmark
+expecting this patch to move it. The claims worth testing are the draft-side ones:
+acceptance length, decode ITL, and the KV capacity cost of replicating the draft
+(5 MLA layers x 576 B/token: ~2,880 B/tok/rank replicated vs ~360 sharded).
+
+#### Pre-check before spending a GPU-hour
+
+Confirm the geometry directly instead of inferring it from a benchmark. Under each
+arm, on a booted serve:
+
+```bash
+docker exec k3-dcp bash -lc '
+  curl -s http://127.0.0.1:8890/metrics |
+    grep -E "prefix_cache_(queries|hits)_total|gpu_cache_usage"'
+grep -iE "GPU KV cache size|Maximum concurrency" /tmp/serve_k3_dcp7.log
+```
+
+If the target group's effective block span reads 12,288 in both arms — it should —
+the agentic cache-rate hypothesis is closed without running the benchmark.
 
 ## 4. Serve
 
@@ -237,4 +274,22 @@ baseline. The cost is TTFT, and the cause is prefix-cache hit rate — 73-78% vs
 request tails into a partial 12,288-token block instead of a 1,536-token one. On
 the pool-of-1 long-context microbench that same effect is worth only ~2.25 pp; on
 varied-length agentic traces it is ~20 pp. That gap is the single biggest DCP lever
-for the agentic story, and it is what `K3-DCP-DRAFT-REPL` targets.
+for the agentic story.
+
+Closing it means changing the **target** group's block granularity — not
+`K3-DCP-DRAFT-REPL`, which only touches the draft group (see §3b). Candidate
+levers are upstream's replay-boundary retention work (vLLM #51295, #50897, #53917,
+all unmerged as of 2026-09-01; #53598's own PR body reports 15.60% actual hits
+without retention against 71.90% with it) or a smaller base attention block size.
+
+### How to evaluate `K3-DCP-DRAFT-REPL`
+
+Use the long-context sweep (§5), not the agentic benchmark: fixed shape, pool of 1,
+deterministic, so a small delta is resolvable. Read acceptance length, decode ITL,
+and each arm's "GPU KV cache size" for the capacity cost.
+
+Reserve the agentic benchmark for confirming that a win transfers, and then run it
+where the recipe actually puts DCP — **conc-8 and up, with LMCache DRAM offload** —
+with at least two repeats per arm. A single conc-1 agentic point cannot decide this:
+it hands the replicated draft all of its benefit and none of its cost, because the
+8x draft KV only bites when capacity is tight.
