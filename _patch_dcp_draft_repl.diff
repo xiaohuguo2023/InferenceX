@@ -203,3 +203,40 @@ diff --git a/v1/worker/gpu/attn_utils.py b/v1/worker/gpu/attn_utils.py
              positions=positions,
              is_prefilling=group_is_prefilling,
              mm_req_doc_ranges=mm_req_doc_ranges,
+diff --git a/vllm/model_executor/layers/attention/mla_attention.py b/vllm/model_executor/layers/attention/mla_attention.py
+--- a/vllm/model_executor/layers/attention/mla_attention.py
++++ b/vllm/model_executor/layers/attention/mla_attention.py
+@@ -548,6 +548,19 @@
+             indexer=indexer,
+             **extra_impl_args,
+         )
++        # K3-DCP-DRAFT-REPL: same reason as the metadata builder -- this layer's KV
++        # group is replicated, so the impl must not do round-robin CP indexing or a
++        # cross-rank LSE combine. The impl reads decode_context_parallel_size in its
++        # own __init__, so override it here, after construction, together with the
++        # values derived from it. rocm_aiter_mla reads dcp_world_size LIVE for
++        # dcp_heads, so only the cached ones need resetting.
++        if self.non_causal_multi_token_decode:
++            self.impl.dcp_world_size = 1
++            for _attr in ("dcp_rank", "_dcp_rank"):
++                if hasattr(self.impl, _attr):
++                    setattr(self.impl, _attr, 0)
++            if hasattr(self.impl, "_decode_num_heads"):
++                self.impl._decode_num_heads = self.num_heads
+         self.q_pad_num_heads = getattr(self.impl, "q_pad_num_heads", None)
+         self.is_amx_bmm_enabled = getattr(self.impl, "uses_amx_bmm", False)
+         # AMX reads kv_b_proj's weight directly and never calls it live; the
+@@ -2275,6 +2288,13 @@
+         except AssertionError:
+             # DCP might not be initialized in testing
+             self.dcp_world_size = 1
++        # K3-DCP-DRAFT-REPL: the replicated non-causal DSpark draft group keeps a
++        # full copy of its KV on every rank, so its attention must run at cp=1.
++        # self.non_causal_multi_token_decode came from THIS group's kv_cache_spec
++        # above, so every DCP-derived quantity below (workspace split, prefill
++        # chunk alignment, decode seq_lens / max_seq_len) follows it.
++        if self.non_causal_multi_token_decode:
++            self.dcp_world_size = 1
+         self.dcp_local_block_size = parallel_config.cp_kv_cache_interleave_size
+         self.dcp_virtual_block_size = self.dcp_local_block_size * self.dcp_world_size
+         self.cp_kv_cache_interleave_size = parallel_config.cp_kv_cache_interleave_size

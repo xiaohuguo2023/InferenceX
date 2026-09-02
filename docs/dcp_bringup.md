@@ -93,16 +93,22 @@ divergence. Apply it to compare:
 cd $V && patch -p1 < /workspace/_patch_dcp_draft_repl.diff        # apply
 cd $V && patch -p1 -R < /workspace/_patch_dcp_draft_repl.diff     # revert
 find $V -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null
-grep -rl K3-DCP-DRAFT-REPL $V --include=*.py | grep -v __pycache__ | wc -l   # -> 8
+grep -rl K3-DCP-DRAFT-REPL $V --include=*.py | grep -v __pycache__ | wc -l   # -> 9
 ```
 
-Touches 8 files / 10 marker lines: `v1/kv_cache_interface.py` (spec runs at cp=1),
-`v1/worker/gpu/block_table.py` (per-group `cp_sizes` + Triton kernel),
-`v1/worker/gpu/model_runner.py` (builds `cp_sizes_per_group`),
+Touches 9 files / 12 marker lines, in two halves.
+
+*KV management* — where the draft's blocks live: `v1/kv_cache_interface.py` (spec
+runs at cp=1), `v1/worker/gpu/block_table.py` (per-group `cp_sizes` + Triton
+kernel), `v1/worker/gpu/model_runner.py` (builds `cp_sizes_per_group`),
 `v1/worker/gpu/spec_decode/dflash/speculator.py` (`cp_sizes[gid]`, not the global
-`cp_size`), `v1/worker/gpu/attn_utils.py` (per-group `dcp_local_seq_lens` --
-see the defect note below), plus `v1/core/{kv_cache_coordinator,kv_cache_utils,
-single_type_kv_cache_manager}.py` on the lookup/allocation paths.
+`cp_size`), `v1/worker/gpu/attn_utils.py` (per-group `dcp_local_seq_lens`), plus
+`v1/core/{kv_cache_coordinator,kv_cache_utils,single_type_kv_cache_manager}.py` on
+the lookup/allocation paths.
+
+*Attention* — how the draft **reads** those blocks:
+`model_executor/layers/attention/mla_attention.py`, 2 sites. Both halves are
+required; see the defect note below for what happens with only the first.
 
 The diff is generated against the *unpatched* 1dc464d files; if the image moves,
 regenerate rather than force-applying.
@@ -135,30 +141,76 @@ the measurement above supersedes it. Something downstream of the per-group block
 size carries the effect; the exact mechanism is still unpinned, but the effect is
 no longer in question.
 
-#### Known defect: this patch alone collapses acceptance length
+#### Fixed defect: the KV-management half alone collapses acceptance length
 
-The same A/B measured **AL 1.03 in the patched arm at every concurrency**, against
-2.37-2.41 upstream, with position-0 draft acceptance of 2.5% vs 67.7%. That is a
-broken draft, not low acceptance.
+Worth reading even though it is fixed -- it is the third instance of the same
+class of bug, and the next per-group CP change will hit it again.
 
-Root cause: `dcp_local_seq_lens` tells each attention group how much of its
-context is resident on this rank. It is computed **once** from the global
-`dcp_size` (`v1/worker/gpu/model_runner.py:1264`, and at capture time in
-`spec_decode/dflash/cudagraph.py:46`) into a **single shared buffer**, then passed
-to every group by `build_attn_metadata`. The replicated draft runs at cp=1, so its
-whole context is local -- but it was being told only `seq_len/8` was resident, and
-attended over one eighth of its own KV. Same failure mode as the earlier
-`speculator.py` global-`cp_size` bug, at a fourth site the first pass missed.
+The 2026-09-02 A/B measured **AL 1.03 in the patched arm at every concurrency**,
+against 2.37-2.41 upstream, with position-0 draft acceptance of 2.5% vs 67.7%.
+That is a broken draft, not low acceptance -- a draft that merely disagreed would
+still get token 0 right most of the time.
 
-The fix is the `v1/worker/gpu/attn_utils.py` hunk in the diff: select the
-unscaled `seq_lens` for groups marked `non_causal_multi_token_decode`. It needs no
-new buffer and no capture change. **The AL/ITL/throughput half of the 2026-09-02
-A/B was run before this hunk existed and is void; the cache% half stands, because
-prefix-cache accounting does not depend on the draft reading the right KV.**
+Root cause: the patch made the draft group replicated everywhere its **blocks**
+are managed, but the **attention** code still read the global DCP size:
 
-Independently of that, the patch has draft-side effects worth measuring on their
-own: acceptance length, decode ITL, and the KV capacity cost of replicating the
-draft (5 MLA layers x 576 B/token: ~2,880 B/tok/rank replicated vs ~360 sharded).
+- `mla_attention.py:2274` -- the metadata builder does
+  `self.dcp_world_size = get_dcp_group().world_size`, i.e. 8, for *every* group.
+  It already reads `non_causal_multi_token_decode` off the group's spec 27 lines
+  earlier, and never used it here.
+- `mla_attention.py:3159` -- the attention impl does the same from
+  `parallel_config.decode_context_parallel_size`.
+
+So the draft attended with round-robin CP indexing and a cross-rank LSE combine
+over a block table in which **every rank already holds the full KV**. Each rank
+read a different wrong eighth and the combine summed them.
+
+Tell-tale: `rocm_aiter_mla.py:1977-1986` already carried comments reading *"the
+replicated non-causal draft group has its `impl.dcp_world_size` forced to 1 by the
+layer AFTER construction"*. That forcing site had never been written -- the
+backend was patched for a mechanism that did not exist.
+
+Fix (the `mla_attention.py` half of the diff, both gated on
+`non_causal_multi_token_decode`):
+
+- builder `__init__`: force `self.dcp_world_size = 1` **before** the DCP-derived
+  quantities below it (`dcp_virtual_block_size`, the chunked-prefill workspace
+  split, the decode `seq_lens`/`max_seq_len` rescale).
+- layer `__init__`, immediately after `self.impl = impl_cls(...)`: force
+  `impl.dcp_world_size = 1`, `dcp_rank = 0`, and reset the cached
+  `_decode_num_heads`. `rocm_aiter_mla` reads `dcp_world_size` live for
+  `dcp_heads`, so only the cached values need resetting.
+
+Verified 2026-09-02 03:50 on a conc-4 / 20-request probe: **AL 1.03 -> 2.12**,
+position-0 acceptance 2.5% -> **68.2%** (sharded reference 67.7%), and the
+histogram decays geometrically instead of sitting flat in noise:
+
+| | pos-0 | 1 | 2 | 3 | 4 | 5 | 6 | AL |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| broken | 3,670 | 326 | 138 | 118 | 113 | 2 | 0 | 1.03 |
+| fixed | 4,043 | 2,327 | 223 | 40 | 17 | 9 | 8 | 2.12 |
+
+Read 2.12 as "the mechanism is fixed", not as a parity number: it is a 20-request
+probe with warmup inside the numerator, against sweep points that ran 900 s. Full
+parity vs the sharded arm's 2.37-2.41 is unmeasured.
+
+**The AL/ITL/throughput half of the 2026-09-02 A/B predates this fix and is void;
+the cache% half stands, because prefix-cache accounting does not depend on the
+draft reading the right KV.** A first attempt that only swapped the
+`dcp_local_seq_lens` tensor per group (the `attn_utils.py` hunk) was measured
+ineffective on GPU -- it is correct and kept, but it is not the fix, because the
+builder rescales `seq_lens` and `max_seq_len` from `dcp_world_size` regardless of
+which tensor it was handed.
+
+**Generalisable rule:** when adding a per-group CP degree, audit every consumer of
+the *global* `dcp_size`/`cp_size` in both the KV-management path **and** the
+attention path. Five sites so far: block-table row width, slot-mapping write,
+speculator kernel arg, attention local seq len, and the attention builder+impl
+world size.
+
+Still worth measuring on their own: decode ITL and the KV capacity cost of
+replicating the draft (5 MLA layers x 576 B/token: ~2,880 B/tok/rank replicated vs
+~360 sharded).
 
 #### Pre-check before spending a GPU-hour
 
