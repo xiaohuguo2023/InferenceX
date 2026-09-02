@@ -10,7 +10,19 @@ interactivity table + SLA gates, and then AUTO-FLAGS anomalies:
   - ITL non-monotonic across concurrency  -> decode bubble (e.g. conc-4/12
     PIECEWISE/eager-attention fallback: a LOWER conc slower than a HIGHER one)
   - ITL cliff between adjacent concs       -> a knee (super-linear decode cost)
-  - ITL tail (p90/p50 spread)              -> stragglers / capture miss / eviction
+  - ITL tail                               -> stragglers / capture miss / eviction
+    NOTE: aiperf's inter_token_latency is a PER-REQUEST AVERAGE, so a point has
+    only `request_count` samples (40 at conc-8), and the sweep is NOT steady
+    state: requests arrive in waves of `conc` and the survivors drain at falling
+    concurrency. That ramp alone yields p90/p50 ~1.2-1.4 on every healthy point,
+    so the old fixed p90/p50 > 1.30 test false-positived constantly at low conc.
+    Two changes: (a) the statistic is TAIL LIFT = mean(slowest decile)/p50, which
+    unlike p90 does not sit on the boundary of a small straggler cluster; (b) it
+    fires only when a bootstrap 95% CI LOWER BOUND clears the threshold. Measured
+    separation: ramp-only points score 1.12-1.43, a real 15%-of-requests-at-2x
+    straggler cluster scores 2.08. Known blind spot: with n=40 the slowest decile
+    is 4 requests, so a cluster of <=2 stragglers is below resolution — raise the
+    request count at that point if you need to resolve it.
   - TTFT cliff across concurrency          -> prefill/scheduling pressure
   - prefix-cache-hit collapse              -> KV eviction (the conc16->24 knee)
   - OSL != 350 / osl_mismatch              -> invalid point (shape didn't hold)
@@ -22,7 +34,9 @@ Thresholds are deliberately conservative; tune via the CONSTANTS block. Exit
 code is 0 always (diagnostic, not a gate) but the flag count is printed.
 """
 import json
+import math
 import os
+import random
 import re
 import sys
 
@@ -30,7 +44,14 @@ import sys
 TP = 8
 ITL_MONO_TOL = 1.05      # lower-conc ITL may exceed higher-conc ITL by at most 5%
 ITL_CLIFF = 1.60         # adjacent-conc ITL_p50 jump ratio that counts as a knee
-ITL_TAIL = 1.30          # p90/p50 spread that counts as a tail problem
+ITL_TAIL_LIFT = 1.50     # mean(slowest decile)/p50 that counts as a real tail.
+                         # Ramp-only points measure 1.12-1.43; a 15%-at-2x
+                         # straggler cluster measures ~2.08. See docstring NOTE.
+ITL_TAIL_DECILE = 0.10   # fraction of slowest requests forming the "tail"
+ITL_TAIL_BOOT = 4000     # bootstrap resamples for the tail-lift CI
+ITL_TAIL_CI = 95.0       # two-sided CI; flag only if the LOWER bound > threshold
+ITL_TAIL = 1.30          # FALLBACK p90/p50 test, used only when the per-request
+ITL_TAIL_MIN_N = 80      # samples are missing AND n >= ITL_TAIL_MIN_N
 TTFT_CLIFF = 2.00        # adjacent-conc TTFT_p50 jump ratio that counts as a cliff
 CACHE_DROP_PTS = 5.0     # abs %-point prefix-cache-hit drop as conc rises
 AL_MIN = 2.0             # mean accepted length floor for spec decode
@@ -109,6 +130,60 @@ def conc_of(name):
     return int(m.group(1)) if m else 1 << 30
 
 
+def itl_samples(pt, n_profiling):
+    """Per-request ITL values for the PROFILING phase only.
+
+    profile_export.jsonl holds warmup + profiling records with no phase tag, but
+    the profiling aiperf json reports how many there are, and warmup always runs
+    first — so the profiling set is the last `n_profiling` by request_start_ns.
+    """
+    p = os.path.join(pt, "profile_export.jsonl")
+    if not os.path.exists(p) or not n_profiling:
+        return []
+    recs = []
+    for line in open(p):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            r = json.loads(line)
+            v = r["metrics"]["inter_token_latency"]
+            recs.append((r["metadata"]["request_start_ns"],
+                         v["value"] if isinstance(v, dict) else v))
+        except (ValueError, KeyError, TypeError):
+            continue
+    recs.sort()
+    return [v for _, v in recs][-int(n_profiling):]
+
+
+def pctl(xs, q):
+    xs = sorted(xs)
+    if not xs:
+        return None
+    k = (len(xs) - 1) * q / 100.0
+    lo, hi = math.floor(k), math.ceil(k)
+    return xs[lo] if lo == hi else xs[lo] + (xs[hi] - xs[lo]) * (k - lo)
+
+
+def tail_lift(xs):
+    """mean(slowest decile) / p50 -- see the ITL-tail NOTE in the docstring."""
+    s = sorted(xs)
+    k = max(1, round(len(s) * ITL_TAIL_DECILE))
+    return (sum(s[-k:]) / k) / pctl(s, 50)
+
+
+def tail_lift_ci(xs, conf=ITL_TAIL_CI, n_boot=ITL_TAIL_BOOT, seed=0):
+    """Bootstrap CI for tail_lift on a small sample. Returns (obs, lo, hi)."""
+    if len(xs) < 8:
+        return None
+    rnd = random.Random(seed)
+    n = len(xs)
+    boots = sorted(tail_lift([xs[rnd.randrange(n)] for _ in range(n)])
+                   for _ in range(n_boot))
+    a = (100.0 - conf) / 2.0
+    return tail_lift(xs), pctl(boots, a), pctl(boots, 100.0 - a)
+
+
 rows = []
 for d in sorted(os.listdir(ROOT)):
     pt = os.path.join(ROOT, d)
@@ -141,6 +216,8 @@ for d in sorted(os.listdir(ROOT)):
         "itl_avg": g("inter_token_latency", "avg"),
         "itl_p50": g("inter_token_latency", "p50"),
         "itl_p90": g("inter_token_latency", "p90"),
+        "itl_n": g("inter_token_latency", "count"),
+        "itl_samples": itl_samples(pt, g("inter_token_latency", "count")),
         "peruser": g("output_token_throughput_per_user", "avg"),   # tok/s/user = interactivity
         "out_tps": g("output_token_throughput", "avg"),            # aggregate tok/s
         "isl": g("input_sequence_length", "avg"),
@@ -209,12 +286,30 @@ for lo, hi in zip(have, have[1:]):
             f"{f(lo['itl_p50'],1)}->{f(hi['itl_p50'],1)} ms ({f(hi['itl_p50']/lo['itl_p50'],2)}x). "
             f"Super-linear decode cost — profile this transition (profile-decode-bubble skill).")
 
-# 3. ITL tail (p90/p50)
+# 3. ITL tail (p90/p50) -- sample-size aware, see the NOTE in the module docstring.
+#    aiperf ITL is a per-request average, so n == request_count (40 at conc-8) and
+#    the wave-drain ramp alone yields ~1.2-1.3. Fire only when the tail survives a
+#    bootstrap, or when n is large enough for the raw ratio to mean something.
 for r in have:
-    if r["itl_p90"] and r["itl_p50"] and r["itl_p90"] / r["itl_p50"] > ITL_TAIL:
-        flags.append(
-            f"ITL TAIL: conc-{r['conc']} p90/p50 = {f(r['itl_p90']/r['itl_p50'],2)} "
-            f"({f(r['itl_p50'],1)}/{f(r['itl_p90'],1)} ms). Stragglers / capture miss / eviction jitter.")
+    if not (r["itl_p90"] and r["itl_p50"]):
+        continue
+    n = int(r["itl_n"] or 0)
+    ci = tail_lift_ci(r["itl_samples"])
+    if ci is not None:
+        obs, lo, hi = ci
+        if lo <= ITL_TAIL_LIFT:
+            continue                  # tail not resolvable from this many samples
+        what = (f"tail lift = {f(obs,2)}x (95% CI [{f(lo,2)}, {f(hi,2)}], n={n}); "
+                f"slowest decile vs p50 {f(r['itl_p50'],1)} ms")
+    else:
+        # No per-request samples on disk -> fall back to the raw p90/p50 test,
+        # but only where n is large enough for it to mean anything.
+        if n < ITL_TAIL_MIN_N or r["itl_p90"] / r["itl_p50"] <= ITL_TAIL:
+            continue
+        what = (f"p90/p50 = {f(r['itl_p90']/r['itl_p50'],2)} "
+                f"({f(r['itl_p50'],1)}/{f(r['itl_p90'],1)} ms, n={n}, no raw samples)")
+    flags.append(f"ITL TAIL: conc-{r['conc']} {what}. "
+                 f"Stragglers / capture miss / eviction jitter.")
 
 # 4. TTFT cliff across concurrency
 tt = [r for r in rows if r["ttft_p50"] is not None]
