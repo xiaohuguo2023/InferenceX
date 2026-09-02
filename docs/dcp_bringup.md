@@ -93,14 +93,15 @@ divergence. Apply it to compare:
 cd $V && patch -p1 < /workspace/_patch_dcp_draft_repl.diff        # apply
 cd $V && patch -p1 -R < /workspace/_patch_dcp_draft_repl.diff     # revert
 find $V -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null
-grep -rl K3-DCP-DRAFT-REPL $V --include=*.py | grep -v __pycache__ | wc -l   # -> 6
+grep -rl K3-DCP-DRAFT-REPL $V --include=*.py | grep -v __pycache__ | wc -l   # -> 8
 ```
 
-Touches 6 files / 9 marker lines: `v1/kv_cache_interface.py` (spec runs at cp=1),
+Touches 8 files / 10 marker lines: `v1/kv_cache_interface.py` (spec runs at cp=1),
 `v1/worker/gpu/block_table.py` (per-group `cp_sizes` + Triton kernel),
 `v1/worker/gpu/model_runner.py` (builds `cp_sizes_per_group`),
 `v1/worker/gpu/spec_decode/dflash/speculator.py` (`cp_sizes[gid]`, not the global
-`cp_size`), plus `v1/core/{kv_cache_coordinator,kv_cache_utils,
+`cp_size`), `v1/worker/gpu/attn_utils.py` (per-group `dcp_local_seq_lens` --
+see the defect note below), plus `v1/core/{kv_cache_coordinator,kv_cache_utils,
 single_type_kv_cache_manager}.py` on the lookup/allocation paths.
 
 The diff is generated against the *unpatched* 1dc464d files; if the image moves,
@@ -112,30 +113,48 @@ Every hunk is gated on `non_causal_multi_token_decode`, which is set at exactly
 one site (`models/kimi_k3/nvidia/dspark_mla.py:81`) and marks the DSpark draft
 group. **The target attention group is untouched in both arms.**
 
-**Whether that can move the prefix-cache rate is genuinely unresolved**, and the
-two lines of evidence disagree. Do not quote either one as settled:
+**This patch does move the prefix-cache rate, decisively — measured 2026-09-02.**
+A full 9-point A/B on the long-context sweep, same image, same serve config, same
+`GPU KV cache size: 12,685,809 tokens` in both arms:
 
-*Source reading says it should not.* The draft and target MLA groups share the
-same `cache_config`, so they have the same base block size, and `MLAAttentionSpec`
-subclasses `FullAttentionSpec`, so both are DCP-scaled in the coordinator.
-`resolve_dcp_kv_block_size` therefore returns 1,536 x 8 = **12,288 tokens** for the
-target in both arms, and `HybridKVCacheCoordinator.find_longest_cache_hit`
-(`v1/core/kv_cache_coordinator.py:757`) is a fixed-point loop in which
-`curr_hit_length` only ever shrinks — the combined hit is the **minimum across
-groups**. On that reading the coarse target floors the hit length whatever the
-draft does, and the patch should be worth ~0.
+| conc | 1 | 2 | 4 | 8 | 12 | 16 | 24 | 32 | 48 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| cache% sharded (upstream) | 90.2 | 90.2 | 90.2 | 90.2 | 90.2 | **15.0** | 0.7 | 0.5 | 0.4 |
+| cache% repl (this patch)  | 90.2 | 90.2 | 90.2 | 90.2 | 90.2 | **90.2** | 90.2 | 89.7 | 89.5 |
 
-*Measurement says otherwise.* On the long-context sweep, dropping these same three
-core hunks swung the conc-16 prefix-cache rate from **90.2% to 15.0%** — a 75 pp
-effect attributed to this patch by a whole-directory diff of `vllm/v1/core/`
-between two nightlies that differ by nothing else. That is far too large to be
-noise.
+The upstream arm falls off the documented conc-12 -> 16 cliff and never recovers;
+the patched arm holds ~90% to conc-48. KV capacity is identical in both, so this
+is block *granularity*, not capacity.
 
-So the source read above is incomplete — something downstream of the per-group
-block size (the `scheduler_block_size` LCM, `hash_block_size`, the alignment
-tokens, or the hybrid Mamba/KDA group's interaction) is carrying the effect. Until
-that is pinned down, treat the agentic cache-rate question as **open**, and settle
-it with the pre-check below rather than with an argument.
+An earlier source-level argument in this doc claimed the patch could not matter,
+on the grounds that `MLAAttentionSpec` subclasses `FullAttentionSpec` so the
+target group is DCP-scaled in both arms and
+`HybridKVCacheCoordinator.find_longest_cache_hit` takes the **min across groups**,
+flooring the hit at the target's 12,288-token span. **That argument was wrong** --
+the measurement above supersedes it. Something downstream of the per-group block
+size carries the effect; the exact mechanism is still unpinned, but the effect is
+no longer in question.
+
+#### Known defect: this patch alone collapses acceptance length
+
+The same A/B measured **AL 1.03 in the patched arm at every concurrency**, against
+2.37-2.41 upstream, with position-0 draft acceptance of 2.5% vs 67.7%. That is a
+broken draft, not low acceptance.
+
+Root cause: `dcp_local_seq_lens` tells each attention group how much of its
+context is resident on this rank. It is computed **once** from the global
+`dcp_size` (`v1/worker/gpu/model_runner.py:1264`, and at capture time in
+`spec_decode/dflash/cudagraph.py:46`) into a **single shared buffer**, then passed
+to every group by `build_attn_metadata`. The replicated draft runs at cp=1, so its
+whole context is local -- but it was being told only `seq_len/8` was resident, and
+attended over one eighth of its own KV. Same failure mode as the earlier
+`speculator.py` global-`cp_size` bug, at a fourth site the first pass missed.
+
+The fix is the `v1/worker/gpu/attn_utils.py` hunk in the diff: select the
+unscaled `seq_lens` for groups marked `non_causal_multi_token_decode`. It needs no
+new buffer and no capture change. **The AL/ITL/throughput half of the 2026-09-02
+A/B was run before this hunk existed and is void; the cache% half stands, because
+prefix-cache accounting does not depend on the draft reading the right KV.**
 
 Independently of that, the patch has draft-side effects worth measuring on their
 own: acceptance length, decode ITL, and the KV capacity cost of replicating the

@@ -172,3 +172,34 @@ diff --git a/v1/worker/gpu/spec_decode/dflash/speculator.py b/v1/worker/gpu/spec
                  self.block_tables.cp_interleave,
                  self.parallel_drafting_token_id,
                  self.num_query_per_req,
+diff --git a/v1/worker/gpu/attn_utils.py b/v1/worker/gpu/attn_utils.py
+--- a/v1/worker/gpu/attn_utils.py
++++ b/v1/worker/gpu/attn_utils.py
+@@ -292,6 +292,18 @@
+         group_is_prefilling = common_attn_metadata_extra_kwargs.pop(
+             "is_prefilling", is_prefilling
+         )
++        # K3-DCP-DRAFT-REPL: the replicated draft group runs its attention at
++        # cp=1, so its entire context is local to this rank. dcp_local_seq_lens
++        # is computed once from the GLOBAL dcp_size, so handing it to this group
++        # would claim only seq_len/dcp_size is resident and the draft would
++        # attend over 1/dcp_size of its own KV (reading zeros for the rest ->
++        # acceptance length collapses to ~1.0). Use the unscaled seq_lens.
++        group_spec = kv_cache_config.kv_cache_groups[i].kv_cache_spec
++        group_dcp_local_seq_lens = (
++            seq_lens
++            if getattr(group_spec, "non_causal_multi_token_decode", False)
++            else dcp_local_seq_lens
++        )
+         common_attn_metadata = CommonAttentionMetadata(
+             query_start_loc=query_start_loc_gpu,
+             query_start_loc_cpu=query_start_loc_cpu,
+@@ -304,7 +316,7 @@
+             block_table_tensor=block_table,
+             slot_mapping=slot_mapping,
+             causal=group_causal,
+-            dcp_local_seq_lens=dcp_local_seq_lens,
++            dcp_local_seq_lens=group_dcp_local_seq_lens,
+             positions=positions,
+             is_prefilling=group_is_prefilling,
+             mm_req_doc_ranges=mm_req_doc_ranges,
