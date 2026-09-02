@@ -144,7 +144,17 @@ def build_vllm_config(args):
         load_format="dummy",
         enforce_eager=False,
     )
-    return engine_args.create_engine_config()
+    cfg = engine_args.create_engine_config()
+    if args.heads:
+        # Simulate a different attention group's decode shape on the same
+        # config. The DSpark draft has 64 attention heads (8 local at TP8 ->
+        # 64 DCP-gathered), so it runs the cprr asm decode at a NATIVE head
+        # count with no 96->128 pad -- a kernel variant the target-shaped
+        # verification never touches.
+        # get_num_attention_heads() reads model_arch_config, a snapshot taken
+        # at config-creation time -- patching hf_config alone is inert.
+        cfg.model_config.model_arch_config.total_num_attention_heads = args.heads
+    return cfg
 
 
 def build_kv_spec(vllm_config, head_size: int, non_causal: bool):
@@ -278,7 +288,10 @@ def build_impl(vllm_config, num_heads: int, dcp: int, cp_rank: int, kv_dtype: st
     impl.pcp_world_size = 1
     impl.kv_cache_dtype = kv_dtype
     impl.scale = (impl.kv_lora_rank + impl.qk_rope_head_dim) ** -0.5
-    impl._decode_num_heads = num_heads * dcp
+    # `_decode_num_heads` is a read-only property on the impl (it derives
+    # num_heads * dcp_world_size, both set above); only the builder carries it
+    # as a plain attribute. Assert rather than assign.
+    assert impl._decode_num_heads == num_heads * dcp
     return impl
 
 
@@ -483,7 +496,7 @@ def run_numerics(args) -> bool:
             max_shard_err = max(max_shard_err, err)
             print(
                 f"[numerics] shard {r}: local_len={local_len} "
-                f"fold={'yes' if md.decode.fold_qo_indptr is not None else 'no'} "
+                f"cprr={'yes' if md.decode.asm_decode_num_heads else 'no'} "
                 f"rel|o-ref_partial|={err:.4e}",
                 flush=True,
             )
@@ -551,8 +564,9 @@ def run_rank(args, cp_rank: int) -> bool:
         print(
             f"[cp_rank={cp_rank}] num_heads={num_heads} dcp={dcp_eff} "
             f"decode_num_heads={builder._decode_num_heads} "
-            f"fold_factor={builder._dcp_fold_factor} "
-            f"fold_heads={builder._dcp_fold_heads} qlen={qlen}",
+            f"asm_dcp_verify={builder._asm_dcp_verify} "
+            f"asm_heads={builder._asm_dcp_verify_heads} "
+            f"kernel_heads={builder._num_attention_heads} qlen={qlen}",
             flush=True,
         )
 
@@ -566,16 +580,17 @@ def run_rank(args, cp_rank: int) -> bool:
             return False
         print(
             f"[cp_rank={cp_rank}] decode: max_qo_len={decode.max_qo_len} "
-            f"fold_qo_indptr={'set' if decode.fold_qo_indptr is not None else 'None'} "
-            f"fold_num_reqs={decode.fold_num_reqs} "
+            f"g_kv_indptr={'set' if decode.g_kv_indptr is not None else 'None'} "
+            f"asm_decode_num_heads={decode.asm_decode_num_heads} "
+            f"dcp_verify={'set' if decode.dcp_verify is not None else 'None'} "
             f"cp_world_size={decode.cp_world_size} cp_rank={decode.cp_rank} "
             f"persistent={decode.has_persistent_metadata}",
             flush=True,
         )
-        if decode.fold_qo_indptr is None:
+        if decode.asm_decode_num_heads == 0:
             print(
-                f"[cp_rank={cp_rank}] NOTE: fold path not selected for this shape "
-                f"-- forward_mqa will take the unfolded dcp branch"
+                f"[cp_rank={cp_rank}] NOTE: asm cprr route not selected for this "
+                f"shape -- forward_mqa will take the plain dcp branch"
             )
 
         # synthetic fp8 KV cache + q, sized from the metadata we just built
@@ -659,6 +674,9 @@ def main() -> int:
     ap.add_argument("--rank", type=int, default=0)
     ap.add_argument("--non-causal", action="store_true",
                     help="simulate the replicated DSpark draft group (#51705)")
+    ap.add_argument("--heads", type=int, default=0,
+                    help="override total attention heads (0 = target's own). "
+                         "64 = the DSpark draft's shape")
     ap.add_argument("--qlen", type=int, default=0,
                     help="override the verify length (0 = production value)")
     ap.add_argument("--interleave", type=int, default=1,

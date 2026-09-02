@@ -667,11 +667,15 @@ def phase_fold(args, ctx):
     log("fold", "builder ctor AFTER", f"took={time.perf_counter() - t:.2f}s")
 
     qlen = args.qlen or builder._mtp_decode_qlen
-    log("fold", "fold params",
+    # The head-fold was superseded by pad-to-native (96 -> 128, one native cprr
+    # kernel, real heads sliced back off as a view). Report the pad instead.
+    log("fold", "cprr params",
         f"num_heads={builder.num_heads} dcp={builder.dcp_world_size} "
         f"decode_num_heads={builder._decode_num_heads} "
-        f"fold_factor={builder._dcp_fold_factor} "
-        f"fold_heads={builder._dcp_fold_heads} qlen={qlen}")
+        f"asm_dcp_verify={builder._asm_dcp_verify} "
+        f"asm_heads={builder._asm_dcp_verify_heads} "
+        f"kernel_heads={builder._num_attention_heads} "
+        f"segmented={builder._supports_segmented_dcp_verify} qlen={qlen}")
 
     common, num_pages = sa.build_common_metadata(
         device, args.reqs, qlen, args.ctx, builder.dcp_world_size)
@@ -687,14 +691,19 @@ def phase_fold(args, ctx):
         raise RuntimeError("builder produced no decode metadata")
     log("fold", "decode metadata",
         f"max_qo_len={decode.max_qo_len} "
-        f"fold_qo_indptr={'set' if decode.fold_qo_indptr is not None else 'None'} "
-        f"fold_num_reqs={decode.fold_num_reqs} "
+        f"g_kv_indptr={'set' if decode.g_kv_indptr is not None else 'None'} "
+        f"asm_decode_num_heads={decode.asm_decode_num_heads} "
+        f"dcp_verify={'set' if decode.dcp_verify is not None else 'None'} "
         f"cp_world_size={decode.cp_world_size} cp_rank={decode.cp_rank} "
         f"persistent={decode.has_persistent_metadata}")
-    if decode.fold_qo_indptr is None:
+    if decode.dcp_verify is not None:
         log("fold", "NOTE",
-            "fold path NOT selected for this shape -- forward_mqa will take the "
-            "unfolded dcp branch, so `mla` is testing a different kernel")
+            "segmented (Triton) DCP verify selected -- `mla` is NOT testing the "
+            "asm cprr kernel. Unset VLLM_ROCM_AITER_MLA_DCP_VERIFY.")
+    elif decode.asm_decode_num_heads == 0:
+        log("fold", "NOTE",
+            "asm cprr route NOT selected for this shape -- forward_mqa will take "
+            "the plain dcp branch, so `mla` is testing a different kernel")
 
     ctx.update(builder=builder, md=md, qlen=qlen, num_pages=num_pages,
                head_size=head_size)
