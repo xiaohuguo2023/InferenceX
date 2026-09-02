@@ -47,12 +47,40 @@ untuned configs.
 ```bash
 V=/usr/local/lib/python3.12/dist-packages/vllm
 cd /workspace
+python3 _patch_draft_causal.py                              # checkpoint, NOT vLLM — see 3a
 python3 _port_dcp_nightly_ba07e4a4.py                       # hunks A-D: DCP MLA plumbing
 python3 _patch_pad128.py                                    # pad 96 heads -> 128 (not fold)
 python3 k3_dcp_direct_hip/_patch_dcp_skip_multicast_probe.py
 ```
 
-All three are anchor-guarded and idempotent; each takes `--revert`.
+All four are anchor-guarded and idempotent; each takes `--revert`.
+
+### 3a. Force the draft causal — the one patch that lives outside vLLM
+
+The DSpark draft checkpoint ships with **no** `dflash_config`. vLLM resolves
+per-layer causality in `models/qwen3_dflash.py::_dflash_layer_causal` in this
+order — `config.is_causal`, then `dflash_config["causal"]`, then
+`layer_types[i] == "sliding_attention"`. This checkpoint has none of the three,
+so every layer resolves **non-causal**, `dflash_has_any_non_causal()` returns
+True, and the draft is routed off the fp8 asm path. `_serve_k3_dcp_test.sh`
+refuses to launch in that state:
+
+```
+!! draft must be forced causal before serve
+```
+
+`_patch_draft_causal.py` writes `"dflash_config": {"causal": true}` into
+`/dev/shm/hf-cache/models--Inferact--Kimi-K3-DSpark/snapshots/*/config.json`.
+That path is a symlink into the HF `blobs/` store, so the script **replaces the
+symlink with a real file** rather than writing through it — writing through
+would corrupt the shared content-addressed blob.
+
+**This is a checkpoint edit, so it does not survive a `/dev/shm` wipe or a
+re-download**, and re-downloads are routine here (`/dev/shm` has no fstab entry
+and resets on reboot). Nothing in the vLLM patch chain restores it. Re-run the
+script after any re-download; `--check` exits non-zero if it is missing, which
+is the cheap thing to put in front of a batch run. A silent re-download is
+exactly what killed the 2026-09-01 DCP A/B, 71 s in.
 
 ### 3b. `K3-DCP-DRAFT-REPL` (optional — this is the A/B knob)
 
