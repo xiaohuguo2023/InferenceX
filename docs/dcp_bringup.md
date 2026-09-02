@@ -93,10 +93,10 @@ divergence. Apply it to compare:
 cd $V && patch -p1 < /workspace/_patch_dcp_draft_repl.diff        # apply
 cd $V && patch -p1 -R < /workspace/_patch_dcp_draft_repl.diff     # revert
 find $V -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null
-grep -rl K3-DCP-DRAFT-REPL $V --include=*.py | grep -v __pycache__ | wc -l   # -> 9
+grep -rl K3-DCP-DRAFT-REPL $V --include=*.py | grep -v __pycache__ | wc -l   # -> 10
 ```
 
-Touches 9 files / 12 marker lines, in two halves.
+Touches 10 files / 14 marker lines, in two halves.
 
 *KV management* — where the draft's blocks live: `v1/kv_cache_interface.py` (spec
 runs at cp=1), `v1/worker/gpu/block_table.py` (per-group `cp_sizes` + Triton
@@ -107,8 +107,19 @@ kernel), `v1/worker/gpu/model_runner.py` (builds `cp_sizes_per_group`),
 the lookup/allocation paths.
 
 *Attention* — how the draft **reads** those blocks:
-`model_executor/layers/attention/mla_attention.py`, 2 sites. Both halves are
-required; see the defect note below for what happens with only the first.
+`models/kimi_k3/nvidia/mla.py` (2 sites: impl cp=1, and the layer collapse that
+leaves `dcp_manager` None) and `model_executor/layers/attention/mla_attention.py`
+(2 sites: the shared metadata builder, plus the same collapse on the generic
+`MLAAttention` layer).
+
+**The draft uses `kimi_k3/nvidia/mla.py`, not `mla_attention.MLAAttention`.**
+`dspark_mla.py:26` imports `MultiHeadLatentAttention` from the former, which is a
+standalone `nn.Module` that builds its own impl and its own `MLADCPManager` — it
+does *not* subclass `MLAAttention`. Patching only `mla_attention.py` leaves the
+draft layer at `dcp_world_size = 8`. The `mla_attention.py` layer hunk is kept as
+the generic analogue but is **dead code on this model**; the builder hunk in that
+file is shared and does apply. Both halves are required; see the defect note
+below for what happens with only the first.
 
 The diff is generated against the *unpatched* 1dc464d files; if the image moves,
 regenerate rather than force-applying.
@@ -170,16 +181,26 @@ replicated non-causal draft group has its `impl.dcp_world_size` forced to 1 by t
 layer AFTER construction"*. That forcing site had never been written -- the
 backend was patched for a mechanism that did not exist.
 
-Fix (the `mla_attention.py` half of the diff, both gated on
+Fix (the attention half of the diff, every site gated on
 `non_causal_multi_token_decode`):
 
-- builder `__init__`: force `self.dcp_world_size = 1` **before** the DCP-derived
-  quantities below it (`dcp_virtual_block_size`, the chunked-prefill workspace
-  split, the decode `seq_lens`/`max_seq_len` rescale).
-- layer `__init__`, immediately after `self.impl = impl_cls(...)`: force
-  `impl.dcp_world_size = 1`, `dcp_rank = 0`, and reset the cached
+- `mla_attention.py` builder `__init__`: force `self.dcp_world_size = 1`
+  **before** the DCP-derived quantities below it (`dcp_virtual_block_size`, the
+  chunked-prefill workspace split, the decode `seq_lens`/`max_seq_len` rescale).
+  This builder is shared by every group, so it applies to the draft.
+- `kimi_k3/nvidia/mla.py` layer `__init__`, after `self.impl = impl_cls(...)`:
+  force `impl.dcp_world_size = 1`, `dcp_rank = 0`, reset the cached
   `_decode_num_heads`. `rocm_aiter_mla` reads `dcp_world_size` live for
   `dcp_heads`, so only the cached values need resetting.
+- `kimi_k3/nvidia/mla.py`, at `self.dcp_world_size = ...`: collapse the layer to
+  cp=1 so `dcp_manager` stays `None` and `forward()` skips both the cross-rank
+  `query_gather` and the LSE `combine`. **This is the attention-manager collapse
+  the ATOM sharded-draft port deleted.** Omitting it is not a correctness bug --
+  the LSE combine of 8 identical full-context results renormalises to the right
+  answer -- but it costs 8x redundant attention work and two collectives per
+  layer per step, so any perf number taken without it is invalid.
+- `mla_attention.py` `MLAAttention.__init__`: the same collapse on the generic
+  layer. Dead code for K3 (see above); kept as the analogue.
 
 Verified 2026-09-02 03:50 on a conc-4 / 20-request probe: **AL 1.03 -> 2.12**,
 position-0 acceptance 2.5% -> **68.2%** (sharded reference 67.7%), and the
@@ -190,9 +211,14 @@ histogram decays geometrically instead of sitting flat in noise:
 | broken | 3,670 | 326 | 138 | 118 | 113 | 2 | 0 | 1.03 |
 | fixed | 4,043 | 2,327 | 223 | 40 | 17 | 9 | 8 | 2.12 |
 
-Read 2.12 as "the mechanism is fixed", not as a parity number: it is a 20-request
-probe with warmup inside the numerator, against sweep points that ran 900 s. Full
-parity vs the sharded arm's 2.37-2.41 is unmeasured.
+Read 2.12 as "the mechanism is fixed", not as a parity number. Three reasons not
+to quote it: it is a 20-request probe with warmup inside the numerator, against
+sweep points that ran 900 s; it was taken before the `kimi_k3/nvidia/mla.py`
+collapse existed, so the draft was still doing 8x redundant attention; and a
+stale bench chain from an earlier run (its driver was killed, its `aiperf`
+workers were not) may have been driving traffic at the same port. That last one
+would pull AL *down*, so 2.12 is a lower bound -- but check for orphaned `aiperf`
+processes before trusting any `/metrics`-delta number, not just the driver PID.
 
 **The AL/ITL/throughput half of the 2026-09-02 A/B predates this fix and is void;
 the cache% half stands, because prefix-cache accounting does not depend on the
@@ -204,9 +230,16 @@ which tensor it was handed.
 
 **Generalisable rule:** when adding a per-group CP degree, audit every consumer of
 the *global* `dcp_size`/`cp_size` in both the KV-management path **and** the
-attention path. Five sites so far: block-table row width, slot-mapping write,
-speculator kernel arg, attention local seq len, and the attention builder+impl
-world size.
+attention path -- and check *which class the model actually instantiates* before
+concluding a layer-level fix is live. Six sites so far: block-table row width,
+slot-mapping write, speculator kernel arg, attention local seq len, the attention
+builder world size, and the layer/impl world size + DCP manager.
+
+Two traps this bug walked into, both worth reusing:
+- `rocm_aiter_mla.py:1977-1986` documented a forcing site that had never been
+  written. **When a comment describes a mechanism, grep for the mechanism.**
+- The first attention-side fix landed in `mla_attention.MLAAttention`, which K3
+  does not use. **Confirm the import path before believing a layer patch runs.**
 
 Still worth measuring on their own: decode ITL and the KV capacity cost of
 replicating the draft (5 MLA layers x 576 B/token: ~2,880 B/tok/rank replicated vs

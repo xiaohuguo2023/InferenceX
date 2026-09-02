@@ -240,3 +240,41 @@ diff --git a/vllm/model_executor/layers/attention/mla_attention.py b/vllm/model_
          self.dcp_local_block_size = parallel_config.cp_kv_cache_interleave_size
          self.dcp_virtual_block_size = self.dcp_local_block_size * self.dcp_world_size
          self.cp_kv_cache_interleave_size = parallel_config.cp_kv_cache_interleave_size
+diff --git a/vllm/models/kimi_k3/nvidia/mla.py b/vllm/models/kimi_k3/nvidia/mla.py
+--- a/vllm/models/kimi_k3/nvidia/mla.py
++++ b/vllm/models/kimi_k3/nvidia/mla.py
+@@ -361,6 +361,19 @@
+             # is non negative; manually set here if not set by caller (-1 is unset)
+             self.impl.dcp_world_size = 1
+             self.impl.dcp_rank = 0
++        # K3-DCP-DRAFT-REPL: this is the layer the DSpark draft actually uses
++        # (dspark_mla.py imports MultiHeadLatentAttention from here, NOT
++        # mla_attention.MLAAttention). The replicated draft group holds a full copy
++        # of its KV on every rank, so its impl must not do round-robin CP indexing.
++        # rocm_aiter_mla reads dcp_world_size live for dcp_heads; only the cached
++        # values need resetting.
++        if self.non_causal_multi_token_decode:
++            self.impl.dcp_world_size = 1
++            for _attr in ("dcp_rank", "_dcp_rank"):
++                if hasattr(self.impl, _attr):
++                    setattr(self.impl, _attr, 0)
++            if hasattr(self.impl, "_decode_num_heads"):
++                self.impl._decode_num_heads = self.num_local_heads
+         self.q_pad_num_heads = getattr(self.impl, "q_pad_num_heads", None)
+ 
+         vllm_config = get_current_vllm_config()
+@@ -370,6 +383,14 @@
+             "parallelism."
+         )
+         self.dcp_world_size = parallel_config.decode_context_parallel_size
++        # K3-DCP-DRAFT-REPL: collapse the layer to cp=1 for the replicated draft.
++        # This is the attention-manager collapse that the ATOM sharded-draft port
++        # deleted: with a replicated KV group every rank already holds the whole
++        # context, so the cross-rank query_gather and LSE combine in forward() are
++        # 8x redundant work plus two collectives per layer per step. Setting this
++        # to 1 leaves dcp_manager None and skips both branches.
++        if self.non_causal_multi_token_decode:
++            self.dcp_world_size = 1
+         self.dcp_manager: MLADCPManager | None = None
+         if self.dcp_world_size > 1:
+             query_dtype = (
