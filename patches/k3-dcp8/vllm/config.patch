@@ -1,0 +1,34 @@
+--- a/model_executor/models/config.py
++++ b/model_executor/models/config.py
+@@ -381,6 +381,31 @@
+             ):
+                 quant_config["quant_method"] = "mxfp4"
+ 
++    # --- K3 #51705: prefer the a2a DCP combine over the default ag_rs ---
++    # MEASURED on MI355X (gfx950, 8-rank xGMI), wall ms per combine call:
++    #   T=5   ag_rs 0.107  a2a 0.095 (1.13x)
++    #   T=48  ag_rs 0.111  a2a 0.097 (1.15x)
++    #   T=144 ag_rs 0.136  a2a 0.101 (1.35x)
++    # a2a wins at every token count and the margin grows with T: it is one
++    # all_to_all_single instead of allgather(lse) + reduce_scatter(out). combine
++    # runs per MLA layer per decode step, so this multiplies by the layer count.
++    # cos-similarity vs ag_rs was >= 0.999994 across the sweep.
++    #
++    # Deliberately NOT setting q_replicate=True (GlmMoeDsa does): that changes
++    # weight loading and is an independent, unmeasured perf question.
++    #
++    # This does NOT select the symmetric-memory `direct` path. On ROCm
++    # direct_cp_enabled() falls back to current_platform.is_cuda() (False), so
++    # get_direct_dcp_a2a_workspace() returns None and _init_combine falls
++    # through to dcp_a2a_lse_reduce. direct is reachable only by explicitly
++    # setting VLLM_USE_DIRECT_DCP_A2A=1, and it should not be: its kernel-issued
++    # peer stores move 17.8 GB/s at T=144 where RCCL moves 140 GB/s over the
++    # same fabric (a single xGMI pair does 60 GB/s), and it strands 24 orphaned
++    # dma-bufs per run.
++    @staticmethod
++    def verify_and_update_config(vllm_config: "VllmConfig") -> None:
++        vllm_config.parallel_config.set_dcp_defaults(comm_backend="a2a")
++
+ 
+ class GptOssForCausalLMConfig(VerifyAndUpdateConfig):
+     @staticmethod

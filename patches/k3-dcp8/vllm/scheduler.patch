@@ -1,0 +1,29 @@
+--- a/distributed/kv_transfer/kv_connector/v1/offloading/scheduler.py
++++ b/distributed/kv_transfer/kv_connector/v1/offloading/scheduler.py
+@@ -1,5 +1,6 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++import os
+ import time
+ from collections.abc import Iterable, Sequence
+ from dataclasses import dataclass, field
+@@ -796,7 +797,18 @@
+                     defer_lookup = True
+                 else:
+                     if is_eagle_unverified:
+-                        num_hit_chunks -= 1
++                        # FIX(full-attn eagle prefix veto): the SWA eagle path
++                        # over-queries one extra chunk (query_max += tpc) above
++                        # and trims it here. The FULL-ATTENTION eagle group runs
++                        # a PREFIX scan, never over-queries, and (offload_prompt
++                        # _only / store-side decode drop) never stores a volatile
++                        # chunk -- so decrementing drops a verified prompt chunk
++                        # and vetoes <=1-chunk prefixes. Only decrement for SWA.
++                        # OFFLOAD_EAGLE_PREFIX_VETO=1 restores upstream behavior.
++                        if (sliding_window_size_in_chunks is not None
++                                or os.environ.get(
++                                    "OFFLOAD_EAGLE_PREFIX_VETO", "0") == "1"):
++                            num_hit_chunks -= 1
+                         eagle_verified.add(group_idx)
+ 
+                     max_hit_size_tokens = min(

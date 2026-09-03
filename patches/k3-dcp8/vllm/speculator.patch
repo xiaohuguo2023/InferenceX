@@ -1,0 +1,17 @@
+--- a/v1/worker/gpu/spec_decode/dflash/speculator.py
++++ b/v1/worker/gpu/spec_decode/dflash/speculator.py
+@@ -139,6 +139,14 @@
+ 
+     def capture(self) -> None:
+         logger.info("Capturing model for %s speculator...", self._speculator_name)
++        # K3-DCP-SPECCAP-BARRIER: under DCP the ATOM-sharded draft runs a CP
++        # collective inside this capture, so every rank must be quiesced and
++        # aligned before any rank starts capturing. Boot-time only.
++        import torch.distributed as _dist
++        torch.cuda.synchronize()
++        if _dist.is_available() and _dist.is_initialized():
++            _dist.barrier()
++        torch.cuda.synchronize()
+         # Padded sample rows must not scatter into a live request during capture.
+         self.sample_indices.zero_()
+         self.sample_pos.zero_()

@@ -1,0 +1,164 @@
+--- a/v1/attention/ops/cp_common.py
++++ b/v1/attention/ops/cp_common.py
+@@ -4,10 +4,15 @@
+ 
+ from __future__ import annotations
+ 
++import atexit
+ import functools
++import os
++import weakref
++from datetime import timedelta
+ from typing import TYPE_CHECKING, Any
+ 
+ import torch
++import torch.distributed as dist
+ 
+ from vllm.distributed.parallel_state import in_the_same_node_as
+ from vllm.logger import init_logger
+@@ -34,6 +39,22 @@
+     """Probe whether the group has NVLS symmetric memory."""
+     if not symm_mem_available:
+         return False
++    # --- K3: skip NVLS multicast probe on ROCm ---
++    # The rendezvous below is a COLLECTIVE, but this function can return before
++    # reaching it (no multicast support, or any exception -> the blanket
++    # `except Exception: return False`). Rank-to-rank asymmetry there strands
++    # some ranks inside a rendezvous their peers skipped, which is what stalls
++    # distributed group init for minutes. The probe also leaks its tensor and
++    # handle every call.
++    #
++    # Safe to skip: our native-HIP a2a port has no multicast kernels at all
++    # (see dcp_direct_common_hip.h -- the multimem/multicast helpers were
++    # intentionally dropped), so a True answer is unusable and the gather paths
++    # raise on it regardless. Bail out before allocating or entering the
++    # collective.
++    if torch.version.hip is not None:
++        return False
++    # --- end K3: skip NVLS multicast probe on ROCm ---
+     try:
+         from torch._C._autograd import DeviceType
+         from torch._C._distributed_c10d import _SymmetricMemory
+@@ -87,6 +108,41 @@
+     ) and _symm_mem_spans_group(group)
+ 
+ 
++# --- K3: ordered symm_mem teardown ---
++# Every live workspace, weakly held (a strong ref here would itself keep the
++# peer mesh alive forever, which is the bug we are fixing).
++_LIVE_CP_WORKSPACES: weakref.WeakSet = weakref.WeakSet()
++_K3_ATEXIT_REGISTERED = False
++
++# Seconds to wait on the teardown barrier before giving up. Generous: the
++# ranks are unwinding an 8x8x3 BO mesh, and the KFD restore work behind it is
++# not instant. If a peer has already died we would rather eat this than hang.
++_K3_TEARDOWN_BARRIER_S = 120
++
++
++def _k3_close_cp_workspaces() -> None:
++    for workspace in list(_LIVE_CP_WORKSPACES):
++        try:
++            workspace.close()
++        except Exception as error:  # never let teardown break exit
++            logger.warning("Direct CP ordered teardown failed: %s", error)
++
++
++def _k3_register_atexit() -> None:
++    # Registered from __init__, NOT at import: atexit runs handlers in REVERSE
++    # registration order, and this module is imported very early. Registering
++    # at first-workspace-creation time puts us ahead of the process-group
++    # teardown that vLLM registers at import, so dist is still usable when we
++    # run.
++    global _K3_ATEXIT_REGISTERED
++    if not _K3_ATEXIT_REGISTERED:
++        atexit.register(_k3_close_cp_workspaces)
++        _K3_ATEXIT_REGISTERED = True
++
++
++# --- end K3: ordered symm_mem teardown ---
++
++
+ class DirectCPWorkspace:
+     def __init__(
+         self,
+@@ -101,6 +157,11 @@
+         self.num_ubatches = num_ubatches
+         self.epoch = torch.zeros(num_ubatches, dtype=torch.int64, device=self.device)
+         self._allocations: list[tuple[torch.Tensor, Any, list[torch.Tensor]]] = []
++        # --- K3: ordered symm_mem teardown ---
++        self._closed = False
++        _LIVE_CP_WORKSPACES.add(self)
++        _k3_register_atexit()
++        # --- end K3: ordered symm_mem teardown ---
+ 
+     def _allocate(
+         self, shape: tuple[int, ...], dtype: torch.dtype
+@@ -127,6 +188,68 @@
+         self._allocations.append((storage, handle, views))
+         return storage, peer_ptrs
+ 
++    # --- K3: ordered symm_mem teardown ---
++    def close(self) -> None:
++        """Release the symmetric-memory peer mesh in exporter-last order.
++
++        `_allocate()` exports one BO per rank and imports it on every peer,
++        then pins (storage, handle, views) here for the process lifetime.
++        Left to interpreter teardown those refs die in arbitrary order, so an
++        exporter routinely releases while peers still hold imports of its BO.
++        `amdgpu_bo_release_notify()` then loses the `dma_resv_trylock` on the
++        aliased private resv (amdgpu_object.c:1351 -- its premise "nobody else
++        should have a pointer to it" is false for an exported BO, because
++        `ttm_bo_individualize_resv` returns early at ttm_bo.c:196 when
++        `resvp == &_resv` and never splits it), so
++        `amdgpu_amdkfd_remove_all_eviction_fences()` is skipped and the BO
++        strands at refcount 7 with live eviction fences. Those fences block
++        the KFD delayed restore work, the exiting rank wedges in
++        `cancel_delayed_work_sync` inside the GLOBAL mmu_notifier SRCU read
++        section, and every other exiting process on the box queues behind it.
++
++        So the fix is ORDERING, not freeing: drop all IMPORTS everywhere,
++        barrier, then drop the EXPORTS. Each release then sees a refcount
++        nobody else holds and takes the lock it expects.
++
++        Idempotent. Never raises.
++        """
++        if self._closed:
++            return
++        self._closed = True
++        if os.environ.get("VLLM_DCP_SKIP_SYMM_TEARDOWN", "0") == "1":
++            return  # A/B escape hatch: restores the old leaking behaviour
++        allocations, self._allocations = self._allocations, []
++        if not allocations:
++            return
++
++        # 1. imported peer BOs
++        for _storage, _handle, views in allocations:
++            views.clear()
++        try:
++            torch.accelerator.synchronize()
++        except Exception as error:
++            logger.warning("Direct CP teardown sync failed: %s", error)
++
++        # 2. no importer anywhere still references a peer BO. Best-effort: a
++        #    dead peer must not turn teardown into a hang, so this is guarded
++        #    and time-bounded. Without it the ordering is only local, which is
++        #    still better than nothing but does not close the race.
++        try:
++            if dist.is_available() and dist.is_initialized():
++                work = dist.barrier(group=self.group, async_op=True)
++                work.wait(timedelta(seconds=_K3_TEARDOWN_BARRIER_S))
++        except Exception as error:
++            logger.warning("Direct CP teardown barrier skipped: %s", error)
++
++        # 3. handles + our own exported storage
++        allocations.clear()
++        try:
++            torch.accelerator.synchronize()
++        except Exception as error:
++            logger.warning("Direct CP teardown sync failed: %s", error)
++
++    # --- end K3: ordered symm_mem teardown ---
++
+     def _multicast_ptrs(self, storage: torch.Tensor) -> list[int]:
+         disabled = [0] * self.num_ubatches
+         for allocated, handle, _ in self._allocations:
