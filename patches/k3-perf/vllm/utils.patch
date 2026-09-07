@@ -1,0 +1,37 @@
+--- a/model_executor/layers/utils.py
++++ b/model_executor/layers/utils.py
+@@ -328,17 +328,31 @@
+ 
+     if use_skinny:
+         # The skinny kernels assume contiguous K elements. A shape-preserving
+-        # reshape can retain a transposed activation's non-contiguous strides.
+-        x_view = x.reshape(-1, x.size(-1)).contiguous()
++        # reshape can retain a transposed activation's non-contiguous strides,
++        # so materialise the input -- but only once a skinny kernel is actually
++        # going to consume it. Hoisting it above the branches copies on every
++        # call that falls through to tgemm/F.linear below, which for a strided
++        # activation is a whole dead kernel launch (n > 5 never matches).
+         if m > 8 and 0 < n <= 5:
++            x_view = x.reshape(-1, x.size(-1)).contiguous()
+             cu_count = num_compute_units()
+             out = ops.wvSplitK(weight, x_view, cu_count, bias)
+             return out.reshape(*x.shape[:-1], weight.shape[0])
+         elif m % 4 == 0 and n == 1 and k <= 8192 and bias is None:
++            x_view = x.reshape(-1, x.size(-1)).contiguous()
+             out = ops.LLMM1(weight, x_view, 4)
+             return out.reshape(*x.shape[:-1], weight.shape[0])
+ 
+-    if rocm_aiter_ops.is_tgemm_enabled():
++    # aiter's tuned bf16 GEMM has no lda: its flydsl/asm backends call
++    # `a.contiguous()` internally (aiter/ops/flydsl/gemm_kernels.py), so a
++    # strided activation costs an extra copy kernel on top of the GEMM.
++    # hipBLASLt takes the leading dimension natively. Measured on gfx950 with
++    # the tuned CSV, non-contiguous input, us/call in a replayed hipGraph:
++    #   (M=8,N=1536,K=128)  aiter+copy 4.20 vs F.linear 3.03  (-28%)
++    #   (M=64,N=7168,K=2048)           10.58 vs        9.68   (-9%)
++    #   (M=256,N=2880,K=7168)          33.34 vs       32.77   (-2%)
++    # F.linear wins 11 of 13 sampled shapes and never loses by more than 13%.
++    if rocm_aiter_ops.is_tgemm_enabled() and x.is_contiguous():
+         from aiter.tuned_gemm import tgemm
+ 
+         return tgemm.mm(x, weight, bias)
