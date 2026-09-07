@@ -625,7 +625,7 @@ dsr1-fp8-mi355x-sglang-disagg-mtp:
           - "DECODE_MTP_SIZE=2"
 
 kimik3-fp4-mi355x-vllm-agentic-mtp:
-  image: vllm/vllm-openai-rocm:nightly-1dc464d42681d22f38caf1fdc1eb632dc4421c45
+  image: vllm/vllm-openai-rocm:nightly-rocm100-e962733e08d10f7ca65dac4df99e116460b8b174
   model: moonshotai/Kimi-K3
   model-prefix: kimik3
   runner: cluster:mi355x-amds
@@ -634,10 +634,34 @@ kimik3-fp4-mi355x-vllm-agentic-mtp:
   multinode: false
   scenarios:
     agentic-coding:
-    - dram-utilization: 0.60
+    # Structured to mirror kimik3-fp4-mi355x-atom-agentic-mtp point for point:
+    # same runner, same checkpoint, same draft depths, same concurrencies, and
+    # the same DCP/offload split at concurrency 8. Only the framework differs,
+    # so a delta between the two recipes is attributable.
+    #
+    # Concurrency 1-4 is the latency floor and stays GPU-resident on DCP1.
+    # From 8 up, decode is KV-bandwidth-bound over 100k+ token contexts, so
+    # dcp-size 8 shards the KV read across all 8 GPUs and the LMCache DRAM
+    # tier backs the paged KV.
+    #
+    # dram-utilization matches the ATOM companion rather than the 0.60 this
+    # recipe used to carry: at large per-rank pools the eight ranks finish
+    # pinning more than 600 s apart, which is PyTorch's hardcoded NCCL
+    # process-group timeout, and the ModelRunners die at the barrier ending
+    # allocate_kv_cache() before the server ever serves a request.
+    #   0.268 ->  803 GB aggregate -> 100 GB/rank (conc 8-14).
+    #   0.343 -> 1028 GB aggregate -> 128 GB/rank (conc 32 and up).
+    - dram-utilization: 0.268
       search-space:
-      - { tp: 8, kv-offloading: none, conc-list: [1] , spec-decoding: mtp}
-      - { tp: 8, ep: 1, kv-offloading: dram, kv-offload-backend: { name: lmcache, version: "0.5.5.dev60+rocm7.2" }, conc-list: [4, 8, 10, 12, 14], spec-decoding: mtp }
+      - { tp: 8, kv-offloading: none, conc-list: [1, 2, 4], spec-decoding: mtp }
+      - { tp: 8, ep: 1, dcp-size: 8, kv-offloading: dram, kv-offload-backend: { name: lmcache, version: "0.5.5.dev89+rocm7.2" }, conc-list: [8, 10, 12, 14], spec-decoding: mtp }
+    - dram-utilization: 0.343
+      search-space:
+      # No draft from concurrency 32 up: the batch already saturates decode, so
+      # a draft only spends bandwidth verifying tokens the batch would have
+      # produced anyway. The recipe encodes this in its own CONC case, so this
+      # label is what makes the artifact filename honest.
+      - { tp: 8, ep: 1, dcp-size: 8, kv-offloading: dram, kv-offload-backend: { name: lmcache, version: "0.5.5.dev89+rocm7.2" }, conc-list: [32, 40, 56], spec-decoding: none }
 
 # Kimi-K3 MXFP4 agentic-coding benchmark on MI355X via ATOM with DSpark
 # speculative decoding. Acceptance is pinned to the committed golden curve in

@@ -20,7 +20,8 @@ in the first wave. So each item below is checked against a live DCP8 serve
 | id | change | file | size | load-bearing for us? | evidence |
 |---|---|---|---|---|---|
 | V6 | asm round-robin CP path for DCP multi-token verify | `mla/rocm_aiter_mla.py` | ~+352/−9 | **yes** | 16 `cprr` hits in the serve log; the alternative is TRITON_MLA, measured +44% ITL / −43% tok/s |
-| V7 | let a same-process offload connector keep `interleave=1` | `config/vllm.py` | +8/−1 | **yes** | recipe line 397 sets `VLLM_DCP_KEEP_INTERLEAVE=1`; without it DSpark refuses to build under DCP8 + LMCache |
+| V8 | propagate DCP settings into the draft's `ParallelConfig` | `config/speculative.py` | +3/−0 | **yes** | boot blocker under DCP8 + DSpark: `assert isinstance(self.dcp_manager, MLADCPManager)` |
+| V7 | ~~let a same-process offload connector keep `interleave=1`~~ | `config/vllm.py` | +8/−1 | **retired** | upstream narrowed the realignment to `NixlConnector`; patch **deleted** 2026-09-07 |
 | V3 | quiesce ranks before DCP speculator graph capture | `dflash/speculator.py` | +8/−0 | **yes** | boot blocker — GPU fault at capture without it |
 | A1 | take the tighter split-tile bound when a cap is supplied | `ops/attention.py` | +9/−1 | **yes** | 9.35 GiB → 2.38 GiB fp32 MLA reduce scratch; this is what let FULL cudagraphs fit under DCP |
 | A2 | ASM a16w16: don't auto-select split-K under graph replay | `asm_gemm_a16w16.cu` | +39/−2 | **yes** | boot blocker — all waves spin forever at seqs=64 warmup |
@@ -76,23 +77,36 @@ Split it. ~352 lines behind one env var is not a reviewable unit; the head-count
 handling, the global page-indptr construction and the kernel-selection change
 are three separable stories.
 
-### V7 · let a same-process offload connector keep `interleave=1`
-`config/vllm.py`, +8/−1. **Missing from the 09-03 survey entirely.**
+### V8 · propagate DCP settings into the draft's `ParallelConfig`
+`config/speculative.py`, +3/−0. **New 2026-09-07.**
 
-With any KV connector configured, vLLM realigns `cp_kv_cache_interleave_size`
-from 1 up to the local block size, assuming the connector is PD disaggregation
-and the producer's KV layout must match the consumer's. A same-process offload
-connector saves and restores each DCP rank's own shard symmetrically and needs
-no such realignment — and `interleave != 1` turns off *both* DCP verify routes,
-after which DSpark refuses to build at all ("does not support causal multi-token
-MLA attention for DSpark with decode context parallelism").
+`create_draft_parallel_config` builds a fresh `ParallelConfig` for the draft and
+copies only tp/pp/executor/loading-workers/all-reduce/nsight/placement. It drops
+`decode_context_parallel_size`, `cp_kv_cache_interleave_size` and
+`dcp_comm_backend`. The K3 draft's MLA layer builds its `MLADCPManager` only when
+`parallel_config.decode_context_parallel_size > 1` (`models/kimi_k3/nvidia/mla.py`),
+so it ends up with `dcp_manager=None` — but the metadata builder reads the
+**global** DCP group (`mla_attention.py`, `get_dcp_group().world_size` = 8) and
+trips `assert isinstance(self.dcp_manager, MLADCPManager)`. Any DCP8 + DSpark
+serve fails to boot without this.
 
-The root problem is that `kv_role` is `"kv_both"` for offload and for a combined
-PD node alike, so vLLM cannot distinguish them. Our patch adds an env escape
-hatch; **upstream should not take the env var**. The real fix is for the
-connector to declare whether it needs layout realignment — propose that as the
-interface change and offer the env var only as the stopgap. Every DCP8 arm we
-ran depends on this.
+Propagating the three fields is also what gives the ATOM-style **sharded** draft,
+which is the configuration DCP8 was validated on (see
+`k3-dcp-atom-sharded-draft-port`). Upstream framing: the draft inherits the
+target's parallelism everywhere else; DCP being omitted looks like an oversight
+from when DCP predated speculative support, not a deliberate choice. Small,
+self-contained, and the assert makes the failure mode concrete — this is the
+easiest of the vLLM items to argue.
+
+### V7 · ~~let a same-process offload connector keep `interleave=1`~~ (RETIRED)
+`config/vllm.py`, +8/−1. **Deleted 2026-09-07 — do not file.**
+
+The premise no longer holds. Upstream's `adjust_dcp_kv_cache_interleave_size` now
+returns early unless the transfer config `has_connector("NixlConnector")`, so an
+LMCache offload connector never triggers the realignment and
+`cp_kv_cache_interleave_size` stays 1 on its own. Verified on
+`nightly-rocm100-e962733e`. The patch and `VLLM_DCP_KEEP_INTERLEAVE` are both
+gone from the recipe.
 
 ### V3 · quiesce ranks before DCP speculator graph capture
 `v1/worker/gpu/spec_decode/dflash/speculator.py`, +8/−0.
@@ -291,17 +305,16 @@ coordination questions above — they can invalidate V6 and A1 outright.
 
 1. **V3** — smallest, cleanest, no dependencies. Icebreaker.
 2. **A1** — needs the post-#4729/#4796 rewrite; start early because it gates V6.
-3. **V7** — propose the connector-declares-realignment interface, not our env var.
+3. **V8** — one three-line omission with a hard assert behind it. File next to V3.
 4. **A3** — fold into the open #4713. Nearly free.
 5. **A2** — only after asking what broke in #4494.
 6. **V6** — split into three; blocked on #54899 and on A1 landing.
 7. **A4** — after the additions-only audit.
 8. **V2**, then **V4** — independent of the above, file when there is capacity.
 
-Confidence, highest first: V2 (exact precedent), V4 (quiet file, real root
-cause), V3 (#54277 legitimises it), A1 (needs the rebase), V7 (new, and the env
-var will be argued), V6 (three-way overlap), A2 (one revert already), A4 (needs
-audit).
+Confidence, highest first: V2 (exact precedent), V8 (three lines, hard assert),
+V4 (quiet file, real root cause), V3 (#54277 legitimises it), A1 (needs the
+rebase), V6 (three-way overlap), A2 (one revert already), A4 (needs audit).
 
 Note the tension in that ordering: the items we are most confident will land are
 not the items our numbers depend on. V6 and A1 carry the performance story and

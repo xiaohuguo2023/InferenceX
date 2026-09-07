@@ -74,6 +74,84 @@ else
     export MODEL_PATH="$MODEL"
 fi
 
+REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
+VLLM_PKG="$(python3 -c 'import os, vllm; print(os.path.dirname(vllm.__file__))')"
+
+# ---- Source patches ---------------------------------------------------------
+# This recipe ships source patches against the pinned nightly image; applying
+# them here keeps a CI run and a manual repro on the same code.
+#   patches/k3-perf/  decode-glue kernel-launch elimination (applies to the
+#                     non-DCP path too, so it is unconditional)
+#   patches/k3-dcp8/  DCP8 + DSpark on the fp8 asm cprr verify route. Also
+#                     applied unconditionally: every hunk is gated on
+#                     decode_context_parallel_size > 1, so the DCP1 arms run
+#                     byte-identical code to the DCP8 arms and the two are
+#                     comparable.
+# Each apply is idempotent -- a *successful* reverse dry-run means it is in.
+apply_vllm_patch() {
+    local p="$1"
+    if [ ! -f "$p" ]; then echo "!! missing patch: $p" >&2; return 1; fi
+    if patch --dry-run -R -p1 -d "$VLLM_PKG" <"$p" >/dev/null 2>&1; then
+        echo "patch already applied: ${p#"$REPO_ROOT"/}"
+        return 0
+    fi
+    patch -p1 -d "$VLLM_PKG" <"$p"
+}
+for _p in envs utils kda linear; do
+    apply_vllm_patch "$REPO_ROOT/patches/k3-perf/vllm/$_p.patch"
+done
+for _p in scheduler config cp_common speculator rocm_aiter_mla speculative_draft_dcp; do
+    apply_vllm_patch "$REPO_ROOT/patches/k3-dcp8/vllm/$_p.patch"
+done
+
+# aiter's tuned bf16 GEMM config. Without it every tuned-shape lookup misses,
+# the unquantized-GEMM dispatch in patches/k3-perf/vllm/utils.patch loses the
+# crossover it was justified against, and the agentic launcher has been seen to
+# HSA-fault outright. The _rocm10_retuned variant is the one tuned on this
+# image's ROCm; merged_bf16_tuned_gemm.csv is kept for the older pin.
+export AITER_CONFIG_GEMM_BF16="${AITER_CONFIG_GEMM_BF16:-$REPO_ROOT/patches/k3-dcp8/aiter/merged_bf16_tuned_gemm_rocm10_retuned.csv}"
+
+# ---- DSpark draft causality -------------------------------------------------
+# The published draft checkpoint ships without `dflash_config`, and
+# qwen3_dflash._dflash_layer_causal then falls through all three of its
+# resolution steps and reports every layer non-causal. That routes the draft off
+# the fp8 asm MLA path ("Selected backend ROCM_AITER_MLA is not valid ...
+# non-causal attention not supported") and, under DCP, is refused outright. The
+# non-causal draft is also measurably worse: +44% ITL and 3.2x the p90 tail at
+# concurrency 24, for +1.3% acceptance.
+#
+# This is a checkpoint edit, not a vLLM patch, so it does not survive a
+# re-download -- hence running it on every launch, after the download.
+hf download Inferact/Kimi-K3-DSpark >/dev/null
+python3 - <<'PY'
+import glob, json, os
+
+REL = "models--Inferact--Kimi-K3-DSpark/snapshots/*/config.json"
+roots = [
+    os.environ.get("HF_HUB_CACHE"),
+    os.path.join(os.environ["HF_HOME"], "hub") if os.environ.get("HF_HOME") else None,
+    os.path.expanduser("~/.cache/huggingface/hub"),
+    "/dev/shm/hf-cache",
+]
+found = 0
+for root in filter(None, dict.fromkeys(roots)):
+    for cfg in glob.glob(os.path.join(root, REL)):
+        found += 1
+        c = json.load(open(cfg))
+        if (c.get("dflash_config") or {}).get("causal") is True:
+            print("draft already causal:", cfg)
+            continue
+        c["dflash_config"] = {"causal": True}
+        # config.json is a symlink into the content-addressed blob store;
+        # writing through it would corrupt the blob for every snapshot.
+        if os.path.islink(cfg):
+            os.unlink(cfg)
+        json.dump(c, open(cfg, "w"), indent=2)
+        print("forced draft causal:", cfg)
+if not found:
+    raise SystemExit("!! DSpark draft not staged -- cannot force causality")
+PY
+
 rocm-smi || true
 amd-smi || true
 
@@ -151,7 +229,13 @@ case "${KV_OFFLOAD_BACKEND:-}" in
 
     # Keep the image's tested torch/ROCm stack and install only LMCache's
     # missing runtime dependencies, same as the MiniMax-M3 lmcache arm.
-    LMCACHE_VERSION="0.5.5.dev60+rocm7.2"
+    # The nightly-rocm asset index is not immutable: it carries only the
+    # current nightly, so a dev pin stops resolving as soon as LMCache cuts
+    # the next one. dev60 is already gone ("No matching distribution found");
+    # dev89 is what the index serves today and exposes the same server CLI
+    # (--l1-size-gb / --chunk-size / --separate-object-groups /
+    # --supported-transfer-mode). Re-pin whenever this stops resolving.
+    LMCACHE_VERSION="0.5.5.dev89+rocm7.2"
     LMCACHE_ROCM_INDEX="https://github.com/LMCache/LMCache/releases/expanded_assets/nightly-rocm"
     agentic_pip_install --quiet --no-cache-dir --no-deps \
         "sortedcontainers==2.4.0" \
@@ -191,6 +275,27 @@ case "${KV_OFFLOAD_BACKEND:-}" in
     # so 3072 is the minimum valid chunk. The multi-group layout also
     # requires one object group per sliding-window size:
     # --separate-object-groups.
+    #
+    # Decode context parallelism scales the attention group's block size by
+    # DCP_SIZE (1536 -> 12288 at DCP8), and the connector then rejects the
+    # 3072 chunk: "LMCache chunk size 3072 must be a multiple of 12288 (the
+    # vLLM block size scaled by decode_context_parallel_size)". So under DCP
+    # the chunk is the DCP-scaled attention block, rounded up to stay a
+    # multiple of the KDA group's 3072.
+    LMCACHE_CHUNK_SIZE=3072
+    if [ "${DCP_SIZE:-1}" -gt 1 ]; then
+        LMCACHE_CHUNK_SIZE=$(( 1536 * ${DCP_SIZE:-1} ))
+        if [ $(( LMCACHE_CHUNK_SIZE % 3072 )) -ne 0 ]; then
+            LMCACHE_CHUNK_SIZE=$(( LMCACHE_CHUNK_SIZE * 2 ))
+        fi
+    fi
+    # DCP shards decode KV across the TP ranks, so the GPU transfer pool needs
+    # one worker per rank; with a single worker all eight shards of every chunk
+    # queue behind one transfer. A non-DCP arm has one shard and needs one.
+    LMCACHE_MAX_GPU_WORKERS=1
+    if [ "${DCP_SIZE:-1}" -gt 1 ]; then
+        LMCACHE_MAX_GPU_WORKERS="$DCP_SIZE"
+    fi
     LMCACHE_PORT=6555
     LMCACHE_HTTP_PORT=8090
     LMCACHE_LOG="$RESULT_DIR/lmcache_server.log"
@@ -205,12 +310,12 @@ case "${KV_OFFLOAD_BACKEND:-}" in
         --http-port "$LMCACHE_HTTP_PORT"
         --l1-size-gb "$LMCACHE_L1_SIZE_GB"
         --l1-init-size-gb 10
-        --chunk-size 3072
+        --chunk-size "$LMCACHE_CHUNK_SIZE"
         --separate-object-groups
         --enable-extra-logging
         --extra-logging-interval 30
         --max-cpu-workers 8
-        --max-gpu-workers 1
+        --max-gpu-workers "$LMCACHE_MAX_GPU_WORKERS"
         --eviction-policy LRU
         --supported-transfer-mode lmcache_driven
         --shm-name ""
@@ -248,38 +353,83 @@ if [ "$EP_SIZE" -gt 1 ]; then
 fi
 
 # ---- Speculative / Util------------------------------------------------------
+# Draft depth follows the committed golden curve, at the same split points the
+# ATOM companion recipe and the B300 recipe use, so a point here has a
+# like-for-like counterpart there: 7 draft tokens -> AL 3.84 at concurrency
+# 1-4, 3 draft tokens -> AL 3.00 from concurrency 8 up. Comparing across draft
+# depths is not meaningful, so do not move these without moving the companions.
+#
+# PREFIX_CACHE_RETENTION_INTERVAL is the KDA/Mamba checkpoint spacing. vLLM's
+# default is 0 (one checkpoint per prefix), which quantises every prefix-cache
+# hit to the whole prefix; spacing checkpoints one per block recovers 2 pp of
+# hit rate and ~12% of p90 interactivity at concurrency 1. The legal values
+# differ by arm because the validator compares against scheduler_block_size:
+#   conc 1-4 (DCP1)   -> 1536, the attention/KDA block size. Dense.
+#   conc 8+  (DCP8)   -> 12288, since DCP8 scales the attention group by 8.
+#                        1536 also works there, but only on a vLLM carrying
+#                        the fix that validates against cache_hit_alignment_
+#                        tokens rather than scheduler_block_size.
+# Dense costs ~4.5x the block pool per cached token, so the conc 8+ value must
+# be re-swept against the working set before it is lowered.
 case "$CONC" in
-    # No KV offload; the working set fits in HBM.
-    1)
-        SYNTHETIC_ACCEPT_LEN=3.75
-        SPEC_NUM_TOKENS=6
+    # Latency floor: everything GPU-resident, deepest published draft.
+    1|2|4)
+        SYNTHETIC_ACCEPT_LEN=3.84
+        SPEC_NUM_TOKENS=7
         GPU_MEM_UTIL=0.9
         MAX_NUM_BATCHED_TOKENS=16384
+        PREFIX_CACHE_RETENTION_INTERVAL=1536
         ;;
-    2|4|8|10|12|14)
+    # Decode is KV-bandwidth-bound over 100k+ token contexts from here up, so
+    # configs/amd-master.yaml pairs these with dcp-size 8 and the DRAM tier.
+    8|10|12|14)
         SYNTHETIC_ACCEPT_LEN=3.00
         SPEC_NUM_TOKENS=3
         GPU_MEM_UTIL=0.9
         MAX_NUM_BATCHED_TOKENS=8192
+        PREFIX_CACHE_RETENTION_INTERVAL=12288
         ;;
     *)
+        # No draft: past concurrency ~16 the batch already saturates decode, so
+        # a draft only spends bandwidth verifying tokens the batch would have
+        # produced anyway. 0.9/8192 rather than the older 0.85/4096 -- with the
+        # draft gone the freed memory is better spent on KV, and the larger
+        # prefill batch is what these concurrencies are bound by.
         SPEC_NUM_TOKENS=0
-        GPU_MEM_UTIL=0.85
-        MAX_NUM_BATCHED_TOKENS=4096
+        GPU_MEM_UTIL=0.9
+        MAX_NUM_BATCHED_TOKENS=8192
+        PREFIX_CACHE_RETENTION_INTERVAL=12288
         ;;
 esac
+PREFIX_CACHE_RETENTION_INTERVAL="${PREFIX_CACHE_RETENTION_INTERVAL_OVERRIDE:-$PREFIX_CACHE_RETENTION_INTERVAL}"
+MAX_NUM_BATCHED_TOKENS="${MNBT_OVERRIDE:-$MAX_NUM_BATCHED_TOKENS}"
+
+# The DSpark draft runs its own MLA attention, separate from the target's.
+# Under decode context parallelism the draft's KV is sharded across the CP
+# ranks too, and TritonMLAMetadataBuilder refuses that path outright --
+# "TritonMLAMetadataBuilder does not support non-causal draft MLA attention
+# for DSpark with decode context parallelism" -- so the draft has to use the
+# same DCP-capable backend as the target. There is no Triton fallback here:
+# a DCP arm with a draft needs an image carrying the fp8 cprr assembly kernel,
+# which is what patches/k3-dcp8/aiter/ supplies.
+#
+# ROCM_AITER_MLA everywhere, DCP or not. It needs the draft forced causal (see
+# the checkpoint edit above); with that in place it beats the non-causal Triton
+# draft by 44% ITL at concurrency 24, and it is the path the GEMM tuning and the
+# asm cprr verify route were built for.
+DRAFT_ATTN_BACKEND="${DCP_ATTN_BACKEND:-ROCM_AITER_MLA}"
 
 SPEC_ARGS=()
 if [ "$SPEC_NUM_TOKENS" -gt 0 ]; then
 if [ "${EVAL_ONLY:-false}" = "true" ]; then
     SPEC_ARGS=(
         --speculative-config
-        "{\"model\":\"Inferact/Kimi-K3-DSpark\",\"num_speculative_tokens\":$SPEC_NUM_TOKENS,\"method\":\"dspark\",\"attention_backend\":\"TRITON_MLA\",\"kv_cache_dtype\":\"fp8\",\"draft_sample_method\":\"probabilistic\",\"rejection_sample_method\": \"block\"}"
+        "{\"model\":\"Inferact/Kimi-K3-DSpark\",\"num_speculative_tokens\":$SPEC_NUM_TOKENS,\"method\":\"dspark\",\"attention_backend\":\"$DRAFT_ATTN_BACKEND\",\"kv_cache_dtype\":\"fp8\",\"draft_sample_method\":\"probabilistic\",\"rejection_sample_method\": \"block\"}"
     )
 else
     SPEC_ARGS=(
         --speculative-config
-        "{\"model\":\"Inferact/Kimi-K3-DSpark\",\"num_speculative_tokens\":$SPEC_NUM_TOKENS,\"method\":\"dspark\",\"attention_backend\":\"TRITON_MLA\",\"kv_cache_dtype\":\"fp8\",\"draft_sample_method\":\"probabilistic\",\"rejection_sample_method\": \"synthetic\", \"synthetic_acceptance_length\": $SYNTHETIC_ACCEPT_LEN}"
+        "{\"model\":\"Inferact/Kimi-K3-DSpark\",\"num_speculative_tokens\":$SPEC_NUM_TOKENS,\"method\":\"dspark\",\"attention_backend\":\"$DRAFT_ATTN_BACKEND\",\"kv_cache_dtype\":\"fp8\",\"draft_sample_method\":\"probabilistic\",\"rejection_sample_method\": \"synthetic\", \"synthetic_acceptance_length\": $SYNTHETIC_ACCEPT_LEN}"
     )
     fi
 fi
@@ -288,7 +438,17 @@ fi
 MAX_NUM_SEQS=$((2 * CONC))
 MAX_CUDAGRAPH_CAPTURE_SIZE=$((MAX_NUM_SEQS * (1 + SPEC_NUM_TOKENS)))
 CUDAGRAPH_CAPTURE_SIZES="$(seq -s, 2 "$MAX_CUDAGRAPH_CAPTURE_SIZE")"
-COMPILATION_CONFIG_ARGS=(--compilation-config "{\"mode\":3,\"cudagraph_mode\":\"FULL_AND_PIECEWISE\",\"max_cudagraph_capture_size\":$MAX_CUDAGRAPH_CAPTURE_SIZE,\"custom_ops\":[\"+fused_rms_norm_gated\"],\"cudagraph_capture_sizes\":[$CUDAGRAPH_CAPTURE_SIZES]}")
+# FULL_DECODE_ONLY, not FULL_AND_PIECEWISE. On the pinned image the decode step
+# is already 100% FULL-captured, and PIECEWISE only adds a second set of graphs
+# to capture and the boot time to capture them.
+CUDAGRAPH_MODE="${CUDAGRAPH_MODE:-FULL_DECODE_ONLY}"
+# At mode 3 every custom op not listed here defaults off and is decomposed for
+# inductor, so this list is the only thing that decides which fused kernels run.
+# +situ_and_mul: K3's hidden_act is "situ" on all 92 shared-expert layers.
+# Decomposed, inductor upcasts to fp32 with temporaries; the shipped C++ op is
+# 43% faster at the concurrency-1 shape and is already below a bare clone.
+CUSTOM_OPS_JSON="${CUSTOM_OPS_JSON:-\"+fused_rms_norm_gated\",\"+situ_and_mul\"}"
+COMPILATION_CONFIG_ARGS=(--compilation-config "{\"mode\":3,\"cudagraph_mode\":\"$CUDAGRAPH_MODE\",\"max_cudagraph_capture_size\":$MAX_CUDAGRAPH_CAPTURE_SIZE,\"custom_ops\":[$CUSTOM_OPS_JSON],\"cudagraph_capture_sizes\":[$CUDAGRAPH_CAPTURE_SIZES]}")
 
 echo "Starting vllm server..."
 export PYTHONNOUSERSITE=1
@@ -297,7 +457,11 @@ export VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS="${VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS:
 
 # ---- DCP       ------------------------------------------------------------
 # DCP shards decode KV across the TP ranks, so it must divide TP.
-DCP_SIZE="${DCP_SIZE:-8}"
+# Default 1, matching benchmark-tmpl.yml's dcp-size default and every other
+# recipe here. The workflow always exports DCP_SIZE, so this only affects
+# manual invocations -- where defaulting to 8 silently gave a DCP run to
+# someone who asked for none.
+DCP_SIZE="${DCP_SIZE:-1}"
 if [ $((TP % DCP_SIZE)) -ne 0 ]; then
     echo "Error: TP='$TP' must be divisible by DCP_SIZE='$DCP_SIZE'" >&2
     exit 1
@@ -306,7 +470,21 @@ CP_ARGS=()
 ATTN_BE_ARGS=()
 if [ "$DCP_SIZE" -gt 1 ]; then
     CP_ARGS+=(--decode-context-parallel-size "$DCP_SIZE" --dcp-comm-backend a2a)
-    ATTN_BE_ARGS+=(--attention-backend TRITON_MLA)
+    # ROCM_AITER_MLA is the tuned path; its DCP route needs the fp8 cprr
+    # assembly kernel, which is not in any released aiter wheel -- it comes
+    # from patches/k3-dcp8/aiter/. Override to TRITON_MLA only on an image
+    # without it, and expect to lose the tuning.
+    ATTN_BE_ARGS+=(--attention-backend "${DCP_ATTN_BACKEND:-ROCM_AITER_MLA}")
+    # With any KV connector configured, vLLM realigns cp_kv_cache_interleave_size
+    # from 1 up to the local block size, on the assumption that the connector is
+    # PD disaggregation and the producer's KV layout has to match the consumer's.
+    # A same-process offload connector saves and restores each DCP rank's own
+    # shard symmetrically, so it needs no such realignment -- and interleave != 1
+    # turns off *both* DCP verify routes, after which DSpark refuses to build:
+    # "does not support causal multi-token MLA attention for DSpark with decode
+    # context parallelism". kv_role is "kv_both" for offload and for a combined
+    # PD node alike, so vLLM cannot tell them apart on its own.
+    export VLLM_DCP_KEEP_INTERLEAVE=1
 fi
 export VLLM_USE_DIRECT_DCP_A2A=0
 export VLLM_USE_DIRECT_DCP_Q_GATHER=0
@@ -330,6 +508,7 @@ VLLM_CMD=(
     --reasoning-parser kimi_k3
     --max-model-len 1048576
     --enable-prefix-caching
+    --prefix-cache-retention-interval "$PREFIX_CACHE_RETENTION_INTERVAL"
     --kv-cache-dtype "fp8"
     --max-num-batched-tokens "$MAX_NUM_BATCHED_TOKENS"
     --attention-config '{"mla_prefill_backend":"ROCM_AITER_FA"}'

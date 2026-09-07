@@ -1,17 +1,23 @@
 # Kimi-K3 DCP8 + DSpark repro bundle (asm fp8 MLA path)
 
 Everything needed to reproduce the green DCP8 + DSpark configuration on a second MI355X
-box. Five vLLM patches, two aiter patches, and the tuned-GEMM CSV they depend on.
+box. Six vLLM patches, two aiter patches, and the tuned-GEMM CSV they depend on.
 
-Measured on this configuration: full long-context sweep at concurrency 48→1, 9/9 `rc=0`,
-acceptance length 2.39–2.43 at every point, ITL within ±7% of the non-DCP baseline.
+Measured on the pinned image below, DCP8 + DSpark at K=3 with the asm cprr verify route,
+conc-1, real `block` acceptance: **AL 3.08–3.94 (max 4)** and flat from 1.5k to 90k context —
+1.5k 3.94, 12k 3.08, 24k 3.51, 45k 3.53, 90k 3.51. The earlier AL collapse to 1.03–1.43 was
+specific to `73029d42` with an unsharded draft and does not reproduce here.
+
+An older long-context sweep on `73029d42` (concurrency 48→1, 9/9 `rc=0`, `num_speculative_tokens=7`)
+measured AL 2.39–2.43 and ITL within ±7% of the non-DCP baseline. Kept for reference only —
+it is a different image, a different K, and a different draft sharding.
 
 ## Pins
 
 | | |
 |---|---|
-| vLLM image | `vllm/vllm-openai-rocm:nightly-73029d42441321b631779db3475031f5ec26dd6c` |
-| vLLM version | `0.28.1rc1.dev278+g73029d424` |
+| vLLM image | `vllm/vllm-openai-rocm:nightly-rocm100-e962733e08d10f7ca65dac4df99e116460b8b174` |
+| vLLM version | `0.28.1rc1.dev437+ge962733e0` |
 | aiter base commit | `55dbc4f475da26c23cdaf73ce6ed38342a2d7f83` |
 
 The nightly image's `ENTRYPOINT` is `vllm`, so start the container with
@@ -19,12 +25,12 @@ The nightly image's `ENTRYPOINT` is `vllm`, so start the container with
 
 ## 1. vLLM patches
 
-All five apply with `-p1` from the installed vllm package root. Order does not matter —
-they touch five different files.
+All six apply with `-p1` from the installed vllm package root. Order does not matter —
+they touch six different files.
 
 ```bash
 cd /usr/local/lib/python3.12/dist-packages/vllm
-for f in scheduler config cp_common speculator rocm_aiter_mla; do
+for f in scheduler config cp_common speculator rocm_aiter_mla speculative_draft_dcp; do
     patch -p1 < /path/to/patches/k3-dcp8/vllm/$f.patch
 done
 ```
@@ -32,7 +38,7 @@ done
 Confirm each landed (a *failing* reverse dry-run means not applied):
 
 ```bash
-for f in scheduler config cp_common speculator rocm_aiter_mla; do
+for f in scheduler config cp_common speculator rocm_aiter_mla speculative_draft_dcp; do
     printf "%-18s " "$f"
     patch --dry-run -R -p1 < /path/to/patches/k3-dcp8/vllm/$f.patch >/dev/null 2>&1 \
         && echo applied || echo NOT-APPLIED
@@ -46,20 +52,24 @@ done
 | `cp_common.patch` | `v1/attention/ops/cp_common.py` | ordered symmetric-memory teardown, plus skipping the NVLS multicast probe on ROCm |
 | `speculator.patch` | `v1/worker/gpu/spec_decode/dflash/speculator.py` | syncs and barriers ranks before speculator cudagraph capture |
 | `rocm_aiter_mla.patch` | `v1/attention/backends/mla/rocm_aiter_mla.py` | the asm round-robin-CP route for DCP multi-token verify, the 96→128 native-tile pad, and the split-cap plumbing |
-| `dcp_keep_interleave.patch` | `config/vllm.py` | env-gates the PD interleave realignment, so DCP can run with a KV-offload connector |
+| `speculative_draft_dcp.patch` | `config/speculative.py` | propagates the target's DCP settings into the draft's `ParallelConfig` |
 
-`dcp_keep_interleave.patch` is only needed for the **DCP + draft + KV-offload** arm, which
-has no upstream equivalent. `adjust_dcp_kv_cache_interleave_size()` forces
-`cp_kv_cache_interleave_size` from 1 up to the local block size whenever *any* KV connector
-is configured — a PD-disaggregation requirement, where the producer's KV layout has to match
-the consumer's. A same-process offload connector saves and restores each DCP rank's own
-shard symmetrically and needs no such realignment, but `kv_role` is `kv_both` in both cases
-so vLLM cannot tell them apart. Interleave != 1 turns off *both* DCP verify routes (asm cprr
-and upstream segmented), after which the DSpark guard refuses to build the target group:
-`does not support causal multi-token MLA attention for DSpark with decode context
-parallelism`. Set `VLLM_DCP_KEEP_INTERLEAVE=1` to skip the realignment. Upstream's own DCP8
-arm never trips this because it drops the draft entirely at high concurrency
-(`SPEC_NUM_TOKENS=0`), so no multi-token verify route is ever needed.
+`speculative_draft_dcp.patch` is a **boot blocker** for DCP8 + DSpark.
+`create_draft_parallel_config()` builds the draft's `ParallelConfig` from scratch and copies
+only tp/pp/executor/loading-workers/all-reduce/nsight/placement — it drops
+`decode_context_parallel_size`, `cp_kv_cache_interleave_size` and `dcp_comm_backend`. The K3
+draft's MLA layer then builds no `MLADCPManager` (it gates on
+`parallel_config.decode_context_parallel_size > 1`), while its metadata builder reads the
+*global* DCP group and believes `dcp_world_size=8`, so
+`assert isinstance(self.dcp_manager, MLADCPManager)` fires. Propagating the three fields also
+gives the ATOM-style **sharded** draft, which is the configuration DCP8 was validated on.
+
+There is no `dcp_keep_interleave.patch` any more (retired 2026-09-07). Upstream's
+`adjust_dcp_kv_cache_interleave_size()` used to realign `cp_kv_cache_interleave_size` from 1
+up to the local block size whenever *any* KV connector was configured, which turned off both
+DCP verify routes and made DSpark refuse to build under DCP8 + LMCache. It now returns early
+unless the connector is `NixlConnector`, so an offload connector leaves interleave at 1 by
+itself. `VLLM_DCP_KEEP_INTERLEAVE` is no longer set or needed.
 
 `rocm_aiter_mla.patch` is the substantial one (~+352/−9, 20 hunks). Without it, stock vLLM
 runs the entire DCP decode on Triton, which is the route we rejected on measured
@@ -95,10 +105,10 @@ ROCm.
 | `0001-k3-dcp8-code.patch` | `aiter/mla.py`, `aiter/ops/attention.py`, `csrc/py_itfs_cu/asm_gemm_a16w16.cu` | +50/−4 | fp8 MLA block-N lookup keys; the tight split-tile bound (`max`→`min`) that reclaims MLA reduce scratch from 9.35 GiB to 2.38 GiB; and a split-K guard for the ASM a16w16 kernels under cudagraph replay |
 | `0002-k3-tuned-gemm-csv.patch` | 6 CSVs under `aiter/configs/model_configs/` | +765/−694 | tuned GEMM rows, closing 371 conc-1 tuned-config misses |
 
-`merged_bf16_tuned_gemm.csv` in this directory is the folded CSV that
-`AITER_CONFIG_GEMM_BF16` must point at. Copy it to
-`aiter/configs/merged_bf16_tuned_gemm.csv` (it is untracked upstream, not produced by
-either patch).
+`merged_bf16_tuned_gemm_rocm10_retuned.csv` in this directory is the folded CSV that
+`AITER_CONFIG_GEMM_BF16` must point at. Copy it into `aiter/configs/` (it is untracked
+upstream and not produced by either patch). The older `merged_bf16_tuned_gemm.csv` is the
+pre-ROCm-10 fold and is **not** the one to use on the pinned image.
 
 **The tight split-tile bound and `rocm_aiter_mla.patch` are a matched pair.** The bound is
 only sound because vLLM passes the same `max_split_per_batch` at metadata-build time. Apply
@@ -108,7 +118,7 @@ faults the GPU rather than raising.
 ## 3. Environment and serve flags
 
 ```bash
-export AITER_CONFIG_GEMM_BF16=/path/to/aiter/configs/merged_bf16_tuned_gemm.csv
+export AITER_CONFIG_GEMM_BF16=/path/to/aiter/configs/merged_bf16_tuned_gemm_rocm10_retuned.csv
 export VLLM_ROCM_USE_AITER=1
 export VLLM_ROCM_AITER_MLA_DCP_VERIFY=asm   # default; the production route
 ```
@@ -129,14 +139,28 @@ DCP serve flags:
 dma-bufs behind.
 
 Mandated benchmark config (do not vary these when comparing against our numbers):
-`GPU_MEM=0.95`, `MAX_NUM_SEQS=64`, `MNBT=16384`, `CUDAGRAPH_MODE=FULL_AND_PIECEWISE`, KV
-cache pinned at 32 GiB. `MAX_NUM_SEQS` must be ≥ the top concurrency or the high points
-silently cap.
+`GPU_MEM=0.95`, `MAX_NUM_SEQS=64`, `MNBT=16384`, `CUDAGRAPH_MODE=FULL_DECODE_ONLY`,
+`custom_ops` listing `+fused_rms_norm_gated` and `+situ_and_mul`, KV cache pinned at 32 GiB.
+`MAX_NUM_SEQS` must be ≥ the top concurrency or the high points silently cap.
+
+Both the target and the draft must run `ROCM_AITER_MLA` (`--attention-backend` and the
+speculative config's `attention_backend`). TritonMLA never sets
+`supports_dcp_with_varlen`, so a Triton draft is refused outright under DCP.
 
 ## 4. Verifying the bundle landed
 
-Cheapest end-to-end check is acceptance length at concurrency 1 — it should be ~2.4. An AL
-near 1.0 means the draft is proposing garbage and something in the DCP path is wrong.
+Cheapest end-to-end check is acceptance length at concurrency 1: **~3.1–3.9 out of a max of
+4 at K=3**, and roughly flat as context grows. An AL near 1.0 means the draft is proposing
+garbage and something in the DCP path is wrong.
+
+**Check the draft is causal first.** `dflash_config.causal` lives in the *checkpoint*, not in
+vLLM, and the published `Inferact/Kimi-K3-DSpark` config sets none of the three keys that
+`_dflash_layer_causal` looks at (`is_causal`, `dflash_config["causal"]`,
+`layer_types[i] == "sliding_attention"`), so every layer resolves non-causal and
+`ROCM_AITER_MLA` is rejected with `non-causal attention not supported`. Patch every cache root
+you might resolve through — `HF_HUB_CACHE`, `$HF_HOME/hub` and `~/.cache/huggingface/hub` are
+frequently different copies, and vLLM picks the ambient one, not the one your serve script
+exports for the target weights.
 
 Accuracy gate is GSM8K in **block** mode (expect ~0.963–0.969). Note that GSM8K alone
 cannot catch a broken draft: it scored 0.9674 in a run where AL had collapsed to 1.03,
