@@ -46,6 +46,20 @@ done
 | `cp_common.patch` | `v1/attention/ops/cp_common.py` | ordered symmetric-memory teardown, plus skipping the NVLS multicast probe on ROCm |
 | `speculator.patch` | `v1/worker/gpu/spec_decode/dflash/speculator.py` | syncs and barriers ranks before speculator cudagraph capture |
 | `rocm_aiter_mla.patch` | `v1/attention/backends/mla/rocm_aiter_mla.py` | the asm round-robin-CP route for DCP multi-token verify, the 96→128 native-tile pad, and the split-cap plumbing |
+| `dcp_keep_interleave.patch` | `config/vllm.py` | env-gates the PD interleave realignment, so DCP can run with a KV-offload connector |
+
+`dcp_keep_interleave.patch` is only needed for the **DCP + draft + KV-offload** arm, which
+has no upstream equivalent. `adjust_dcp_kv_cache_interleave_size()` forces
+`cp_kv_cache_interleave_size` from 1 up to the local block size whenever *any* KV connector
+is configured — a PD-disaggregation requirement, where the producer's KV layout has to match
+the consumer's. A same-process offload connector saves and restores each DCP rank's own
+shard symmetrically and needs no such realignment, but `kv_role` is `kv_both` in both cases
+so vLLM cannot tell them apart. Interleave != 1 turns off *both* DCP verify routes (asm cprr
+and upstream segmented), after which the DSpark guard refuses to build the target group:
+`does not support causal multi-token MLA attention for DSpark with decode context
+parallelism`. Set `VLLM_DCP_KEEP_INTERLEAVE=1` to skip the realignment. Upstream's own DCP8
+arm never trips this because it drops the draft entirely at high concurrency
+(`SPEC_NUM_TOKENS=0`), so no multi-token verify route is ever needed.
 
 `rocm_aiter_mla.patch` is the substantial one (~+352/−9, 20 hunks). Without it, stock vLLM
 runs the entire DCP decode on Triton, which is the route we rejected on measured
