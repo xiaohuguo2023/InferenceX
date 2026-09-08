@@ -25,13 +25,13 @@ The nightly image's `ENTRYPOINT` is `vllm`, so start the container with
 
 ## 1. vLLM patches
 
-All seven apply with `-p1` from the installed vllm package root. Order does not matter —
-they touch seven different files.
+All eight apply with `-p1` from the installed vllm package root. Order does not matter —
+they touch eight different files.
 
 ```bash
 cd /usr/local/lib/python3.12/dist-packages/vllm
 for f in scheduler config cp_common speculator rocm_aiter_mla speculative_draft_dcp \
-         retention_alignment; do
+         retention_alignment dcp_a2a_pack_mask; do
     patch -p1 < /path/to/patches/k3-dcp8/vllm/$f.patch
 done
 ```
@@ -40,7 +40,7 @@ Confirm each landed (a *failing* reverse dry-run means not applied):
 
 ```bash
 for f in scheduler config cp_common speculator rocm_aiter_mla speculative_draft_dcp \
-         retention_alignment; do
+         retention_alignment dcp_a2a_pack_mask; do
     printf "%-18s " "$f"
     patch --dry-run -R -p1 < /path/to/patches/k3-dcp8/vllm/$f.patch >/dev/null 2>&1 \
         && echo applied || echo NOT-APPLIED
@@ -56,6 +56,7 @@ done
 | `rocm_aiter_mla.patch` | `v1/attention/backends/mla/rocm_aiter_mla.py` | the asm round-robin-CP route for DCP multi-token verify, the 96→128 native-tile pad, and the split-cap plumbing |
 | `speculative_draft_dcp.patch` | `config/speculative.py` | propagates the target's DCP settings into the draft's `ParallelConfig` |
 | `retention_alignment.patch` | `v1/core/kv_cache_coordinator.py` | validates `prefix_cache_retention_interval` against the granularity a cache hit is actually reported at (`cache_hit_alignment_tokens`) instead of `scheduler_block_size` |
+| `dcp_a2a_pack_mask.patch` | `v1/attention/ops/dcp.py` | backport of **unmerged** vLLM PR #54889 — folds the empty-shard LSE mask into the A2A pack kernel, deleting 8 eager kernels (~35 us) per MLA layer per step. Drop this once it merges upstream. |
 
 `speculative_draft_dcp.patch` is a **boot blocker** for DCP8 + DSpark.
 `create_draft_parallel_config()` builds the draft's `ParallelConfig` from scratch and copies

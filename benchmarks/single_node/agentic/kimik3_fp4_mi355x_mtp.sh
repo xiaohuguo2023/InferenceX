@@ -97,11 +97,11 @@ apply_vllm_patch() {
     fi
     patch -p1 -d "$VLLM_PKG" <"$p"
 }
-for _p in envs utils kda linear; do
+for _p in envs utils kda linear wvsplitkq_strided; do
     apply_vllm_patch "$REPO_ROOT/patches/k3-perf/vllm/$_p.patch"
 done
 for _p in scheduler config cp_common speculator rocm_aiter_mla speculative_draft_dcp \
-          retention_alignment; do
+          retention_alignment dcp_a2a_pack_mask; do
     apply_vllm_patch "$REPO_ROOT/patches/k3-dcp8/vllm/$_p.patch"
 done
 
