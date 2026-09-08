@@ -25,12 +25,13 @@ The nightly image's `ENTRYPOINT` is `vllm`, so start the container with
 
 ## 1. vLLM patches
 
-All six apply with `-p1` from the installed vllm package root. Order does not matter —
-they touch six different files.
+All seven apply with `-p1` from the installed vllm package root. Order does not matter —
+they touch seven different files.
 
 ```bash
 cd /usr/local/lib/python3.12/dist-packages/vllm
-for f in scheduler config cp_common speculator rocm_aiter_mla speculative_draft_dcp; do
+for f in scheduler config cp_common speculator rocm_aiter_mla speculative_draft_dcp \
+         retention_alignment; do
     patch -p1 < /path/to/patches/k3-dcp8/vllm/$f.patch
 done
 ```
@@ -38,7 +39,8 @@ done
 Confirm each landed (a *failing* reverse dry-run means not applied):
 
 ```bash
-for f in scheduler config cp_common speculator rocm_aiter_mla speculative_draft_dcp; do
+for f in scheduler config cp_common speculator rocm_aiter_mla speculative_draft_dcp \
+         retention_alignment; do
     printf "%-18s " "$f"
     patch --dry-run -R -p1 < /path/to/patches/k3-dcp8/vllm/$f.patch >/dev/null 2>&1 \
         && echo applied || echo NOT-APPLIED
@@ -53,6 +55,7 @@ done
 | `speculator.patch` | `v1/worker/gpu/spec_decode/dflash/speculator.py` | syncs and barriers ranks before speculator cudagraph capture |
 | `rocm_aiter_mla.patch` | `v1/attention/backends/mla/rocm_aiter_mla.py` | the asm round-robin-CP route for DCP multi-token verify, the 96→128 native-tile pad, and the split-cap plumbing |
 | `speculative_draft_dcp.patch` | `config/speculative.py` | propagates the target's DCP settings into the draft's `ParallelConfig` |
+| `retention_alignment.patch` | `v1/core/kv_cache_coordinator.py` | validates `prefix_cache_retention_interval` against the granularity a cache hit is actually reported at (`cache_hit_alignment_tokens`) instead of `scheduler_block_size` |
 
 `speculative_draft_dcp.patch` is a **boot blocker** for DCP8 + DSpark.
 `create_draft_parallel_config()` builds the draft's `ParallelConfig` from scratch and copies
@@ -75,6 +78,16 @@ itself. `VLLM_DCP_KEEP_INTERLEAVE` is no longer set or needed.
 runs the entire DCP decode on Triton, which is the route we rejected on measured
 performance.
 
+`retention_alignment.patch` is what lets the DCP8 arms use
+`--prefix-cache-retention-interval 1536`. Upstream validates the interval against
+`scheduler_block_size`, which DCP8 scales to 12288, even though a prefix-cache hit is reported
+at `cache_hit_alignment_tokens` = `hash_block_size` = 1536 whenever partial hash hits are on --
+and they always are under DCP ("DCP accepts equality because it scales the effective
+full-attention block instead"). The check ran in `KVCacheCoordinator.__init__`, before
+`HybridKVCacheCoordinator` had resolved `enable_partial_hash_hits`, so it always read the class
+default `False`. Being forced to the 8x-coarser 12288 cost 2.4 pp of GPU prefix-cache hit rate
+(95.3% -> 92.9%) and ~21% of p90 interactivity at concurrency 1.
+
 There is no `rocm.patch` here on purpose. Upstream removed the blanket DCP→PIECEWISE
 cudagraph downgrade, so DCP with FULL cudagraphs is stock behaviour now.
 
@@ -88,6 +101,8 @@ cd /path/to/aiter
 git checkout 55dbc4f475da26c23cdaf73ce6ed38342a2d7f83
 git apply /path/to/patches/k3-dcp8/aiter/0001-k3-dcp8-code.patch
 git apply /path/to/patches/k3-dcp8/aiter/0002-k3-tuned-gemm-csv.patch
+# only needed on images carrying flydsl >= 0.3.2 (see the table below)
+git apply /path/to/patches/k3-dcp8/aiter/0003-flydsl-032-aux-attr.patch
 
 export PREBUILD_KERNELS=0
 export AITER_USE_SYSTEM_TRITON=1
@@ -104,6 +119,7 @@ ROCm.
 |---|---|---|---|
 | `0001-k3-dcp8-code.patch` | `aiter/mla.py`, `aiter/ops/attention.py`, `csrc/py_itfs_cu/asm_gemm_a16w16.cu` | +50/−4 | fp8 MLA block-N lookup keys; the tight split-tile bound (`max`→`min`) that reclaims MLA reduce scratch from 9.35 GiB to 2.38 GiB; and a split-K guard for the ASM a16w16 kernels under cudagraph replay |
 | `0002-k3-tuned-gemm-csv.patch` | 6 CSVs under `aiter/configs/model_configs/` | +765/−694 | tuned GEMM rows, closing 371 conc-1 tuned-config misses |
+| `0003-flydsl-032-aux-attr.patch` | `aiter/ops/flydsl/kernels/buffer_ops.py` | +12/−4 | flydsl 0.3.2 moved `aux` on `RawPtrBufferLoadOp`/`StoreOp` from a positional operand to a keyword-only `IntegerAttr`. A pinned aiter built against 0.3.0 dies at KV-cache profiling with `TypeError: RawPtrBufferStoreOp.__init__() takes 5 positional arguments but 6 were given`, taking every worker with it. **Check this on every image bump** — aiter is transplanted, not rebuilt, so a flydsl minor bump silently breaks it. |
 
 `merged_bf16_tuned_gemm_rocm10_retuned.csv` in this directory is the folded CSV that
 `AITER_CONFIG_GEMM_BF16` must point at. Copy it into `aiter/configs/` (it is untracked

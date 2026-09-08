@@ -100,7 +100,8 @@ apply_vllm_patch() {
 for _p in envs utils kda linear; do
     apply_vllm_patch "$REPO_ROOT/patches/k3-perf/vllm/$_p.patch"
 done
-for _p in scheduler config cp_common speculator rocm_aiter_mla speculative_draft_dcp; do
+for _p in scheduler config cp_common speculator rocm_aiter_mla speculative_draft_dcp \
+          retention_alignment; do
     apply_vllm_patch "$REPO_ROOT/patches/k3-dcp8/vllm/$_p.patch"
 done
 
@@ -231,11 +232,16 @@ case "${KV_OFFLOAD_BACKEND:-}" in
     # missing runtime dependencies, same as the MiniMax-M3 lmcache arm.
     # The nightly-rocm asset index is not immutable: it carries only the
     # current nightly, so a dev pin stops resolving as soon as LMCache cuts
-    # the next one. dev60 is already gone ("No matching distribution found");
-    # dev89 is what the index serves today and exposes the same server CLI
-    # (--l1-size-gb / --chunk-size / --separate-object-groups /
-    # --supported-transfer-mode). Re-pin whenever this stops resolving.
-    LMCACHE_VERSION="0.5.5.dev89+rocm7.2"
+    # the next one. dev60 and dev89 are both already gone ("No matching
+    # distribution found"); dev105 is what the index serves today and exposes
+    # the same `lmcache server` CLI the block below depends on (verified:
+    # --l1-size-gb / --l1-init-size-gb / --chunk-size /
+    # --separate-object-groups / --enable-extra-logging /
+    # --extra-logging-interval / --max-cpu-workers / --max-gpu-workers /
+    # --eviction-policy / --supported-transfer-mode / --shm-name /
+    # --http-port). Re-pin whenever this stops resolving; override without
+    # editing the recipe via LMCACHE_VERSION=<ver> in the environment.
+    LMCACHE_VERSION="${LMCACHE_VERSION:-0.5.5.dev105+rocm7.2}"
     LMCACHE_ROCM_INDEX="https://github.com/LMCache/LMCache/releases/expanded_assets/nightly-rocm"
     agentic_pip_install --quiet --no-cache-dir --no-deps \
         "sortedcontainers==2.4.0" \
@@ -264,6 +270,25 @@ case "${KV_OFFLOAD_BACKEND:-}" in
     python3 -c \
         "import cupy; import lmcache.integration.vllm.lmcache_mp_connector; import opentelemetry.exporter.prometheus" \
         >/dev/null
+
+    # LMCache creates a fresh interprocess event per store/retrieve, records
+    # it, exports its IPC handle and then drops the last reference -- CPython
+    # destroys the event as the transfer function returns. HIP/CUDA only defer
+    # the real destroy while the recorded work is still outstanding, so once
+    # the copy lands the exported handle stops being openable and the vLLM
+    # worker's Event.from_ipc_handle() raises hipErrorInvalidValue straight out
+    # of get_finished(), killing EngineCore. It survives light load and then
+    # dies once a long prefill step delays get_finished() past a copy
+    # completing (m2_c8: 17 min of clean serving, then EngineDeadError and a
+    # 10.4% client error rate). Retain a bounded ring of exported events, and
+    # do not let a stale handle be fatal. Idempotent, same as the vLLM applies.
+    LMCACHE_PKG="$(python3 -c 'import lmcache, os; print(os.path.dirname(lmcache.__file__))')"
+    _lmp="$REPO_ROOT/patches/k3-lmcache/0001-retain-exported-ipc-events.patch"
+    if patch --dry-run -R -p1 -d "$LMCACHE_PKG" <"$_lmp" >/dev/null 2>&1; then
+        echo "patch already applied: ${_lmp#"$REPO_ROOT"/}"
+    else
+        patch -p1 -d "$LMCACHE_PKG" <"$_lmp"
+    fi
 
     # One MP server for the node, per the Kimi-K3 recipe
     # (docs.lmcache.ai/recipes/kimi_k3.html), with --chunk-size sized for
@@ -301,6 +326,14 @@ case "${KV_OFFLOAD_BACKEND:-}" in
     LMCACHE_LOG="$RESULT_DIR/lmcache_server.log"
 
     LMCACHE_L1_SIZE_GB="$TOTAL_CPU_DRAM_GB"
+    # See --l1-init-size-gb below. 256 GiB is ~1.8x the largest working set at
+    # which the lazy-growth fault was observed (140.99 GiB), and still fits in
+    # host RAM alongside the /dev/shm weights. Capped at the pool size so small
+    # --dram-util values stay coherent.
+    LMCACHE_L1_INIT_SIZE_GB=256
+    if [ "$LMCACHE_L1_INIT_SIZE_GB" -gt "$LMCACHE_L1_SIZE_GB" ]; then
+        LMCACHE_L1_INIT_SIZE_GB="$LMCACHE_L1_SIZE_GB"
+    fi
 
     LMCACHE_CMD=(
         lmcache server
@@ -309,7 +342,18 @@ case "${KV_OFFLOAD_BACKEND:-}" in
         --http-host 127.0.0.1
         --http-port "$LMCACHE_HTTP_PORT"
         --l1-size-gb "$LMCACHE_L1_SIZE_GB"
-        --l1-init-size-gb 10
+        # L1 is lazily allocated (--l1-use-lazy defaults on), so this is where
+        # the pinned host pool STARTS; it then grows toward --l1-size-gb as the
+        # run stores more. Growing it while GPU->host copies are in flight makes
+        # the LMCache server take a GPU memory access fault on a stale host VA
+        # and core-dump, killing offload for the rest of the run:
+        #   Memory access fault by GPU node-7 ... on address 0x7dac1c6ce000
+        # It tracks allocated size, not elapsed time -- conc-8 faulted at
+        # L1=133.96 GiB after 21.5 min, conc-10 at L1=140.99 GiB after 12 min.
+        # Starting above the working set avoids the growth entirely. Full
+        # pre-allocation (--no-l1-use-lazy) is the airtight fix but does not fit:
+        # of 3023 GiB host RAM, ~1490 GiB is /dev/shm holding the weights.
+        --l1-init-size-gb "$LMCACHE_L1_INIT_SIZE_GB"
         --chunk-size "$LMCACHE_CHUNK_SIZE"
         --separate-object-groups
         --enable-extra-logging
@@ -317,6 +361,13 @@ case "${KV_OFFLOAD_BACKEND:-}" in
         --max-cpu-workers 8
         --max-gpu-workers "$LMCACHE_MAX_GPU_WORKERS"
         --eviction-policy LRU
+        # Must stay lmcache_driven. engine_driven looks attractive -- it moves
+        # gather/scatter into the vLLM workers so the server never touches a GPU,
+        # and it does make the fault above disappear -- but it silently disables
+        # the DRAM tier entirely: L1 stays at 0.00/803.00 GiB for the whole run,
+        # zero prefetches, ext_cache_hit 0.0%, and a 277-line server log instead
+        # of 3000+. The run passes with numbers that are really "no offload".
+        # Fix the fault with --l1-init-size-gb (above), not with this flag.
         --supported-transfer-mode lmcache_driven
         --shm-name ""
     )
@@ -332,9 +383,20 @@ case "${KV_OFFLOAD_BACKEND:-}" in
 
     # 100k-330k-token agentic prefixes make single retrieves large; use the
     # same MQ timeout headroom as the MiniMax-M3 arm.
+    #
+    # mp_transfer_mode is pinned explicitly rather than left at its "auto"
+    # default. It must agree with the server's --supported-transfer-mode (see
+    # LMCACHE_CMD above): that flag only declares what the *server* accepts,
+    # while the worker separately defaults to "auto", which dispatches on
+    # tensor.device.type and picks lmcache_driven for CUDA/ROCm regardless.
+    # Change one side only and the two never agree -- the workers hang in
+    # connector init right after "Auto-selected backend [rocm]", never print
+    # "Application startup complete", and EngineCore loops on "No available
+    # shared memory broadcast block found in 60 seconds" until the outer
+    # timeout fires. Pinning both sides makes that mismatch impossible.
     OFFLOAD_ARGS=(
         --kv-transfer-config
-        "{\"kv_connector\":\"LMCacheMPConnector\",\"kv_connector_module_path\":\"lmcache.integration.vllm.lmcache_mp_connector\",\"kv_role\":\"kv_both\",\"kv_connector_extra_config\":{\"lmcache.mp.port\":$LMCACHE_PORT,\"lmcache.mp.mq_timeout\":6000.0}}"
+        "{\"kv_connector\":\"LMCacheMPConnector\",\"kv_connector_module_path\":\"lmcache.integration.vllm.lmcache_mp_connector\",\"kv_role\":\"kv_both\",\"kv_connector_extra_config\":{\"lmcache.mp.port\":$LMCACHE_PORT,\"lmcache.mp.mq_timeout\":6000.0,\"lmcache.mp.mp_transfer_mode\":\"lmcache_driven\"}}"
     )
     ;;
     *)
@@ -365,10 +427,19 @@ fi
 # hit rate and ~12% of p90 interactivity at concurrency 1. The legal values
 # differ by arm because the validator compares against scheduler_block_size:
 #   conc 1-4 (DCP1)   -> 1536, the attention/KDA block size. Dense.
-#   conc 8+  (DCP8)   -> 12288, since DCP8 scales the attention group by 8.
-#                        1536 also works there, but only on a vLLM carrying
-#                        the fix that validates against cache_hit_alignment_
-#                        tokens rather than scheduler_block_size.
+#   conc 8+  (DCP8)   -> 1536 as well, now that patches/k3-dcp8/vllm/
+#                        retention_alignment.patch is applied. vLLM validated
+#                        the interval against scheduler_block_size, which DCP8
+#                        scales to 12288, even though the granularity a hit is
+#                        actually reported at is cache_hit_alignment_tokens =
+#                        hash_block_size = 1536 whenever partial hash hits are
+#                        on (they are under DCP: "DCP accepts equality because
+#                        it scales the effective full-attention block instead").
+#                        The forced 8x-coarser 12288 cost 2.4 pp of GPU prefix-
+#                        cache hit rate (95.3% -> 92.9%) and ~21% of p90
+#                        interactivity at conc 1. This is what the B300 arm's
+#                        agentx-k3 image carries; without it we were not
+#                        running the same configuration.
 # Dense costs ~4.5x the block pool per cached token, so the conc 8+ value must
 # be re-swept against the working set before it is lowered.
 case "$CONC" in
@@ -403,6 +474,20 @@ case "$CONC" in
 esac
 PREFIX_CACHE_RETENTION_INTERVAL="${PREFIX_CACHE_RETENTION_INTERVAL_OVERRIDE:-$PREFIX_CACHE_RETENTION_INTERVAL}"
 MAX_NUM_BATCHED_TOKENS="${MNBT_OVERRIDE:-$MAX_NUM_BATCHED_TOKENS}"
+# Draft depth is normally pinned by concurrency above, but it is also the single
+# biggest lever on the DCP8 decode attention, so it needs to be sweepable.
+# Measured on the asm cprr kernel (single-GPU repro,
+# _dcp_folded_mla_standalone.py, 96 heads / 27,316 ctx per rank):
+#   qlen  7 (K=3) -> 217.8 us/layer      qlen 15 (K=7) -> 450.6 us/layer
+# i.e. cost is LINEAR in max_qo_len, because mla_*_cprr_ps re-walks the KV once
+# per query token instead of amortizing the read across the multi-token query
+# dimension the way mla_*_ps does (73.9 us at the same shape, 6.1x cheaper).
+# Until that is fixed in the kernel, a deeper draft is charged twice under DCP:
+# once in the draft itself and again in every verify. Keep them in step with
+# SYNTHETIC_ACCEPT_LEN_OVERRIDE -- the golden AL curve is 3.84 at K=7, 3.00 at
+# K=3, and comparing across draft depths without moving both is meaningless.
+SPEC_NUM_TOKENS="${SPEC_NUM_TOKENS_OVERRIDE:-$SPEC_NUM_TOKENS}"
+SYNTHETIC_ACCEPT_LEN="${SYNTHETIC_ACCEPT_LEN_OVERRIDE:-${SYNTHETIC_ACCEPT_LEN:-}}"
 
 # The DSpark draft runs its own MLA attention, separate from the target's.
 # Under decode context parallelism the draft's KV is sharded across the CP
@@ -475,16 +560,15 @@ if [ "$DCP_SIZE" -gt 1 ]; then
     # from patches/k3-dcp8/aiter/. Override to TRITON_MLA only on an image
     # without it, and expect to lose the tuning.
     ATTN_BE_ARGS+=(--attention-backend "${DCP_ATTN_BACKEND:-ROCM_AITER_MLA}")
-    # With any KV connector configured, vLLM realigns cp_kv_cache_interleave_size
-    # from 1 up to the local block size, on the assumption that the connector is
-    # PD disaggregation and the producer's KV layout has to match the consumer's.
-    # A same-process offload connector saves and restores each DCP rank's own
-    # shard symmetrically, so it needs no such realignment -- and interleave != 1
-    # turns off *both* DCP verify routes, after which DSpark refuses to build:
-    # "does not support causal multi-token MLA attention for DSpark with decode
-    # context parallelism". kv_role is "kv_both" for offload and for a combined
-    # PD node alike, so vLLM cannot tell them apart on its own.
-    export VLLM_DCP_KEEP_INTERLEAVE=1
+    # cp_kv_cache_interleave_size must stay 1: any other value turns off *both*
+    # DCP verify routes, after which DSpark refuses to build ("does not support
+    # causal multi-token MLA attention for DSpark with decode context
+    # parallelism"). vLLM used to realign it up to the local block size whenever
+    # *any* KV connector was configured -- fine for PD disaggregation, wrong for
+    # a same-process offload connector that saves and restores each DCP rank's
+    # own shard symmetrically. adjust_dcp_kv_cache_interleave_size() now returns
+    # early unless the connector is NixlConnector, so the LMCache offload arm
+    # keeps interleave 1 on its own and needs no flag or patch here.
 fi
 export VLLM_USE_DIRECT_DCP_A2A=0
 export VLLM_USE_DIRECT_DCP_Q_GATHER=0

@@ -1,0 +1,78 @@
+--- a/v1/platform/base/event_ipc.py
++++ b/v1/platform/base/event_ipc.py
+@@ -17,7 +17,9 @@
+ 
+ # Standard
+ from typing import Protocol, runtime_checkable
++import collections
+ import inspect
++import os
+ 
+ # First Party
+ from lmcache import torch_dev, torch_device_type
+@@ -183,6 +185,10 @@
+     ) -> None:
+         self._event_module = event_module if event_module is not None else torch_dev
+         self.device_type = device_type if device_type is not None else torch_device_type
++        # See create_event(): bounded ring keeping exported events alive.
++        self._retained_events: collections.deque = collections.deque(
++            maxlen=max(1, int(os.environ.get("LMCACHE_EVENT_IPC_RETAIN", "4096")))
++        )
+ 
+     def check_event_support(self, device: object) -> None:
+         """Raise ``RuntimeError`` if interprocess events are unsupported.
+@@ -212,8 +218,20 @@
+             )
+ 
+     def create_event(self, device: object) -> object:
+-        """Create a new interprocess-capable event."""
+-        return self._event_module.Event(interprocess=True)  # type: ignore[union-attr]
++        """Create a new interprocess-capable event.
++
++        The event is also appended to a bounded retain ring. Callers export the
++        event's IPC handle and then drop their reference, so CPython destroys
++        the event as soon as the creating function returns. HIP/CUDA only defer
++        the real destroy while the recorded work is still outstanding, so once
++        the copy completes the exported handle stops being openable and the
++        importing process gets hipErrorInvalidValue. Holding the last N events
++        keeps every handle openable long after its work has completed. Size via
++        LMCACHE_EVENT_IPC_RETAIN.
++        """
++        event = self._event_module.Event(interprocess=True)  # type: ignore[union-attr]
++        self._retained_events.append(event)
++        return event
+ 
+     def export_event(self, event: object, device: object) -> bytes:
+         """Serialize ``event`` into a process-portable IPC handle."""
+--- a/v1/multiprocess/futures.py
++++ b/v1/multiprocess/futures.py
+@@ -1,5 +1,6 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # Standard
++import logging
+ from typing import Any, Generic, Optional, TypeVar, cast
+ import threading
+ 
+@@ -166,7 +167,21 @@
+         event_bytes, result = self.raw_future_.result()
+         event = None
+         if event_bytes:
+-            event = self._event_backend.import_event(event_bytes, self.device_)
++            try:
++                event = self._event_backend.import_event(event_bytes, self.device_)
++            except Exception as exc:
++                # K3: a stale IPC event handle must not kill the engine. The
++                # remote side does not retain the event it exported, so the
++                # handle stops being openable once the recorded work completes
++                # -- i.e. the failure itself means the work is already done.
++                # Treat it as "no device work outstanding" instead of raising
++                # out of the vLLM worker's get_finished().
++                logging.getLogger(__name__).warning(
++                    "Dropping unopenable IPC event handle (%s); treating the "
++                    "remote device work as complete.",
++                    exc,
++                )
++                event = None
+ 
+         self.result_ = result
+         self.event_ = event
