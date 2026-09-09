@@ -1,6 +1,27 @@
 --- a/model_executor/layers/utils.py
 +++ b/model_executor/layers/utils.py
-@@ -328,17 +328,37 @@
+@@ -3,6 +3,7 @@
+ """Utility methods for model layers."""
+ 
+ import functools
++import os
+ from collections.abc import Callable
+ from dataclasses import dataclass
+ 
+@@ -257,6 +258,12 @@
+     )
+ 
+ 
++# See the gate below. 5 = what stock vLLM compiles; set to 9 only where
++# patches/k3-perf/vllm-csrc/skinny_gemms_n6to9.patch has been built into
++# _rocm_C.abi3.so, otherwise wvSplitK throws and takes the worker with it.
++_WVSPLITK_MAX_N = int(os.environ.get("VLLM_ROCM_WVSPLITK_MAX_N", "5"))
++
++
+ def rocm_unquantized_gemm_impl(
+     x: torch.Tensor, weight: torch.Tensor, bias: torch.Tensor | None = None
+ ) -> torch.Tensor:
+@@ -328,17 +335,44 @@
  
      if use_skinny:
          # The skinny kernels assume contiguous K elements. A shape-preserving
@@ -12,13 +33,20 @@
 +        # going to consume it. Hoisting it above the branches copies on every
 +        # call that falls through to tgemm/F.linear below, which for a strided
 +        # activation is a whole dead kernel launch (n > 5 never matches).
-+        # n<=9, not n<=5: wvSplitK is generic in N (it is a template
-+        # parameter) and skinny_gemms.cu now instantiates 6..9 with YTILE
-+        # clamped to 1, which keeps sum[N][YTILE] inside the register
-+        # budget. Without the clamp N=8 spilled 141 VGPRs / 364 B/lane.
-+        # Conc-1 with K=7 gives n = 1+7 = 8, which previously fell through
-+        # to the aiter/asm path on 16-row tiles.
-+        if m > 8 and 0 < n <= 9:
++        # Upper bound on n for wvSplitK. It MUST NOT exceed what the compiled
++        # _rocm_C carries: skinny_gemms.cu dispatches `switch (N_in)` and its
++        # `default:` raises RuntimeError("Unsupported N value: M,K,N"), which
++        # kills the worker. vLLM #40687 raised this gate to 5 and #44001 was
++        # opened to revert it precisely because a stale _rocm_C (cases 1..4)
++        # met a gate of 5 and threw on a live serve.
++        #
++        # Stock vLLM compiles cases 1..5. patches/k3-perf/vllm-csrc/
++        # skinny_gemms_n6to9.patch adds 6..9 (with YTILE clamped to 1 so
++        # sum[N][YTILE] stays in registers -- unclamped, N=8 spills 141 VGPRs
++        # / 364 B per lane), but that needs a _rocm_C rebuild the recipe does
++        # NOT perform. So default to the stock-safe 5 and let a box that has
++        # rebuilt opt in explicitly.
++        if m > 8 and 0 < n <= _WVSPLITK_MAX_N:
 +            x_view = x.reshape(-1, x.size(-1)).contiguous()
              cu_count = num_compute_units()
              out = ops.wvSplitK(weight, x_view, cu_count, bias)
