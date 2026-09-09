@@ -321,6 +321,20 @@ case "${KV_OFFLOAD_BACKEND:-}" in
     if [ "${DCP_SIZE:-1}" -gt 1 ]; then
         LMCACHE_MAX_GPU_WORKERS="$DCP_SIZE"
     fi
+    # Overridable because this is a throughput/latency tradeoff, not a
+    # correctness setting. All 8 workers copying at once is a burst that stalls
+    # the decode collectives: on a fixed-ISL-84k probe it leaves 57 of 63 decode
+    # steps untouched and blows up 6 of them, taking one cross_device_reduce
+    # from ~8 us to 18 ms (step max/p50 2.81x). Capping at 2 removes the stalls
+    # completely (max/p50 1.01x, decode -7.3%) while keeping the DRAM tier.
+    #
+    # It is still left at DCP_SIZE, because that win does NOT survive e2e: on
+    # the full agentic conc-1 run capping at 2 moved interactivity p90
+    # 123.30 -> 122.57, i.e. nothing. The IX metric is a per-request MEDIAN ITL
+    # and a handful of stalled steps cannot move a median -- only p99/max
+    # improved (12.824 -> 12.641). Keep the knob for tail-sensitive workloads;
+    # do not re-litigate it for the agentic benchmark.
+    LMCACHE_MAX_GPU_WORKERS="${LMCACHE_MAX_GPU_WORKERS_OVERRIDE:-$LMCACHE_MAX_GPU_WORKERS}"
     LMCACHE_PORT=6555
     LMCACHE_HTTP_PORT=8090
     LMCACHE_LOG="$RESULT_DIR/lmcache_server.log"
@@ -602,6 +616,23 @@ VLLM_CMD=(
     "${OFFLOAD_ARGS[@]}"
     "${CP_ARGS[@]}"
 )
+
+# Escape hatch for one-off serve flags that must not become part of the recipe
+# -- e.g. --profiler-config for a profiling run. Parsed as a shell word list, so
+# quote anything containing spaces. Empty by default, so the benchmark arms are
+# byte-identical to before. The flags land in vllm_command.txt like any other,
+# which keeps a profiled run self-documenting.
+#
+# TRAP: a bare JSON value is BRACE-EXPANDED by the eval -- {"a":"b","c":"d"}
+# becomes two words a:b and c:d, and vLLM then rejects the flag. Single-quote
+# any JSON *inside* the variable:
+#   EXTRA_VLLM_ARGS="--profiler-config '{\"profiler\":\"torch\"}'"
+if [ -n "${EXTRA_VLLM_ARGS:-}" ]; then
+    eval "_extra_vllm_arr=($EXTRA_VLLM_ARGS)"
+    VLLM_CMD+=("${_extra_vllm_arr[@]}")
+    echo "EXTRA_VLLM_ARGS: ${_extra_vllm_arr[*]}"
+fi
+
 printf '%q ' "${VLLM_CMD[@]}" | tee "$RESULT_DIR/vllm_command.txt"
 printf '\n' | tee -a "$RESULT_DIR/vllm_command.txt"
 "${VLLM_CMD[@]}" > "$SERVER_LOG" 2>&1 &
@@ -609,6 +640,16 @@ SERVER_PID=$!
 echo "Server PID: $SERVER_PID"
 
 wait_for_server_ready --port "$PORT" --server-log "$SERVER_LOG" --server-pid "$SERVER_PID"
+
+# Bring the recipe's exact serve up and stop there, for driving it by hand (a
+# fixed-ISL profiling probe, a one-off shape check). Using this instead of a
+# hand-rolled vllm command is the point: the env and flags are the benchmark's,
+# so what gets profiled is what gets measured. Terminate the server to finish.
+if [ "${SERVE_ONLY:-false}" = "true" ]; then
+    echo "SERVE_ONLY=true: ready on port $PORT (server pid $SERVER_PID); skipping the client."
+    wait "$SERVER_PID"
+    exit 0
+fi
 
 if [ "${EVAL_ONLY}" = "true" ]; then
     run_eval --port "$PORT"
