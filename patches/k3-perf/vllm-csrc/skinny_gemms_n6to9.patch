@@ -1,0 +1,43 @@
+--- a/csrc/rocm/skinny_gemms.cu
++++ b/csrc/rocm/skinny_gemms.cu
+@@ -1234,7 +1234,16 @@
+ #define WVSPLIT_TILE_CFG(_THRDS, _WVPRGRP, _sYT, __N)     \
+   {                                                       \
+     bool fit_lds = (Kbp_in * N_in <= max_lds_len);        \
+-    if (_sYT <= 1)                                        \
++    /* Accumulators are sum[N][YTILE] / sum4[N][YTILE] /   \
++     * bigA[N][UNRL], so register cost scales with N*YTILE. \
++     * Past N=5 the default YTILE spills: measured on       \
++     * gfx950 at N=8, YTILE=3 needs 364 B/lane of scratch   \
++     * (141 VGPR spills) while YTILE=1,UNRL=2 needs none.   \
++     * Shrink the output-row tile as N grows to stay in     \
++     * registers. */                                       \
++    if (__N >= 6)                                         \
++      WVSPLITK_CFG(_THRDS, _WVPRGRP, 1, 2, __N)           \
++    else if (_sYT <= 1)                                   \
+       WVSPLITK_CFG(_THRDS, _WVPRGRP, 1, 4, __N)           \
+     else if ((__N == 1) || (!fit_lds) || (_sYT <= 4 * 2)) \
+       WVSPLITK_CFG(_THRDS, _WVPRGRP, 2, 2, __N)           \
+@@ -1315,6 +1324,22 @@
+       case 5:
+         WVSPLIT_TILE(sYT, 5)
+         break;
++      // K3: 1 + num_speculative_tokens lands in 6..9 for K=5..8 (K=7 -> n=8).
++      // Without these instantiations that whole range falls through to the
++      // generic aiter/hipBLASLt path on 16-row tiles. The kernel body is
++      // already generic in N (loop bound + array extent only).
++      case 6:
++        WVSPLIT_TILE(sYT, 6)
++        break;
++      case 7:
++        WVSPLIT_TILE(sYT, 7)
++        break;
++      case 8:
++        WVSPLIT_TILE(sYT, 8)
++        break;
++      case 9:
++        WVSPLIT_TILE(sYT, 9)
++        break;
+       default:
+         throw std::runtime_error(
+             "Unsupported N value: " + std::to_string(M_in) + "," +

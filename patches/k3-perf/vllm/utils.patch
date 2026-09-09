@@ -1,17 +1,24 @@
 --- a/model_executor/layers/utils.py
 +++ b/model_executor/layers/utils.py
-@@ -328,17 +328,31 @@
+@@ -328,17 +328,37 @@
  
      if use_skinny:
          # The skinny kernels assume contiguous K elements. A shape-preserving
 -        # reshape can retain a transposed activation's non-contiguous strides.
 -        x_view = x.reshape(-1, x.size(-1)).contiguous()
+-        if m > 8 and 0 < n <= 5:
 +        # reshape can retain a transposed activation's non-contiguous strides,
 +        # so materialise the input -- but only once a skinny kernel is actually
 +        # going to consume it. Hoisting it above the branches copies on every
 +        # call that falls through to tgemm/F.linear below, which for a strided
 +        # activation is a whole dead kernel launch (n > 5 never matches).
-         if m > 8 and 0 < n <= 5:
++        # n<=9, not n<=5: wvSplitK is generic in N (it is a template
++        # parameter) and skinny_gemms.cu now instantiates 6..9 with YTILE
++        # clamped to 1, which keeps sum[N][YTILE] inside the register
++        # budget. Without the clamp N=8 spilled 141 VGPRs / 364 B/lane.
++        # Conc-1 with K=7 gives n = 1+7 = 8, which previously fell through
++        # to the aiter/asm path on 16-row tiles.
++        if m > 8 and 0 < n <= 9:
 +            x_view = x.reshape(-1, x.size(-1)).contiguous()
              cu_count = num_compute_units()
              out = ops.wvSplitK(weight, x_view, cu_count, bias)
