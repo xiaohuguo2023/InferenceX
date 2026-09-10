@@ -100,6 +100,86 @@ export AITER_CONFIG_GEMM_BF16="${AITER_CONFIG_GEMM_BF16:-$REPO_ROOT/patches/k3-d
 # The a8w4 MoE knobs (SITUV2 etc.) are exported by the recipe itself and are
 # already correct -- do not set them here. See the recipe's env block.
 
+# ---- preflight -------------------------------------------------------------
+# Every check below fails in seconds. Without them the run dies AFTER loading
+# ~1.5 TB of weights, or worse, completes and produces a number that is not
+# comparable. Set REPRO_SKIP_PREFLIGHT=1 only if you know why.
+preflight() {
+    local bad=0
+
+    # 1. aiter MUST be rebuilt from source with patches/k3-dcp8/aiter/ applied.
+    #    The recipe patches vLLM in place but CANNOT rebuild aiter (a .cu change
+    #    needs a compile), so this is the one silent manual prerequisite.
+    #    Without 0001-k3-dcp8-code.patch there is no asm cprr kernel and the
+    #    whole DCP decode path falls back or fails. See patches/k3-dcp8/README.md section 2.
+    local adir
+    adir=$(python3 -c 'import aiter, os; print(os.path.dirname(aiter.__file__))' 2>/dev/null || true)
+    if [ -z "$adir" ]; then
+        echo "PREFLIGHT FAIL: aiter is not importable" >&2; bad=1
+    elif ! grep -q cprr "$adir/ops/attention.py" 2>/dev/null; then
+        echo "PREFLIGHT FAIL: aiter lacks the DCP cprr path -- patches/k3-dcp8/aiter/" >&2
+        echo "  was not applied, or aiter was installed as a wheel instead of rebuilt." >&2
+        echo "  Fix: follow patches/k3-dcp8/README.md section 2 (source rebuild required)." >&2
+        bad=1
+    else
+        echo "  ok  aiter DCP cprr path present ($adir)"
+    fi
+
+    # 1b. Image line. The plain nightly-<sha> tags are ROCm 7.2.3; the
+    #     nightly-rocm100-* tags are ROCm 10 and measured ~9.5% SLOWER on this
+    #     workload (they also break the torch profiler in vLLM workers and make
+    #     the aiter GEMM tuner report 0 us). Every published number is 7.2.x.
+    local rocmv
+    rocmv=$(cat /opt/rocm/.info/version 2>/dev/null | cut -d. -f1,2)
+    if [ -z "$rocmv" ]; then
+        echo "  ..  ROCm version not detectable (/opt/rocm/.info/version missing)"
+    elif [ "$rocmv" != "7.2" ]; then
+        echo "PREFLIGHT FAIL: ROCm $rocmv -- the published numbers are ROCm 7.2.3." >&2
+        echo "  A rocm100 image is ~9.5% slower here and is NOT comparable." >&2
+        echo "  Fix: use the image pinned in patches/k3-dcp8/README.md." >&2
+        bad=1
+    else
+        echo "  ok  ROCm $(cat /opt/rocm/.info/version)"
+    fi
+
+    # 2. Target weights.
+    [ -d "$MODEL_PATH" ] && echo "  ok  target weights: $MODEL_PATH" \
+        || { echo "PREFLIGHT FAIL: MODEL_PATH does not exist: $MODEL_PATH" >&2; bad=1; }
+
+    # 3. DSpark draft, staged AND causal. dflash_config.causal lives in the
+    #    CHECKPOINT, not in vLLM, and it does not survive a re-download. The
+    #    recipe rewrites it on every launch, but only in caches it can find --
+    #    so the draft has to be cached here or the recipe's `hf download` will
+    #    fail under HF_HUB_OFFLINE=1.
+    local nd
+    nd=$(ls -d "$HF_ROOT"/models--Inferact--Kimi-K3-DSpark/snapshots/*/ 2>/dev/null | wc -l)
+    if [ "$nd" -eq 0 ]; then
+        echo "PREFLIGHT FAIL: DSpark draft not staged under $HF_ROOT" >&2
+        echo "  HF_HUB_OFFLINE=1 is set, so the recipe's 'hf download' cannot fetch it." >&2
+        echo "  Fix: stage it once with HF_HUB_OFFLINE=0, or point HF_ROOT at the cache that has it." >&2
+        bad=1
+    else
+        echo "  ok  DSpark draft staged ($nd snapshot(s))"
+    fi
+
+    # 4. conc-1 only: the DRAM KV tier is sized in GB and is MACHINE-SPECIFIC.
+    #    803 is what this box used. On a box with less free RAM -- remember the
+    #    weights may also sit in /dev/shm and count against it -- lower it.
+    if [ "$CONC" = "1" ]; then
+        local availgb
+        availgb=$(awk '/MemAvailable/{printf "%d", $2/1048576}' /proc/meminfo 2>/dev/null || echo 0)
+        echo "  ..  host MemAvailable=${availgb} GB, TOTAL_CPU_DRAM_GB=${TOTAL_CPU_DRAM_GB}"
+        if [ "$availgb" -gt 0 ] && [ "$TOTAL_CPU_DRAM_GB" -gt "$availgb" ]; then
+            echo "PREFLIGHT WARN: TOTAL_CPU_DRAM_GB (${TOTAL_CPU_DRAM_GB}) exceeds MemAvailable (${availgb} GB)." >&2
+            echo "  LMCache grows lazily (l1-init 256 GB) so this may still run, but set" >&2
+            echo "  TOTAL_CPU_DRAM_GB=<something under ${availgb}> if the box starts swapping." >&2
+        fi
+    fi
+
+    [ "$bad" -eq 0 ] || { echo "PREFLIGHT FAILED -- not launching." >&2; exit 1; }
+}
+[ "${REPRO_SKIP_PREFLIGHT:-0}" = "1" ] || preflight
+
 echo "=== K3 agentic repro: CONC=$CONC DCP=$DCP_SIZE EP_SIZE=$EP_SIZE tag=$TAG ==="
 bash "$REPO_ROOT/benchmarks/single_node/agentic/kimik3_fp4_mi355x_mtp.sh"
 rc=$?
