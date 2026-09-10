@@ -110,7 +110,15 @@ done
 # crossover it was justified against, and the agentic launcher has been seen to
 # HSA-fault outright. The _rocm10_retuned variant is the one tuned on this
 # image's ROCm; merged_bf16_tuned_gemm.csv is kept for the older pin.
-export AITER_CONFIG_GEMM_BF16="${AITER_CONFIG_GEMM_BF16:-$REPO_ROOT/patches/k3-dcp8/aiter/merged_bf16_tuned_gemm_rocm10_retuned.csv}"
+# Tuned bf16 GEMM rows. Must match the IMAGE LINE, not just the GPU: tuned
+# kernel indices are hardware- AND aiter-build-specific.
+# merged_bf16_tuned_gemm.csv (3103 rows) is what every published conc-1/2/4
+# number was measured with, on the ROCm 7.2.3 image pinned in
+# patches/k3-dcp8/README.md.
+# NOT _rocm10_retuned.csv (2898 rows): that was retuned against the superseded
+# nightly-rocm100 (ROCm 10) image, on which the aiter GEMM tuner reports 0 us --
+# so its rows are unverified as well as fewer.
+export AITER_CONFIG_GEMM_BF16="${AITER_CONFIG_GEMM_BF16:-$REPO_ROOT/patches/k3-dcp8/aiter/merged_bf16_tuned_gemm.csv}"
 
 # ---- DSpark draft causality -------------------------------------------------
 # The published draft checkpoint ships without `dflash_config`, and
