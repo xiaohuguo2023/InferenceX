@@ -164,9 +164,18 @@ install_agentic_deps
 export VLLM_ROCM_AITER_MLA_ASM_PADDING=asm
 export VLLM_ROCM_USE_AITER=1
 export SAFETENSORS_FAST_GPU=1
-export VLLM_ROCM_USE_AITER_MOE_SITUV2_A8W4=1
-export AITER_SITUV2_A8W4=1
-export AITER_BF16_FP8_MOE_BOUND=0
+# a8w4 routed-expert path: keeps the FlyDSL/CK backend (logged as AITER_MXFP4_BF16,
+# which is a backend FAMILY name, not the GEMM dtype) and dispatches
+# flydsl_moe1_afp8_wfp4_* -- MXFP4 weights x FP8 activations. Confirm with
+# `grep -o afp8_wfp4 server.log`, never from the backend log line.
+# AITER_BF16_FP8_MOE_BOUND: AITER's own default is 256; below that, non-SiTU
+# mixed_moe kernels fall back to a16, which would cover the whole decode range
+# (M = (1+NUM_SPEC)*CONC = 8 at conc-1). Keep it 0.
+# Overridable only so the a8w4-vs-a16 A/B can be run without forking this file;
+# the defaults below are the shipped configuration.
+export VLLM_ROCM_USE_AITER_MOE_SITUV2_A8W4="${VLLM_ROCM_USE_AITER_MOE_SITUV2_A8W4:-1}"
+export AITER_SITUV2_A8W4="${AITER_SITUV2_A8W4:-1}"
+export AITER_BF16_FP8_MOE_BOUND="${AITER_BF16_FP8_MOE_BOUND:-0}"
 export VLLM_USE_BREAKABLE_CUDAGRAPH=0
 export AITER_QUICK_REDUCE_QUANTIZATION=INT4
 

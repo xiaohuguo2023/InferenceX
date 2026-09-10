@@ -12,13 +12,45 @@ An older long-context sweep on `73029d42` (concurrency 48→1, 9/9 `rc=0`, `num_
 measured AL 2.39–2.43 and ITL within ±7% of the non-DCP baseline. Kept for reference only —
 it is a different image, a different K, and a different draft sharding.
 
+## Reproducing the published agentic numbers
+
+Once the patches below are applied, the benchmark itself is one command:
+
+```bash
+CONC=1 bash benchmarks/single_node/agentic/repro/k3_mi355x_agentic_repro.sh
+```
+
+That script carries the full measured environment (including the four variables a
+manual launch gets wrong, which otherwise abort the run *after* a 1.5 TB weight
+load) and prints the verification checks. Measured, 3600 s, nspec 7, synthetic
+AL 3.84, TP8, `EP_SIZE=1`:
+
+| CONC | intvty p90 | frITL p90 | n | ISL med | OSL med | topology |
+|---|---|---|---|---|---|---|
+| 1 | **131.35** | 7.613 | 203 | 161287 | 654.0 | DCP8 + LMCache DRAM |
+| 2 | 102.13 | 9.792 | 342 | 79067 | 203.0 | DCP1, no offload |
+| 4 | 93.82 | 10.659 | 455 | 88812 | 299.0 | DCP1, no offload |
+
+**Only CONC=1 was measured on the image pinned below.** The conc-2 and conc-4
+numbers predate the ROCm 7.2.3 correction (worth ~9.5% at conc-1), so treat them
+as a floor rather than a target.
+
 ## Pins
 
 | | |
 |---|---|
-| vLLM image | `vllm/vllm-openai-rocm:nightly-rocm100-e962733e08d10f7ca65dac4df99e116460b8b174` |
-| vLLM version | `0.28.1rc1.dev437+ge962733e0` |
+| vLLM image | `vllm/vllm-openai-rocm:nightly-385dce36bcee42309924a5ece951a96db3dce7f2` |
+| vLLM version | `0.28.1` |
 | aiter base commit | `55dbc4f475da26c23cdaf73ce6ed38342a2d7f83` |
+
+> **Image line matters — do not use a `rocm100` tag.** The plain `nightly-<sha>`
+> tags are ROCm 7.2.3; the `nightly-rocm100-*` tags are ROCm 10 and were measured
+> **~9.5% slower** on this workload, on top of breaking the torch profiler inside
+> vLLM workers and making the aiter GEMM tuner report 0 µs. The pin above is the
+> image every number in
+> `benchmarks/single_node/agentic/repro/k3_mi355x_agentic_repro.sh` was measured on.
+> (Earlier revisions of this file pinned `nightly-rocm100-e962733e…`; that is the
+> superseded ROCm 10 image and its numbers are not comparable.)
 
 The nightly image's `ENTRYPOINT` is `vllm`, so start the container with
 `--entrypoint sleep` or it will try to serve immediately.
