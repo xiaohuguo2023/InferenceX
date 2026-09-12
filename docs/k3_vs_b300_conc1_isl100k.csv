@@ -1,0 +1,2017 @@
+tp_label,stage,rank,category,sub_kernel,total_time_us,call_count,avg_time_us
+mi355x_isl100k,PREFILL,0,Activation,SiLU/SwiGLU,1542.1,380,4.1
+mi355x_isl100k,PREFILL,0,Attention,aiter attn,914746.2,480,1905.7
+mi355x_isl100k,PREFILL,0,Attention,MLA attn residual,537206.8,14212,37.8
+mi355x_isl100k,PREFILL,0,Attention,MLA merge states,24336.3,288,84.5
+mi355x_isl100k,PREFILL,0,Communication,NCCL/RCCL,1891981.3,4289,441.1
+mi355x_isl100k,PREFILL,0,Communication,CustomAR 2-stage,280355.5,14015,20.0
+mi355x_isl100k,PREFILL,0,Communication,CustomAR 1-stage,57414.3,6164,9.3
+mi355x_isl100k,PREFILL,0,GEMM,hipBLASLt (Cijk),1636044.0,28782,56.8
+mi355x_isl100k,PREFILL,0,GEMM,AITER hgemm bf16,252297.4,30441,8.3
+mi355x_isl100k,PREFILL,0,GEMM,AITER flydsl MoE,150108.1,6164,24.4
+mi355x_isl100k,PREFILL,0,GEMM,AITER wfp4 batched,16145.6,3216,5.0
+mi355x_isl100k,PREFILL,0,GEMM,rocBLAS splitK,12121.3,541,22.4
+mi355x_isl100k,PREFILL,0,KDA Linear Attn,KDA gated-delta,428293.2,6486,66.0
+mi355x_isl100k,PREFILL,0,KDA Linear Attn,KDA conv1d,98543.0,6486,15.2
+mi355x_isl100k,PREFILL,0,KDA Linear Attn,KDA gate/state,75245.2,3105,24.2
+mi355x_isl100k,PREFILL,0,KDA Linear Attn,KDA GLA,36617.1,621,59.0
+mi355x_isl100k,PREFILL,0,Memory,Fill,11694.4,2099,5.6
+mi355x_isl100k,PREFILL,0,Memory,Memcpy,355.7,30,11.9
+mi355x_isl100k,PREFILL,0,MoE Routing,MoE sort mxfp4,177098.5,22264,8.0
+mi355x_isl100k,PREFILL,0,MoE Routing,AITER grouped_topk,116567.2,6992,16.7
+mi355x_isl100k,PREFILL,0,Normalization,Add+RMSNorm+quant,52763.4,7980,6.6
+mi355x_isl100k,PREFILL,0,Normalization,LayerNorm,38409.5,5244,7.3
+mi355x_isl100k,PREFILL,0,Normalization,RMSNorm,11572.1,1824,6.3
+mi355x_isl100k,PREFILL,0,Other,void opus_moe::stage1_a8w4::pipeline_group_split::opus_moe_stage1_a8w4_kernel...,558432.6,828,674.4
+mi355x_isl100k,PREFILL,0,Other,void opus_moe_stage2_a8w4_decode_kernel_gfx950<OpusMoeStage2A8W4DecodeShape<o...,411366.4,828,496.8
+mi355x_isl100k,PREFILL,0,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,377978.3,705,536.1
+mi355x_isl100k,PREFILL,0,Other,void gemm_a16w16_persistent_4g_safe_kernel<opus_gemm_a16w16_persistent_traits...,219819.9,696,315.8
+mi355x_isl100k,PREFILL,0,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3584, 448, ...",106709.7,644,165.7
+mi355x_isl100k,PREFILL,0,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,76547.1,1988,38.5
+mi355x_isl100k,PREFILL,0,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,68920.0,6164,11.2
+mi355x_isl100k,PREFILL,0,Other,"void vllm::gather_and_maybe_dequant_cache_page<__hip_bfloat16, unsigned char, ",63305.2,288,219.8
+mi355x_isl100k,PREFILL,0,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",62528.9,6659,9.4
+mi355x_isl100k,PREFILL,0,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,50872.0,7068,7.2
+mi355x_isl100k,PREFILL,0,Other,__amd_rocclr_copyBuffer.kd,43155.4,6469,6.7
+mi355x_isl100k,PREFILL,0,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",29431.0,1608,18.3
+mi355x_isl100k,PREFILL,0,Other,void at::native::,26676.0,1537,17.4
+mi355x_isl100k,PREFILL,0,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,22617.0,1608,14.1
+mi355x_isl100k,PREFILL,0,Other,"void gqa_d192_v128_kernel<opus_gqa_d192_traits<32, 64, 8, true, true> >",21060.7,24,877.5
+mi355x_isl100k,PREFILL,0,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",15203.8,210,72.4
+mi355x_isl100k,PREFILL,0,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",13508.8,2204,6.1
+mi355x_isl100k,PREFILL,0,Other,_dcp_a2a_pack_send_kernel.kd,11993.5,1988,6.0
+mi355x_isl100k,PREFILL,0,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",10769.5,1824,5.9
+mi355x_isl100k,PREFILL,0,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",10325.6,1824,5.7
+mi355x_isl100k,PREFILL,0,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",9087.8,1488,6.1
+mi355x_isl100k,PREFILL,0,Other,_dcp_a2a_unpack_combine_kernel.kd,8849.4,1988,4.5
+mi355x_isl100k,PREFILL,0,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8771.7,447,19.6
+mi355x_isl100k,PREFILL,0,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,8122.9,760,10.7
+mi355x_isl100k,PREFILL,0,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",7081.1,912,7.8
+mi355x_isl100k,PREFILL,0,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",6460.4,1198,5.4
+mi355x_isl100k,PREFILL,0,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",6270.8,380,16.5
+mi355x_isl100k,PREFILL,0,Other,mscclKernel_Sum_hip_bfloat16_LL_false,6009.3,380,15.8
+mi355x_isl100k,PREFILL,0,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3072, 384, ...",4085.5,184,22.2
+mi355x_isl100k,PREFILL,0,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",3503.9,769,4.6
+mi355x_isl100k,PREFILL,0,Other,_prepare_dflash_inputs_kernel.kd,2649.3,76,34.9
+mi355x_isl100k,PREFILL,0,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",2100.2,447,4.7
+mi355x_isl100k,PREFILL,0,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",2061.2,447,4.6
+mi355x_isl100k,PREFILL,0,Other,void ,2057.8,438,4.7
+mi355x_isl100k,PREFILL,0,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1759.6,420,4.2
+mi355x_isl100k,PREFILL,0,Other,kernel.kd,1621.8,380,4.3
+mi355x_isl100k,PREFILL,0,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1499.0,380,3.9
+mi355x_isl100k,PREFILL,0,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",1235.7,228,5.4
+mi355x_isl100k,PREFILL,0,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",1161.7,228,5.1
+mi355x_isl100k,PREFILL,0,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,982.3,228,4.3
+mi355x_isl100k,PREFILL,0,Other,"void at::native::vectorized_gather_kernel<16, long>",971.0,152,6.4
+mi355x_isl100k,PREFILL,0,Other,_expand_page_indices_kernel.kd,875.6,210,4.2
+mi355x_isl100k,PREFILL,0,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,782.5,228,3.4
+mi355x_isl100k,PREFILL,0,Other,_dcp_local_seq_lens_kernel.kd,689.2,152,4.5
+mi355x_isl100k,PREFILL,0,Other,_compute_slot_mappings_kernel.kd,640.6,76,8.4
+mi355x_isl100k,PREFILL,0,Other,precopy_mamba_align_fused_kernel.kd,634.3,76,8.3
+mi355x_isl100k,PREFILL,0,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",625.5,152,4.1
+mi355x_isl100k,PREFILL,0,Other,_rejection_kernel.kd,615.1,67,9.2
+mi355x_isl100k,PREFILL,0,Other,__amd_rocclr_fillBufferAligned.kd,610.1,143,4.3
+mi355x_isl100k,PREFILL,0,Other,_bias_kernel.kd,555.6,76,7.3
+mi355x_isl100k,PREFILL,0,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",505.6,76,6.7
+mi355x_isl100k,PREFILL,0,Other,_compute_local_logits_stats_kernel.kd,440.7,67,6.6
+mi355x_isl100k,PREFILL,0,Other,preprocess_mamba_align_fused_kernel.kd,414.8,76,5.5
+mi355x_isl100k,PREFILL,0,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",414.1,76,5.4
+mi355x_isl100k,PREFILL,0,Other,_scatter_num_accepted_kernel.kd,397.8,76,5.2
+mi355x_isl100k,PREFILL,0,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",373.9,76,4.9
+mi355x_isl100k,PREFILL,0,Other,_post_update_kernel.kd,370.3,76,4.9
+mi355x_isl100k,PREFILL,0,Other,_gather_block_tables_kernel.kd,353.7,76,4.7
+mi355x_isl100k,PREFILL,0,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_...",350.9,27,13.0
+mi355x_isl100k,PREFILL,0,Other,postprocess_mamba_fused_kernel.kd,345.6,76,4.5
+mi355x_isl100k,PREFILL,0,Other,_prepare_pos_seq_lens_kernel.kd,340.1,76,4.5
+mi355x_isl100k,PREFILL,0,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add...",336.2,27,12.5
+mi355x_isl100k,PREFILL,0,Other,_chunk_metadata_kernel.kd,334.7,27,12.4
+mi355x_isl100k,PREFILL,0,Other,_apply_write_kernel.kd,197.1,17,11.6
+mi355x_isl100k,PREFILL,0,Other,_expand_idx_mapping_kernel.kd,177.5,67,2.6
+mi355x_isl100k,PREFILL,0,Other,_prepare_prefill_inputs_kernel.kd,164.7,9,18.3
+mi355x_isl100k,PREFILL,0,Other,_zero_kv_blocks_kernel.kd,66.3,8,8.3
+mi355x_isl100k,PREFILL,0,Other,__amd_rocclr_streamOpsWrite.kd,23.7,7,3.4
+mi355x_isl100k,PREFILL,0,Quantization,dynamic per-group quant,17982.6,828,21.7
+mi355x_isl100k,PREFILL,0,Sampling,Sampling,3465.5,827,4.2
+mi355x_isl100k,PREFILL,0,Sampling,ArgMax/Reduce,2873.6,541,5.3
+mi355x_isl100k,PREFILL,0,Triton Fused,Triton fused op,6488.1,1760,3.7
+mi355x_isl100k,PREFILL,1,Activation,SiLU/SwiGLU,1581.2,380,4.2
+mi355x_isl100k,PREFILL,1,Attention,aiter attn,910289.2,480,1896.4
+mi355x_isl100k,PREFILL,1,Attention,MLA attn residual,539708.6,14212,38.0
+mi355x_isl100k,PREFILL,1,Attention,MLA merge states,24548.2,288,85.2
+mi355x_isl100k,PREFILL,1,Communication,NCCL/RCCL,1866970.0,4289,435.3
+mi355x_isl100k,PREFILL,1,Communication,CustomAR 2-stage,275263.5,14015,19.6
+mi355x_isl100k,PREFILL,1,Communication,CustomAR 1-stage,58254.2,6164,9.5
+mi355x_isl100k,PREFILL,1,GEMM,hipBLASLt (Cijk),1647417.6,28782,57.2
+mi355x_isl100k,PREFILL,1,GEMM,AITER hgemm bf16,252927.4,30441,8.3
+mi355x_isl100k,PREFILL,1,GEMM,AITER flydsl MoE,151642.7,6164,24.6
+mi355x_isl100k,PREFILL,1,GEMM,AITER wfp4 batched,15918.3,3216,4.9
+mi355x_isl100k,PREFILL,1,GEMM,rocBLAS splitK,12144.0,541,22.4
+mi355x_isl100k,PREFILL,1,KDA Linear Attn,KDA gated-delta,427143.0,6486,65.9
+mi355x_isl100k,PREFILL,1,KDA Linear Attn,KDA conv1d,104727.6,6486,16.1
+mi355x_isl100k,PREFILL,1,KDA Linear Attn,KDA gate/state,75311.0,3105,24.3
+mi355x_isl100k,PREFILL,1,KDA Linear Attn,KDA GLA,36597.6,621,58.9
+mi355x_isl100k,PREFILL,1,Memory,Fill,11570.5,2099,5.5
+mi355x_isl100k,PREFILL,1,Memory,Memcpy,367.1,30,12.2
+mi355x_isl100k,PREFILL,1,MoE Routing,MoE sort mxfp4,177317.4,22264,8.0
+mi355x_isl100k,PREFILL,1,MoE Routing,AITER grouped_topk,115552.1,6992,16.5
+mi355x_isl100k,PREFILL,1,Normalization,Add+RMSNorm+quant,53145.1,7980,6.7
+mi355x_isl100k,PREFILL,1,Normalization,LayerNorm,38942.8,5244,7.4
+mi355x_isl100k,PREFILL,1,Normalization,RMSNorm,11319.1,1824,6.2
+mi355x_isl100k,PREFILL,1,Other,void opus_moe::stage1_a8w4::pipeline_group_split::opus_moe_stage1_a8w4_kernel...,552039.4,828,666.7
+mi355x_isl100k,PREFILL,1,Other,void opus_moe_stage2_a8w4_decode_kernel_gfx950<OpusMoeStage2A8W4DecodeShape<o...,408687.9,828,493.6
+mi355x_isl100k,PREFILL,1,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,374071.6,705,530.6
+mi355x_isl100k,PREFILL,1,Other,void gemm_a16w16_persistent_4g_safe_kernel<opus_gemm_a16w16_persistent_traits...,216608.9,696,311.2
+mi355x_isl100k,PREFILL,1,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3584, 448, ...",107327.5,644,166.7
+mi355x_isl100k,PREFILL,1,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,75951.5,1988,38.2
+mi355x_isl100k,PREFILL,1,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,66129.1,6164,10.7
+mi355x_isl100k,PREFILL,1,Other,"void vllm::gather_and_maybe_dequant_cache_page<__hip_bfloat16, unsigned char, ",62982.9,288,218.7
+mi355x_isl100k,PREFILL,1,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",62713.9,6659,9.4
+mi355x_isl100k,PREFILL,1,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,50902.9,7068,7.2
+mi355x_isl100k,PREFILL,1,Other,__amd_rocclr_copyBuffer.kd,43660.8,6469,6.7
+mi355x_isl100k,PREFILL,1,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",29542.1,1608,18.4
+mi355x_isl100k,PREFILL,1,Other,void at::native::,26774.9,1537,17.4
+mi355x_isl100k,PREFILL,1,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,22817.0,1608,14.2
+mi355x_isl100k,PREFILL,1,Other,"void gqa_d192_v128_kernel<opus_gqa_d192_traits<32, 64, 8, true, true> >",20634.1,24,859.8
+mi355x_isl100k,PREFILL,1,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",15178.5,210,72.3
+mi355x_isl100k,PREFILL,1,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",13516.3,2204,6.1
+mi355x_isl100k,PREFILL,1,Other,_dcp_a2a_pack_send_kernel.kd,12083.2,1988,6.1
+mi355x_isl100k,PREFILL,1,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",10654.9,1824,5.8
+mi355x_isl100k,PREFILL,1,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",10420.4,1824,5.7
+mi355x_isl100k,PREFILL,1,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",9178.4,1488,6.2
+mi355x_isl100k,PREFILL,1,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",9163.3,447,20.5
+mi355x_isl100k,PREFILL,1,Other,_dcp_a2a_unpack_combine_kernel.kd,8948.1,1988,4.5
+mi355x_isl100k,PREFILL,1,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,8098.1,760,10.7
+mi355x_isl100k,PREFILL,1,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",7065.4,912,7.7
+mi355x_isl100k,PREFILL,1,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",6555.6,1198,5.5
+mi355x_isl100k,PREFILL,1,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",6302.6,380,16.6
+mi355x_isl100k,PREFILL,1,Other,mscclKernel_Sum_hip_bfloat16_LL_false,6040.7,380,15.9
+mi355x_isl100k,PREFILL,1,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3072, 384, ...",4167.3,184,22.6
+mi355x_isl100k,PREFILL,1,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",3570.9,769,4.6
+mi355x_isl100k,PREFILL,1,Other,_prepare_dflash_inputs_kernel.kd,2645.0,76,34.8
+mi355x_isl100k,PREFILL,1,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",2122.5,447,4.7
+mi355x_isl100k,PREFILL,1,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",2090.4,447,4.7
+mi355x_isl100k,PREFILL,1,Other,void ,2074.1,438,4.7
+mi355x_isl100k,PREFILL,1,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1736.1,420,4.1
+mi355x_isl100k,PREFILL,1,Other,kernel.kd,1631.8,380,4.3
+mi355x_isl100k,PREFILL,1,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1502.6,380,4.0
+mi355x_isl100k,PREFILL,1,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",1166.9,228,5.1
+mi355x_isl100k,PREFILL,1,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",1156.9,228,5.1
+mi355x_isl100k,PREFILL,1,Other,"void at::native::vectorized_gather_kernel<16, long>",971.3,152,6.4
+mi355x_isl100k,PREFILL,1,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,968.7,228,4.2
+mi355x_isl100k,PREFILL,1,Other,_expand_page_indices_kernel.kd,892.0,210,4.2
+mi355x_isl100k,PREFILL,1,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,820.2,228,3.6
+mi355x_isl100k,PREFILL,1,Other,_dcp_local_seq_lens_kernel.kd,663.9,152,4.4
+mi355x_isl100k,PREFILL,1,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",643.9,152,4.2
+mi355x_isl100k,PREFILL,1,Other,__amd_rocclr_fillBufferAligned.kd,613.9,143,4.3
+mi355x_isl100k,PREFILL,1,Other,_bias_kernel.kd,599.8,76,7.9
+mi355x_isl100k,PREFILL,1,Other,_rejection_kernel.kd,599.6,67,8.9
+mi355x_isl100k,PREFILL,1,Other,_compute_slot_mappings_kernel.kd,591.0,76,7.8
+mi355x_isl100k,PREFILL,1,Other,precopy_mamba_align_fused_kernel.kd,545.8,76,7.2
+mi355x_isl100k,PREFILL,1,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",501.9,76,6.6
+mi355x_isl100k,PREFILL,1,Other,_compute_local_logits_stats_kernel.kd,458.5,67,6.8
+mi355x_isl100k,PREFILL,1,Other,_chunk_metadata_kernel.kd,431.7,27,16.0
+mi355x_isl100k,PREFILL,1,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",418.4,76,5.5
+mi355x_isl100k,PREFILL,1,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_...",411.1,27,15.2
+mi355x_isl100k,PREFILL,1,Other,_scatter_num_accepted_kernel.kd,396.1,76,5.2
+mi355x_isl100k,PREFILL,1,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add...",392.5,27,14.5
+mi355x_isl100k,PREFILL,1,Other,preprocess_mamba_align_fused_kernel.kd,380.4,76,5.0
+mi355x_isl100k,PREFILL,1,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",372.4,76,4.9
+mi355x_isl100k,PREFILL,1,Other,_gather_block_tables_kernel.kd,357.9,76,4.7
+mi355x_isl100k,PREFILL,1,Other,_post_update_kernel.kd,357.3,76,4.7
+mi355x_isl100k,PREFILL,1,Other,postprocess_mamba_fused_kernel.kd,356.6,76,4.7
+mi355x_isl100k,PREFILL,1,Other,_prepare_pos_seq_lens_kernel.kd,332.2,76,4.4
+mi355x_isl100k,PREFILL,1,Other,_apply_write_kernel.kd,207.1,17,12.2
+mi355x_isl100k,PREFILL,1,Other,_prepare_prefill_inputs_kernel.kd,186.3,9,20.7
+mi355x_isl100k,PREFILL,1,Other,_expand_idx_mapping_kernel.kd,173.1,67,2.6
+mi355x_isl100k,PREFILL,1,Other,_zero_kv_blocks_kernel.kd,66.8,8,8.4
+mi355x_isl100k,PREFILL,1,Other,__amd_rocclr_streamOpsWrite.kd,24.0,7,3.4
+mi355x_isl100k,PREFILL,1,Quantization,dynamic per-group quant,17900.0,828,21.6
+mi355x_isl100k,PREFILL,1,Sampling,Sampling,3428.5,827,4.1
+mi355x_isl100k,PREFILL,1,Sampling,ArgMax/Reduce,2792.2,541,5.2
+mi355x_isl100k,PREFILL,1,Triton Fused,Triton fused op,10128.0,1760,5.8
+mi355x_isl100k,PREFILL,2,Activation,SiLU/SwiGLU,1611.8,380,4.2
+mi355x_isl100k,PREFILL,2,Attention,aiter attn,906352.9,480,1888.2
+mi355x_isl100k,PREFILL,2,Attention,MLA attn residual,537858.1,14212,37.8
+mi355x_isl100k,PREFILL,2,Attention,MLA merge states,24110.9,288,83.7
+mi355x_isl100k,PREFILL,2,Communication,NCCL/RCCL,1940522.6,4289,452.4
+mi355x_isl100k,PREFILL,2,Communication,CustomAR 2-stage,259423.2,14015,18.5
+mi355x_isl100k,PREFILL,2,Communication,CustomAR 1-stage,59701.9,6164,9.7
+mi355x_isl100k,PREFILL,2,GEMM,hipBLASLt (Cijk),1622167.4,28782,56.4
+mi355x_isl100k,PREFILL,2,GEMM,AITER hgemm bf16,252920.1,30441,8.3
+mi355x_isl100k,PREFILL,2,GEMM,AITER flydsl MoE,149119.3,6164,24.2
+mi355x_isl100k,PREFILL,2,GEMM,AITER wfp4 batched,16067.7,3216,5.0
+mi355x_isl100k,PREFILL,2,GEMM,rocBLAS splitK,12065.8,541,22.3
+mi355x_isl100k,PREFILL,2,KDA Linear Attn,KDA gated-delta,426004.6,6486,65.7
+mi355x_isl100k,PREFILL,2,KDA Linear Attn,KDA conv1d,98261.4,6486,15.1
+mi355x_isl100k,PREFILL,2,KDA Linear Attn,KDA gate/state,72736.1,3105,23.4
+mi355x_isl100k,PREFILL,2,KDA Linear Attn,KDA GLA,35173.0,621,56.6
+mi355x_isl100k,PREFILL,2,Memory,Fill,11519.9,2099,5.5
+mi355x_isl100k,PREFILL,2,Memory,Memcpy,369.1,30,12.3
+mi355x_isl100k,PREFILL,2,MoE Routing,MoE sort mxfp4,176165.4,22264,7.9
+mi355x_isl100k,PREFILL,2,MoE Routing,AITER grouped_topk,115583.3,6992,16.5
+mi355x_isl100k,PREFILL,2,Normalization,Add+RMSNorm+quant,53433.7,7980,6.7
+mi355x_isl100k,PREFILL,2,Normalization,LayerNorm,37566.1,5244,7.2
+mi355x_isl100k,PREFILL,2,Normalization,RMSNorm,11351.8,1824,6.2
+mi355x_isl100k,PREFILL,2,Other,void opus_moe::stage1_a8w4::pipeline_group_split::opus_moe_stage1_a8w4_kernel...,548768.7,828,662.8
+mi355x_isl100k,PREFILL,2,Other,void opus_moe_stage2_a8w4_decode_kernel_gfx950<OpusMoeStage2A8W4DecodeShape<o...,406939.4,828,491.5
+mi355x_isl100k,PREFILL,2,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,372394.8,705,528.2
+mi355x_isl100k,PREFILL,2,Other,void gemm_a16w16_persistent_4g_safe_kernel<opus_gemm_a16w16_persistent_traits...,214904.5,696,308.8
+mi355x_isl100k,PREFILL,2,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3584, 448, ...",107079.1,644,166.3
+mi355x_isl100k,PREFILL,2,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,75796.3,1988,38.1
+mi355x_isl100k,PREFILL,2,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,66687.8,6164,10.8
+mi355x_isl100k,PREFILL,2,Other,"void vllm::gather_and_maybe_dequant_cache_page<__hip_bfloat16, unsigned char, ",62533.3,288,217.1
+mi355x_isl100k,PREFILL,2,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",62174.6,6659,9.3
+mi355x_isl100k,PREFILL,2,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,50981.6,7068,7.2
+mi355x_isl100k,PREFILL,2,Other,__amd_rocclr_copyBuffer.kd,42121.6,6469,6.5
+mi355x_isl100k,PREFILL,2,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",28633.9,1608,17.8
+mi355x_isl100k,PREFILL,2,Other,void at::native::,27267.0,1537,17.7
+mi355x_isl100k,PREFILL,2,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,23868.2,1608,14.8
+mi355x_isl100k,PREFILL,2,Other,"void gqa_d192_v128_kernel<opus_gqa_d192_traits<32, 64, 8, true, true> >",20681.1,24,861.7
+mi355x_isl100k,PREFILL,2,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",15234.1,210,72.5
+mi355x_isl100k,PREFILL,2,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",13476.7,2204,6.1
+mi355x_isl100k,PREFILL,2,Other,_dcp_a2a_pack_send_kernel.kd,12134.6,1988,6.1
+mi355x_isl100k,PREFILL,2,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",10848.0,1824,5.9
+mi355x_isl100k,PREFILL,2,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",10380.1,1824,5.7
+mi355x_isl100k,PREFILL,2,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",9365.4,447,21.0
+mi355x_isl100k,PREFILL,2,Other,_dcp_a2a_unpack_combine_kernel.kd,9158.0,1988,4.6
+mi355x_isl100k,PREFILL,2,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",8757.8,1488,5.9
+mi355x_isl100k,PREFILL,2,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,8168.1,760,10.7
+mi355x_isl100k,PREFILL,2,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",7112.3,912,7.8
+mi355x_isl100k,PREFILL,2,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",6309.6,380,16.6
+mi355x_isl100k,PREFILL,2,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",6262.6,1198,5.2
+mi355x_isl100k,PREFILL,2,Other,mscclKernel_Sum_hip_bfloat16_LL_false,6250.4,380,16.4
+mi355x_isl100k,PREFILL,2,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3072, 384, ...",4091.7,184,22.2
+mi355x_isl100k,PREFILL,2,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",3506.3,769,4.6
+mi355x_isl100k,PREFILL,2,Other,_prepare_dflash_inputs_kernel.kd,2657.0,76,35.0
+mi355x_isl100k,PREFILL,2,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",2089.8,447,4.7
+mi355x_isl100k,PREFILL,2,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",2061.5,447,4.6
+mi355x_isl100k,PREFILL,2,Other,void ,2012.1,438,4.6
+mi355x_isl100k,PREFILL,2,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1785.4,420,4.3
+mi355x_isl100k,PREFILL,2,Other,kernel.kd,1667.9,380,4.4
+mi355x_isl100k,PREFILL,2,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1497.0,380,3.9
+mi355x_isl100k,PREFILL,2,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",1140.5,228,5.0
+mi355x_isl100k,PREFILL,2,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",1137.7,228,5.0
+mi355x_isl100k,PREFILL,2,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,969.2,228,4.3
+mi355x_isl100k,PREFILL,2,Other,"void at::native::vectorized_gather_kernel<16, long>",925.8,152,6.1
+mi355x_isl100k,PREFILL,2,Other,_expand_page_indices_kernel.kd,924.1,210,4.4
+mi355x_isl100k,PREFILL,2,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,760.2,228,3.3
+mi355x_isl100k,PREFILL,2,Other,_dcp_local_seq_lens_kernel.kd,679.8,152,4.5
+mi355x_isl100k,PREFILL,2,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",640.2,152,4.2
+mi355x_isl100k,PREFILL,2,Other,__amd_rocclr_fillBufferAligned.kd,613.0,143,4.3
+mi355x_isl100k,PREFILL,2,Other,_rejection_kernel.kd,612.1,67,9.1
+mi355x_isl100k,PREFILL,2,Other,_compute_slot_mappings_kernel.kd,610.5,76,8.0
+mi355x_isl100k,PREFILL,2,Other,_bias_kernel.kd,553.0,76,7.3
+mi355x_isl100k,PREFILL,2,Other,precopy_mamba_align_fused_kernel.kd,550.1,76,7.2
+mi355x_isl100k,PREFILL,2,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",500.6,76,6.6
+mi355x_isl100k,PREFILL,2,Other,_compute_local_logits_stats_kernel.kd,440.7,67,6.6
+mi355x_isl100k,PREFILL,2,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",418.2,76,5.5
+mi355x_isl100k,PREFILL,2,Other,_scatter_num_accepted_kernel.kd,401.0,76,5.3
+mi355x_isl100k,PREFILL,2,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",383.4,76,5.0
+mi355x_isl100k,PREFILL,2,Other,_chunk_metadata_kernel.kd,366.4,27,13.6
+mi355x_isl100k,PREFILL,2,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_...",360.6,27,13.4
+mi355x_isl100k,PREFILL,2,Other,preprocess_mamba_align_fused_kernel.kd,359.1,76,4.7
+mi355x_isl100k,PREFILL,2,Other,_post_update_kernel.kd,358.2,76,4.7
+mi355x_isl100k,PREFILL,2,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add...",353.5,27,13.1
+mi355x_isl100k,PREFILL,2,Other,_gather_block_tables_kernel.kd,349.4,76,4.6
+mi355x_isl100k,PREFILL,2,Other,postprocess_mamba_fused_kernel.kd,341.0,76,4.5
+mi355x_isl100k,PREFILL,2,Other,_prepare_pos_seq_lens_kernel.kd,335.5,76,4.4
+mi355x_isl100k,PREFILL,2,Other,_apply_write_kernel.kd,198.7,17,11.7
+mi355x_isl100k,PREFILL,2,Other,_prepare_prefill_inputs_kernel.kd,170.2,9,18.9
+mi355x_isl100k,PREFILL,2,Other,_expand_idx_mapping_kernel.kd,167.3,67,2.5
+mi355x_isl100k,PREFILL,2,Other,_zero_kv_blocks_kernel.kd,64.9,8,8.1
+mi355x_isl100k,PREFILL,2,Other,__amd_rocclr_streamOpsWrite.kd,23.8,7,3.4
+mi355x_isl100k,PREFILL,2,Quantization,dynamic per-group quant,17740.5,828,21.4
+mi355x_isl100k,PREFILL,2,Sampling,Sampling,3425.4,827,4.1
+mi355x_isl100k,PREFILL,2,Sampling,ArgMax/Reduce,2818.6,541,5.2
+mi355x_isl100k,PREFILL,2,Triton Fused,Triton fused op,10242.6,1760,5.8
+mi355x_isl100k,PREFILL,3,Activation,SiLU/SwiGLU,2930.1,380,7.7
+mi355x_isl100k,PREFILL,3,Attention,aiter attn,903021.1,480,1881.3
+mi355x_isl100k,PREFILL,3,Attention,MLA attn residual,538558.0,14212,37.9
+mi355x_isl100k,PREFILL,3,Attention,MLA merge states,24697.1,288,85.8
+mi355x_isl100k,PREFILL,3,Communication,NCCL/RCCL,1910837.6,4289,445.5
+mi355x_isl100k,PREFILL,3,Communication,CustomAR 2-stage,207201.9,14015,14.8
+mi355x_isl100k,PREFILL,3,Communication,CustomAR 1-stage,55163.3,6164,8.9
+mi355x_isl100k,PREFILL,3,GEMM,hipBLASLt (Cijk),1630507.9,28782,56.7
+mi355x_isl100k,PREFILL,3,GEMM,AITER hgemm bf16,251349.0,30441,8.3
+mi355x_isl100k,PREFILL,3,GEMM,AITER flydsl MoE,151433.1,6164,24.6
+mi355x_isl100k,PREFILL,3,GEMM,AITER wfp4 batched,16005.4,3216,5.0
+mi355x_isl100k,PREFILL,3,GEMM,rocBLAS splitK,12188.2,541,22.5
+mi355x_isl100k,PREFILL,3,KDA Linear Attn,KDA gated-delta,428428.8,6486,66.1
+mi355x_isl100k,PREFILL,3,KDA Linear Attn,KDA conv1d,101581.4,6486,15.7
+mi355x_isl100k,PREFILL,3,KDA Linear Attn,KDA gate/state,72708.9,3105,23.4
+mi355x_isl100k,PREFILL,3,KDA Linear Attn,KDA GLA,34843.0,621,56.1
+mi355x_isl100k,PREFILL,3,Memory,Fill,11291.1,2099,5.4
+mi355x_isl100k,PREFILL,3,Memory,Memcpy,369.5,30,12.3
+mi355x_isl100k,PREFILL,3,MoE Routing,MoE sort mxfp4,179160.8,22264,8.0
+mi355x_isl100k,PREFILL,3,MoE Routing,AITER grouped_topk,115546.5,6992,16.5
+mi355x_isl100k,PREFILL,3,Normalization,Add+RMSNorm+quant,53058.4,7980,6.6
+mi355x_isl100k,PREFILL,3,Normalization,LayerNorm,38673.8,5244,7.4
+mi355x_isl100k,PREFILL,3,Normalization,RMSNorm,11224.7,1824,6.2
+mi355x_isl100k,PREFILL,3,Other,void opus_moe::stage1_a8w4::pipeline_group_split::opus_moe_stage1_a8w4_kernel...,552999.2,828,667.9
+mi355x_isl100k,PREFILL,3,Other,void opus_moe_stage2_a8w4_decode_kernel_gfx950<OpusMoeStage2A8W4DecodeShape<o...,410641.0,828,495.9
+mi355x_isl100k,PREFILL,3,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,375365.5,705,532.4
+mi355x_isl100k,PREFILL,3,Other,void gemm_a16w16_persistent_4g_safe_kernel<opus_gemm_a16w16_persistent_traits...,217168.5,696,312.0
+mi355x_isl100k,PREFILL,3,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3584, 448, ...",107807.5,644,167.4
+mi355x_isl100k,PREFILL,3,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,75996.2,1988,38.2
+mi355x_isl100k,PREFILL,3,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,68760.2,6164,11.2
+mi355x_isl100k,PREFILL,3,Other,"void vllm::gather_and_maybe_dequant_cache_page<__hip_bfloat16, unsigned char, ",63111.8,288,219.1
+mi355x_isl100k,PREFILL,3,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",62397.8,6659,9.4
+mi355x_isl100k,PREFILL,3,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,50873.2,7068,7.2
+mi355x_isl100k,PREFILL,3,Other,__amd_rocclr_copyBuffer.kd,43461.2,6469,6.7
+mi355x_isl100k,PREFILL,3,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",27663.7,1608,17.2
+mi355x_isl100k,PREFILL,3,Other,void at::native::,26630.6,1537,17.3
+mi355x_isl100k,PREFILL,3,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,24928.5,1608,15.5
+mi355x_isl100k,PREFILL,3,Other,"void gqa_d192_v128_kernel<opus_gqa_d192_traits<32, 64, 8, true, true> >",20817.3,24,867.4
+mi355x_isl100k,PREFILL,3,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",15145.3,210,72.1
+mi355x_isl100k,PREFILL,3,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",13747.3,2204,6.2
+mi355x_isl100k,PREFILL,3,Other,_dcp_a2a_pack_send_kernel.kd,12079.0,1988,6.1
+mi355x_isl100k,PREFILL,3,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",10844.5,1824,5.9
+mi355x_isl100k,PREFILL,3,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",10491.2,1824,5.8
+mi355x_isl100k,PREFILL,3,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",9395.3,447,21.0
+mi355x_isl100k,PREFILL,3,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",9042.3,1488,6.1
+mi355x_isl100k,PREFILL,3,Other,_dcp_a2a_unpack_combine_kernel.kd,8925.8,1988,4.5
+mi355x_isl100k,PREFILL,3,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,8077.9,760,10.6
+mi355x_isl100k,PREFILL,3,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",7097.4,912,7.8
+mi355x_isl100k,PREFILL,3,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",6449.1,380,17.0
+mi355x_isl100k,PREFILL,3,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",6411.0,1198,5.4
+mi355x_isl100k,PREFILL,3,Other,mscclKernel_Sum_hip_bfloat16_LL_false,5873.9,380,15.5
+mi355x_isl100k,PREFILL,3,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3072, 384, ...",4070.9,184,22.1
+mi355x_isl100k,PREFILL,3,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",3515.9,769,4.6
+mi355x_isl100k,PREFILL,3,Other,_prepare_dflash_inputs_kernel.kd,2643.5,76,34.8
+mi355x_isl100k,PREFILL,3,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",2121.4,447,4.7
+mi355x_isl100k,PREFILL,3,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",2102.0,447,4.7
+mi355x_isl100k,PREFILL,3,Other,void ,2018.1,438,4.6
+mi355x_isl100k,PREFILL,3,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1723.4,420,4.1
+mi355x_isl100k,PREFILL,3,Other,kernel.kd,1627.7,380,4.3
+mi355x_isl100k,PREFILL,3,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1461.7,380,3.8
+mi355x_isl100k,PREFILL,3,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",1164.8,228,5.1
+mi355x_isl100k,PREFILL,3,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",1136.0,228,5.0
+mi355x_isl100k,PREFILL,3,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,965.5,228,4.2
+mi355x_isl100k,PREFILL,3,Other,"void at::native::vectorized_gather_kernel<16, long>",936.6,152,6.2
+mi355x_isl100k,PREFILL,3,Other,_expand_page_indices_kernel.kd,878.2,210,4.2
+mi355x_isl100k,PREFILL,3,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,807.9,228,3.5
+mi355x_isl100k,PREFILL,3,Other,_dcp_local_seq_lens_kernel.kd,649.7,152,4.3
+mi355x_isl100k,PREFILL,3,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",624.4,152,4.1
+mi355x_isl100k,PREFILL,3,Other,_rejection_kernel.kd,619.0,67,9.2
+mi355x_isl100k,PREFILL,3,Other,__amd_rocclr_fillBufferAligned.kd,612.4,143,4.3
+mi355x_isl100k,PREFILL,3,Other,_bias_kernel.kd,593.8,76,7.8
+mi355x_isl100k,PREFILL,3,Other,_compute_slot_mappings_kernel.kd,592.0,76,7.8
+mi355x_isl100k,PREFILL,3,Other,precopy_mamba_align_fused_kernel.kd,540.7,76,7.1
+mi355x_isl100k,PREFILL,3,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",497.4,76,6.5
+mi355x_isl100k,PREFILL,3,Other,_compute_local_logits_stats_kernel.kd,465.1,67,6.9
+mi355x_isl100k,PREFILL,3,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_...",417.3,27,15.5
+mi355x_isl100k,PREFILL,3,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",415.4,76,5.5
+mi355x_isl100k,PREFILL,3,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add...",409.9,27,15.2
+mi355x_isl100k,PREFILL,3,Other,_chunk_metadata_kernel.kd,399.1,27,14.8
+mi355x_isl100k,PREFILL,3,Other,_scatter_num_accepted_kernel.kd,394.2,76,5.2
+mi355x_isl100k,PREFILL,3,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",373.0,76,4.9
+mi355x_isl100k,PREFILL,3,Other,_gather_block_tables_kernel.kd,369.4,76,4.9
+mi355x_isl100k,PREFILL,3,Other,preprocess_mamba_align_fused_kernel.kd,364.8,76,4.8
+mi355x_isl100k,PREFILL,3,Other,postprocess_mamba_fused_kernel.kd,353.8,76,4.7
+mi355x_isl100k,PREFILL,3,Other,_post_update_kernel.kd,349.2,76,4.6
+mi355x_isl100k,PREFILL,3,Other,_prepare_pos_seq_lens_kernel.kd,339.5,76,4.5
+mi355x_isl100k,PREFILL,3,Other,_apply_write_kernel.kd,206.9,17,12.2
+mi355x_isl100k,PREFILL,3,Other,_prepare_prefill_inputs_kernel.kd,177.0,9,19.7
+mi355x_isl100k,PREFILL,3,Other,_expand_idx_mapping_kernel.kd,173.3,67,2.6
+mi355x_isl100k,PREFILL,3,Other,_zero_kv_blocks_kernel.kd,65.8,8,8.2
+mi355x_isl100k,PREFILL,3,Other,__amd_rocclr_streamOpsWrite.kd,23.7,7,3.4
+mi355x_isl100k,PREFILL,3,Quantization,dynamic per-group quant,17905.5,828,21.6
+mi355x_isl100k,PREFILL,3,Sampling,Sampling,3456.8,827,4.2
+mi355x_isl100k,PREFILL,3,Sampling,ArgMax/Reduce,2829.2,541,5.2
+mi355x_isl100k,PREFILL,3,Triton Fused,Triton fused op,6455.5,1760,3.7
+mi355x_isl100k,PREFILL,4,Activation,SiLU/SwiGLU,2922.1,380,7.7
+mi355x_isl100k,PREFILL,4,Attention,aiter attn,915987.7,480,1908.3
+mi355x_isl100k,PREFILL,4,Attention,MLA attn residual,540511.3,14212,38.0
+mi355x_isl100k,PREFILL,4,Attention,MLA merge states,24219.9,288,84.1
+mi355x_isl100k,PREFILL,4,Communication,NCCL/RCCL,1888977.2,4289,440.4
+mi355x_isl100k,PREFILL,4,Communication,CustomAR 2-stage,279167.8,14015,19.9
+mi355x_isl100k,PREFILL,4,Communication,CustomAR 1-stage,56259.0,6164,9.1
+mi355x_isl100k,PREFILL,4,GEMM,hipBLASLt (Cijk),1634635.2,28782,56.8
+mi355x_isl100k,PREFILL,4,GEMM,AITER hgemm bf16,253992.3,30441,8.3
+mi355x_isl100k,PREFILL,4,GEMM,AITER flydsl MoE,150449.9,6164,24.4
+mi355x_isl100k,PREFILL,4,GEMM,AITER wfp4 batched,15922.8,3216,5.0
+mi355x_isl100k,PREFILL,4,GEMM,rocBLAS splitK,12158.7,541,22.5
+mi355x_isl100k,PREFILL,4,KDA Linear Attn,KDA gated-delta,427513.7,6486,65.9
+mi355x_isl100k,PREFILL,4,KDA Linear Attn,KDA conv1d,101328.8,6486,15.6
+mi355x_isl100k,PREFILL,4,KDA Linear Attn,KDA gate/state,74489.6,3105,24.0
+mi355x_isl100k,PREFILL,4,KDA Linear Attn,KDA GLA,36157.1,621,58.2
+mi355x_isl100k,PREFILL,4,Memory,Fill,12046.1,2099,5.7
+mi355x_isl100k,PREFILL,4,Memory,Memcpy,494.7,30,16.5
+mi355x_isl100k,PREFILL,4,MoE Routing,MoE sort mxfp4,176944.9,22264,7.9
+mi355x_isl100k,PREFILL,4,MoE Routing,AITER grouped_topk,115756.5,6992,16.6
+mi355x_isl100k,PREFILL,4,Normalization,Add+RMSNorm+quant,52209.9,7980,6.5
+mi355x_isl100k,PREFILL,4,Normalization,LayerNorm,38359.8,5244,7.3
+mi355x_isl100k,PREFILL,4,Normalization,RMSNorm,11344.5,1824,6.2
+mi355x_isl100k,PREFILL,4,Other,void opus_moe::stage1_a8w4::pipeline_group_split::opus_moe_stage1_a8w4_kernel...,552485.8,828,667.3
+mi355x_isl100k,PREFILL,4,Other,void opus_moe_stage2_a8w4_decode_kernel_gfx950<OpusMoeStage2A8W4DecodeShape<o...,405147.7,828,489.3
+mi355x_isl100k,PREFILL,4,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,379099.3,705,537.7
+mi355x_isl100k,PREFILL,4,Other,void gemm_a16w16_persistent_4g_safe_kernel<opus_gemm_a16w16_persistent_traits...,218158.3,696,313.4
+mi355x_isl100k,PREFILL,4,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3584, 448, ...",106672.3,644,165.6
+mi355x_isl100k,PREFILL,4,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,76250.8,1988,38.4
+mi355x_isl100k,PREFILL,4,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,68574.3,6164,11.1
+mi355x_isl100k,PREFILL,4,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",62629.3,6659,9.4
+mi355x_isl100k,PREFILL,4,Other,"void vllm::gather_and_maybe_dequant_cache_page<__hip_bfloat16, unsigned char, ",62462.3,288,216.9
+mi355x_isl100k,PREFILL,4,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,50893.3,7068,7.2
+mi355x_isl100k,PREFILL,4,Other,__amd_rocclr_copyBuffer.kd,43408.1,6469,6.7
+mi355x_isl100k,PREFILL,4,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",27659.1,1608,17.2
+mi355x_isl100k,PREFILL,4,Other,void at::native::,26489.8,1537,17.2
+mi355x_isl100k,PREFILL,4,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,24969.4,1608,15.5
+mi355x_isl100k,PREFILL,4,Other,"void gqa_d192_v128_kernel<opus_gqa_d192_traits<32, 64, 8, true, true> >",21128.8,24,880.4
+mi355x_isl100k,PREFILL,4,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",15139.8,210,72.1
+mi355x_isl100k,PREFILL,4,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",13441.4,2204,6.1
+mi355x_isl100k,PREFILL,4,Other,_dcp_a2a_pack_send_kernel.kd,12351.6,1988,6.2
+mi355x_isl100k,PREFILL,4,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",10691.2,1824,5.9
+mi355x_isl100k,PREFILL,4,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",10245.1,1824,5.6
+mi355x_isl100k,PREFILL,4,Other,_dcp_a2a_unpack_combine_kernel.kd,9138.8,1988,4.6
+mi355x_isl100k,PREFILL,4,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",9003.9,1488,6.1
+mi355x_isl100k,PREFILL,4,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8809.1,447,19.7
+mi355x_isl100k,PREFILL,4,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,8034.1,760,10.6
+mi355x_isl100k,PREFILL,4,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",7081.6,1198,5.9
+mi355x_isl100k,PREFILL,4,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",7052.3,912,7.7
+mi355x_isl100k,PREFILL,4,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",6230.0,380,16.4
+mi355x_isl100k,PREFILL,4,Other,mscclKernel_Sum_hip_bfloat16_LL_false,6056.5,380,15.9
+mi355x_isl100k,PREFILL,4,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3072, 384, ...",4087.1,184,22.2
+mi355x_isl100k,PREFILL,4,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",3830.6,769,5.0
+mi355x_isl100k,PREFILL,4,Other,_prepare_dflash_inputs_kernel.kd,2654.0,76,34.9
+mi355x_isl100k,PREFILL,4,Other,void ,2353.9,438,5.4
+mi355x_isl100k,PREFILL,4,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",2332.7,447,5.2
+mi355x_isl100k,PREFILL,4,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",2096.8,447,4.7
+mi355x_isl100k,PREFILL,4,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1749.9,420,4.2
+mi355x_isl100k,PREFILL,4,Other,kernel.kd,1636.1,380,4.3
+mi355x_isl100k,PREFILL,4,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",1480.3,228,6.5
+mi355x_isl100k,PREFILL,4,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1469.5,380,3.9
+mi355x_isl100k,PREFILL,4,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",1446.6,228,6.3
+mi355x_isl100k,PREFILL,4,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,1114.5,228,4.9
+mi355x_isl100k,PREFILL,4,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,996.9,228,4.4
+mi355x_isl100k,PREFILL,4,Other,"void at::native::vectorized_gather_kernel<16, long>",966.8,152,6.4
+mi355x_isl100k,PREFILL,4,Other,_expand_page_indices_kernel.kd,876.6,210,4.2
+mi355x_isl100k,PREFILL,4,Other,_dcp_local_seq_lens_kernel.kd,689.5,152,4.5
+mi355x_isl100k,PREFILL,4,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add...",683.1,27,25.3
+mi355x_isl100k,PREFILL,4,Other,_chunk_metadata_kernel.kd,669.8,27,24.8
+mi355x_isl100k,PREFILL,4,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_...",637.2,27,23.6
+mi355x_isl100k,PREFILL,4,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",624.7,152,4.1
+mi355x_isl100k,PREFILL,4,Other,_rejection_kernel.kd,623.2,67,9.3
+mi355x_isl100k,PREFILL,4,Other,__amd_rocclr_fillBufferAligned.kd,617.2,143,4.3
+mi355x_isl100k,PREFILL,4,Other,_compute_slot_mappings_kernel.kd,606.4,76,8.0
+mi355x_isl100k,PREFILL,4,Other,_bias_kernel.kd,591.6,76,7.8
+mi355x_isl100k,PREFILL,4,Other,precopy_mamba_align_fused_kernel.kd,582.0,76,7.7
+mi355x_isl100k,PREFILL,4,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",498.1,76,6.6
+mi355x_isl100k,PREFILL,4,Other,_compute_local_logits_stats_kernel.kd,448.6,67,6.7
+mi355x_isl100k,PREFILL,4,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",420.3,76,5.5
+mi355x_isl100k,PREFILL,4,Other,preprocess_mamba_align_fused_kernel.kd,395.7,76,5.2
+mi355x_isl100k,PREFILL,4,Other,_scatter_num_accepted_kernel.kd,392.0,76,5.2
+mi355x_isl100k,PREFILL,4,Other,_gather_block_tables_kernel.kd,382.1,76,5.0
+mi355x_isl100k,PREFILL,4,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",371.4,76,4.9
+mi355x_isl100k,PREFILL,4,Other,_prepare_pos_seq_lens_kernel.kd,364.9,76,4.8
+mi355x_isl100k,PREFILL,4,Other,postprocess_mamba_fused_kernel.kd,362.3,76,4.8
+mi355x_isl100k,PREFILL,4,Other,_post_update_kernel.kd,334.4,76,4.4
+mi355x_isl100k,PREFILL,4,Other,_apply_write_kernel.kd,208.9,17,12.3
+mi355x_isl100k,PREFILL,4,Other,_prepare_prefill_inputs_kernel.kd,207.9,9,23.1
+mi355x_isl100k,PREFILL,4,Other,_expand_idx_mapping_kernel.kd,173.9,67,2.6
+mi355x_isl100k,PREFILL,4,Other,_zero_kv_blocks_kernel.kd,64.6,8,8.1
+mi355x_isl100k,PREFILL,4,Other,__amd_rocclr_streamOpsWrite.kd,24.2,7,3.5
+mi355x_isl100k,PREFILL,4,Quantization,dynamic per-group quant,18691.7,828,22.6
+mi355x_isl100k,PREFILL,4,Sampling,Sampling,3490.2,827,4.2
+mi355x_isl100k,PREFILL,4,Sampling,ArgMax/Reduce,2755.0,541,5.1
+mi355x_isl100k,PREFILL,4,Triton Fused,Triton fused op,6711.8,1760,3.8
+mi355x_isl100k,PREFILL,5,Activation,SiLU/SwiGLU,1615.0,380,4.2
+mi355x_isl100k,PREFILL,5,Attention,aiter attn,928085.2,480,1933.5
+mi355x_isl100k,PREFILL,5,Attention,MLA attn residual,543762.1,14212,38.3
+mi355x_isl100k,PREFILL,5,Attention,MLA merge states,24490.7,288,85.0
+mi355x_isl100k,PREFILL,5,Communication,NCCL/RCCL,1856368.1,4289,432.8
+mi355x_isl100k,PREFILL,5,Communication,CustomAR 2-stage,261164.7,14015,18.6
+mi355x_isl100k,PREFILL,5,Communication,CustomAR 1-stage,57403.6,6164,9.3
+mi355x_isl100k,PREFILL,5,GEMM,hipBLASLt (Cijk),1643125.2,28782,57.1
+mi355x_isl100k,PREFILL,5,GEMM,AITER hgemm bf16,253447.9,30441,8.3
+mi355x_isl100k,PREFILL,5,GEMM,AITER flydsl MoE,150803.1,6164,24.5
+mi355x_isl100k,PREFILL,5,GEMM,AITER wfp4 batched,16379.4,3216,5.1
+mi355x_isl100k,PREFILL,5,GEMM,rocBLAS splitK,12152.8,541,22.5
+mi355x_isl100k,PREFILL,5,KDA Linear Attn,KDA gated-delta,427119.9,6486,65.9
+mi355x_isl100k,PREFILL,5,KDA Linear Attn,KDA conv1d,101937.1,6486,15.7
+mi355x_isl100k,PREFILL,5,KDA Linear Attn,KDA gate/state,75462.7,3105,24.3
+mi355x_isl100k,PREFILL,5,KDA Linear Attn,KDA GLA,36225.2,621,58.3
+mi355x_isl100k,PREFILL,5,Memory,Fill,12186.1,2099,5.8
+mi355x_isl100k,PREFILL,5,Memory,Memcpy,523.5,30,17.4
+mi355x_isl100k,PREFILL,5,MoE Routing,MoE sort mxfp4,177484.1,22264,8.0
+mi355x_isl100k,PREFILL,5,MoE Routing,AITER grouped_topk,116656.3,6992,16.7
+mi355x_isl100k,PREFILL,5,Normalization,Add+RMSNorm+quant,53564.1,7980,6.7
+mi355x_isl100k,PREFILL,5,Normalization,LayerNorm,38753.9,5244,7.4
+mi355x_isl100k,PREFILL,5,Normalization,RMSNorm,11604.9,1824,6.4
+mi355x_isl100k,PREFILL,5,Other,void opus_moe::stage1_a8w4::pipeline_group_split::opus_moe_stage1_a8w4_kernel...,550203.0,828,664.5
+mi355x_isl100k,PREFILL,5,Other,void opus_moe_stage2_a8w4_decode_kernel_gfx950<OpusMoeStage2A8W4DecodeShape<o...,411748.1,828,497.3
+mi355x_isl100k,PREFILL,5,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,381829.7,705,541.6
+mi355x_isl100k,PREFILL,5,Other,void gemm_a16w16_persistent_4g_safe_kernel<opus_gemm_a16w16_persistent_traits...,217837.4,696,313.0
+mi355x_isl100k,PREFILL,5,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3584, 448, ...",107292.7,644,166.6
+mi355x_isl100k,PREFILL,5,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,76321.0,1988,38.4
+mi355x_isl100k,PREFILL,5,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,66615.6,6164,10.8
+mi355x_isl100k,PREFILL,5,Other,"void vllm::gather_and_maybe_dequant_cache_page<__hip_bfloat16, unsigned char, ",63583.6,288,220.8
+mi355x_isl100k,PREFILL,5,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",62725.3,6659,9.4
+mi355x_isl100k,PREFILL,5,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,52098.8,7068,7.4
+mi355x_isl100k,PREFILL,5,Other,__amd_rocclr_copyBuffer.kd,44726.8,6469,6.9
+mi355x_isl100k,PREFILL,5,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",27614.0,1608,17.2
+mi355x_isl100k,PREFILL,5,Other,void at::native::,26845.6,1537,17.5
+mi355x_isl100k,PREFILL,5,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,24343.9,1608,15.1
+mi355x_isl100k,PREFILL,5,Other,"void gqa_d192_v128_kernel<opus_gqa_d192_traits<32, 64, 8, true, true> >",21217.5,24,884.1
+mi355x_isl100k,PREFILL,5,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",15262.5,210,72.7
+mi355x_isl100k,PREFILL,5,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",13773.7,2204,6.2
+mi355x_isl100k,PREFILL,5,Other,_dcp_a2a_pack_send_kernel.kd,12390.6,1988,6.2
+mi355x_isl100k,PREFILL,5,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",10902.1,1824,6.0
+mi355x_isl100k,PREFILL,5,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",10463.3,1824,5.7
+mi355x_isl100k,PREFILL,5,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",9335.9,447,20.9
+mi355x_isl100k,PREFILL,5,Other,_dcp_a2a_unpack_combine_kernel.kd,9332.7,1988,4.7
+mi355x_isl100k,PREFILL,5,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",9118.8,1488,6.1
+mi355x_isl100k,PREFILL,5,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,8126.5,760,10.7
+mi355x_isl100k,PREFILL,5,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",7303.2,1198,6.1
+mi355x_isl100k,PREFILL,5,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",7149.9,912,7.8
+mi355x_isl100k,PREFILL,5,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",6376.2,380,16.8
+mi355x_isl100k,PREFILL,5,Other,mscclKernel_Sum_hip_bfloat16_LL_false,5958.9,380,15.7
+mi355x_isl100k,PREFILL,5,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3072, 384, ...",4151.8,184,22.6
+mi355x_isl100k,PREFILL,5,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",3812.2,769,5.0
+mi355x_isl100k,PREFILL,5,Other,_prepare_dflash_inputs_kernel.kd,2657.5,76,35.0
+mi355x_isl100k,PREFILL,5,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",2419.1,447,5.4
+mi355x_isl100k,PREFILL,5,Other,void ,2400.4,438,5.5
+mi355x_isl100k,PREFILL,5,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",2173.5,447,4.9
+mi355x_isl100k,PREFILL,5,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1792.0,420,4.3
+mi355x_isl100k,PREFILL,5,Other,kernel.kd,1631.1,380,4.3
+mi355x_isl100k,PREFILL,5,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1542.8,380,4.1
+mi355x_isl100k,PREFILL,5,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",1490.7,228,6.5
+mi355x_isl100k,PREFILL,5,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",1483.3,228,6.5
+mi355x_isl100k,PREFILL,5,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,1131.9,228,5.0
+mi355x_isl100k,PREFILL,5,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,1018.6,228,4.5
+mi355x_isl100k,PREFILL,5,Other,"void at::native::vectorized_gather_kernel<16, long>",962.6,152,6.3
+mi355x_isl100k,PREFILL,5,Other,_expand_page_indices_kernel.kd,896.3,210,4.3
+mi355x_isl100k,PREFILL,5,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add...",737.4,27,27.3
+mi355x_isl100k,PREFILL,5,Other,_chunk_metadata_kernel.kd,707.3,27,26.2
+mi355x_isl100k,PREFILL,5,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_...",701.2,27,26.0
+mi355x_isl100k,PREFILL,5,Other,_dcp_local_seq_lens_kernel.kd,676.8,152,4.5
+mi355x_isl100k,PREFILL,5,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",642.1,152,4.2
+mi355x_isl100k,PREFILL,5,Other,__amd_rocclr_fillBufferAligned.kd,630.2,143,4.4
+mi355x_isl100k,PREFILL,5,Other,_bias_kernel.kd,613.2,76,8.1
+mi355x_isl100k,PREFILL,5,Other,_rejection_kernel.kd,605.2,67,9.0
+mi355x_isl100k,PREFILL,5,Other,_compute_slot_mappings_kernel.kd,603.3,76,7.9
+mi355x_isl100k,PREFILL,5,Other,precopy_mamba_align_fused_kernel.kd,579.0,76,7.6
+mi355x_isl100k,PREFILL,5,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",510.0,76,6.7
+mi355x_isl100k,PREFILL,5,Other,_compute_local_logits_stats_kernel.kd,464.2,67,6.9
+mi355x_isl100k,PREFILL,5,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",436.1,76,5.7
+mi355x_isl100k,PREFILL,5,Other,_scatter_num_accepted_kernel.kd,416.5,76,5.5
+mi355x_isl100k,PREFILL,5,Other,preprocess_mamba_align_fused_kernel.kd,388.2,76,5.1
+mi355x_isl100k,PREFILL,5,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",384.5,76,5.1
+mi355x_isl100k,PREFILL,5,Other,_gather_block_tables_kernel.kd,379.5,76,5.0
+mi355x_isl100k,PREFILL,5,Other,_post_update_kernel.kd,378.9,76,5.0
+mi355x_isl100k,PREFILL,5,Other,_prepare_pos_seq_lens_kernel.kd,362.9,76,4.8
+mi355x_isl100k,PREFILL,5,Other,postprocess_mamba_fused_kernel.kd,348.0,76,4.6
+mi355x_isl100k,PREFILL,5,Other,_prepare_prefill_inputs_kernel.kd,232.5,9,25.8
+mi355x_isl100k,PREFILL,5,Other,_apply_write_kernel.kd,210.6,17,12.4
+mi355x_isl100k,PREFILL,5,Other,_expand_idx_mapping_kernel.kd,184.1,67,2.7
+mi355x_isl100k,PREFILL,5,Other,_zero_kv_blocks_kernel.kd,63.7,8,8.0
+mi355x_isl100k,PREFILL,5,Other,__amd_rocclr_streamOpsWrite.kd,24.5,7,3.5
+mi355x_isl100k,PREFILL,5,Quantization,dynamic per-group quant,17918.3,828,21.6
+mi355x_isl100k,PREFILL,5,Sampling,Sampling,3530.4,827,4.3
+mi355x_isl100k,PREFILL,5,Sampling,ArgMax/Reduce,2891.3,541,5.3
+mi355x_isl100k,PREFILL,5,Triton Fused,Triton fused op,10247.2,1760,5.8
+mi355x_isl100k,PREFILL,6,Activation,SiLU/SwiGLU,1598.4,380,4.2
+mi355x_isl100k,PREFILL,6,Attention,aiter attn,910183.5,480,1896.2
+mi355x_isl100k,PREFILL,6,Attention,MLA attn residual,542762.4,14212,38.2
+mi355x_isl100k,PREFILL,6,Attention,MLA merge states,24476.5,288,85.0
+mi355x_isl100k,PREFILL,6,Communication,NCCL/RCCL,1919159.0,4289,447.5
+mi355x_isl100k,PREFILL,6,Communication,CustomAR 2-stage,271407.7,14015,19.4
+mi355x_isl100k,PREFILL,6,Communication,CustomAR 1-stage,58145.0,6164,9.4
+mi355x_isl100k,PREFILL,6,GEMM,hipBLASLt (Cijk),1582516.8,28782,55.0
+mi355x_isl100k,PREFILL,6,GEMM,AITER hgemm bf16,251354.8,30441,8.3
+mi355x_isl100k,PREFILL,6,GEMM,AITER flydsl MoE,150172.7,6164,24.4
+mi355x_isl100k,PREFILL,6,GEMM,AITER wfp4 batched,16185.0,3216,5.0
+mi355x_isl100k,PREFILL,6,GEMM,rocBLAS splitK,12114.4,541,22.4
+mi355x_isl100k,PREFILL,6,KDA Linear Attn,KDA gated-delta,430044.3,6486,66.3
+mi355x_isl100k,PREFILL,6,KDA Linear Attn,KDA conv1d,101030.7,6486,15.6
+mi355x_isl100k,PREFILL,6,KDA Linear Attn,KDA gate/state,74922.8,3105,24.1
+mi355x_isl100k,PREFILL,6,KDA Linear Attn,KDA GLA,36342.4,621,58.5
+mi355x_isl100k,PREFILL,6,Memory,Fill,12140.6,2099,5.8
+mi355x_isl100k,PREFILL,6,Memory,Memcpy,495.3,30,16.5
+mi355x_isl100k,PREFILL,6,MoE Routing,MoE sort mxfp4,177347.0,22264,8.0
+mi355x_isl100k,PREFILL,6,MoE Routing,AITER grouped_topk,115990.2,6992,16.6
+mi355x_isl100k,PREFILL,6,Normalization,Add+RMSNorm+quant,53250.3,7980,6.7
+mi355x_isl100k,PREFILL,6,Normalization,LayerNorm,39181.0,5244,7.5
+mi355x_isl100k,PREFILL,6,Normalization,RMSNorm,11308.6,1824,6.2
+mi355x_isl100k,PREFILL,6,Other,void opus_moe::stage1_a8w4::pipeline_group_split::opus_moe_stage1_a8w4_kernel...,554474.1,828,669.7
+mi355x_isl100k,PREFILL,6,Other,void opus_moe_stage2_a8w4_decode_kernel_gfx950<OpusMoeStage2A8W4DecodeShape<o...,406702.2,828,491.2
+mi355x_isl100k,PREFILL,6,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,385778.1,705,547.2
+mi355x_isl100k,PREFILL,6,Other,void gemm_a16w16_persistent_4g_safe_kernel<opus_gemm_a16w16_persistent_traits...,217200.7,696,312.1
+mi355x_isl100k,PREFILL,6,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3584, 448, ...",106748.5,644,165.8
+mi355x_isl100k,PREFILL,6,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,75878.7,1988,38.2
+mi355x_isl100k,PREFILL,6,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,67064.8,6164,10.9
+mi355x_isl100k,PREFILL,6,Other,"void vllm::gather_and_maybe_dequant_cache_page<__hip_bfloat16, unsigned char, ",65323.2,288,226.8
+mi355x_isl100k,PREFILL,6,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",62756.0,6659,9.4
+mi355x_isl100k,PREFILL,6,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,51479.9,7068,7.3
+mi355x_isl100k,PREFILL,6,Other,__amd_rocclr_copyBuffer.kd,43764.0,6469,6.8
+mi355x_isl100k,PREFILL,6,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",27929.2,1608,17.4
+mi355x_isl100k,PREFILL,6,Other,void at::native::,27456.2,1537,17.9
+mi355x_isl100k,PREFILL,6,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,24122.9,1608,15.0
+mi355x_isl100k,PREFILL,6,Other,"void gqa_d192_v128_kernel<opus_gqa_d192_traits<32, 64, 8, true, true> >",21233.0,24,884.7
+mi355x_isl100k,PREFILL,6,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",15289.9,210,72.8
+mi355x_isl100k,PREFILL,6,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",13482.4,2204,6.1
+mi355x_isl100k,PREFILL,6,Other,_dcp_a2a_pack_send_kernel.kd,12123.9,1988,6.1
+mi355x_isl100k,PREFILL,6,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",11021.9,1824,6.0
+mi355x_isl100k,PREFILL,6,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",10510.9,1824,5.8
+mi355x_isl100k,PREFILL,6,Other,_dcp_a2a_unpack_combine_kernel.kd,9054.3,1988,4.6
+mi355x_isl100k,PREFILL,6,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",9031.5,1488,6.1
+mi355x_isl100k,PREFILL,6,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8878.2,447,19.9
+mi355x_isl100k,PREFILL,6,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,8077.4,760,10.6
+mi355x_isl100k,PREFILL,6,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",7370.9,1198,6.2
+mi355x_isl100k,PREFILL,6,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",7178.3,912,7.9
+mi355x_isl100k,PREFILL,6,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",6238.6,380,16.4
+mi355x_isl100k,PREFILL,6,Other,mscclKernel_Sum_hip_bfloat16_LL_false,6012.9,380,15.8
+mi355x_isl100k,PREFILL,6,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3072, 384, ...",4068.2,184,22.1
+mi355x_isl100k,PREFILL,6,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",3881.7,769,5.0
+mi355x_isl100k,PREFILL,6,Other,_prepare_dflash_inputs_kernel.kd,2642.7,76,34.8
+mi355x_isl100k,PREFILL,6,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",2397.4,447,5.4
+mi355x_isl100k,PREFILL,6,Other,void ,2307.5,438,5.3
+mi355x_isl100k,PREFILL,6,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",2168.9,447,4.9
+mi355x_isl100k,PREFILL,6,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1763.2,420,4.2
+mi355x_isl100k,PREFILL,6,Other,kernel.kd,1667.5,380,4.4
+mi355x_isl100k,PREFILL,6,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1531.8,380,4.0
+mi355x_isl100k,PREFILL,6,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",1471.9,228,6.5
+mi355x_isl100k,PREFILL,6,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",1418.2,228,6.2
+mi355x_isl100k,PREFILL,6,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,1091.4,228,4.8
+mi355x_isl100k,PREFILL,6,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,1029.4,228,4.5
+mi355x_isl100k,PREFILL,6,Other,"void at::native::vectorized_gather_kernel<16, long>",963.6,152,6.3
+mi355x_isl100k,PREFILL,6,Other,_expand_page_indices_kernel.kd,891.8,210,4.2
+mi355x_isl100k,PREFILL,6,Other,_dcp_local_seq_lens_kernel.kd,687.7,152,4.5
+mi355x_isl100k,PREFILL,6,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add...",677.1,27,25.1
+mi355x_isl100k,PREFILL,6,Other,_chunk_metadata_kernel.kd,658.9,27,24.4
+mi355x_isl100k,PREFILL,6,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",656.3,152,4.3
+mi355x_isl100k,PREFILL,6,Other,__amd_rocclr_fillBufferAligned.kd,629.8,143,4.4
+mi355x_isl100k,PREFILL,6,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_...",625.0,27,23.1
+mi355x_isl100k,PREFILL,6,Other,_compute_slot_mappings_kernel.kd,618.6,76,8.1
+mi355x_isl100k,PREFILL,6,Other,_rejection_kernel.kd,613.5,67,9.2
+mi355x_isl100k,PREFILL,6,Other,precopy_mamba_align_fused_kernel.kd,589.2,76,7.8
+mi355x_isl100k,PREFILL,6,Other,_bias_kernel.kd,548.4,76,7.2
+mi355x_isl100k,PREFILL,6,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",503.2,76,6.6
+mi355x_isl100k,PREFILL,6,Other,_compute_local_logits_stats_kernel.kd,440.5,67,6.6
+mi355x_isl100k,PREFILL,6,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",433.5,76,5.7
+mi355x_isl100k,PREFILL,6,Other,_scatter_num_accepted_kernel.kd,392.4,76,5.2
+mi355x_isl100k,PREFILL,6,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",389.1,76,5.1
+mi355x_isl100k,PREFILL,6,Other,postprocess_mamba_fused_kernel.kd,381.4,76,5.0
+mi355x_isl100k,PREFILL,6,Other,preprocess_mamba_align_fused_kernel.kd,381.3,76,5.0
+mi355x_isl100k,PREFILL,6,Other,_gather_block_tables_kernel.kd,366.9,76,4.8
+mi355x_isl100k,PREFILL,6,Other,_prepare_pos_seq_lens_kernel.kd,352.6,76,4.6
+mi355x_isl100k,PREFILL,6,Other,_post_update_kernel.kd,332.5,76,4.4
+mi355x_isl100k,PREFILL,6,Other,_prepare_prefill_inputs_kernel.kd,207.8,9,23.1
+mi355x_isl100k,PREFILL,6,Other,_apply_write_kernel.kd,203.2,17,12.0
+mi355x_isl100k,PREFILL,6,Other,_expand_idx_mapping_kernel.kd,181.0,67,2.7
+mi355x_isl100k,PREFILL,6,Other,_zero_kv_blocks_kernel.kd,65.8,8,8.2
+mi355x_isl100k,PREFILL,6,Other,__amd_rocclr_streamOpsWrite.kd,24.4,7,3.5
+mi355x_isl100k,PREFILL,6,Quantization,dynamic per-group quant,17946.1,828,21.7
+mi355x_isl100k,PREFILL,6,Sampling,Sampling,3535.9,827,4.3
+mi355x_isl100k,PREFILL,6,Sampling,ArgMax/Reduce,2701.7,541,5.0
+mi355x_isl100k,PREFILL,6,Triton Fused,Triton fused op,10131.4,1760,5.8
+mi355x_isl100k,PREFILL,7,Activation,SiLU/SwiGLU,1639.6,380,4.3
+mi355x_isl100k,PREFILL,7,Attention,aiter attn,903190.6,480,1881.6
+mi355x_isl100k,PREFILL,7,Attention,MLA attn residual,546775.2,14212,38.5
+mi355x_isl100k,PREFILL,7,Attention,MLA merge states,24538.3,288,85.2
+mi355x_isl100k,PREFILL,7,Communication,NCCL/RCCL,1952683.2,4289,455.3
+mi355x_isl100k,PREFILL,7,Communication,CustomAR 2-stage,265868.7,14015,19.0
+mi355x_isl100k,PREFILL,7,Communication,CustomAR 1-stage,56275.3,6164,9.1
+mi355x_isl100k,PREFILL,7,GEMM,hipBLASLt (Cijk),1582452.1,28782,55.0
+mi355x_isl100k,PREFILL,7,GEMM,AITER hgemm bf16,250572.1,30441,8.2
+mi355x_isl100k,PREFILL,7,GEMM,AITER flydsl MoE,150916.9,6164,24.5
+mi355x_isl100k,PREFILL,7,GEMM,AITER wfp4 batched,15946.7,3216,5.0
+mi355x_isl100k,PREFILL,7,GEMM,rocBLAS splitK,12121.8,541,22.4
+mi355x_isl100k,PREFILL,7,KDA Linear Attn,KDA gated-delta,428430.5,6486,66.1
+mi355x_isl100k,PREFILL,7,KDA Linear Attn,KDA conv1d,99850.7,6486,15.4
+mi355x_isl100k,PREFILL,7,KDA Linear Attn,KDA gate/state,75053.9,3105,24.2
+mi355x_isl100k,PREFILL,7,KDA Linear Attn,KDA GLA,36177.6,621,58.3
+mi355x_isl100k,PREFILL,7,Memory,Fill,12062.7,2099,5.7
+mi355x_isl100k,PREFILL,7,Memory,Memcpy,488.7,30,16.3
+mi355x_isl100k,PREFILL,7,MoE Routing,MoE sort mxfp4,176653.7,22264,7.9
+mi355x_isl100k,PREFILL,7,MoE Routing,AITER grouped_topk,115604.7,6992,16.5
+mi355x_isl100k,PREFILL,7,Normalization,Add+RMSNorm+quant,53854.9,7980,6.7
+mi355x_isl100k,PREFILL,7,Normalization,LayerNorm,39289.9,5244,7.5
+mi355x_isl100k,PREFILL,7,Normalization,RMSNorm,11338.3,1824,6.2
+mi355x_isl100k,PREFILL,7,Other,void opus_moe::stage1_a8w4::pipeline_group_split::opus_moe_stage1_a8w4_kernel...,551454.1,828,666.0
+mi355x_isl100k,PREFILL,7,Other,void opus_moe_stage2_a8w4_decode_kernel_gfx950<OpusMoeStage2A8W4DecodeShape<o...,407798.9,828,492.5
+mi355x_isl100k,PREFILL,7,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,379991.8,705,539.0
+mi355x_isl100k,PREFILL,7,Other,void gemm_a16w16_persistent_4g_safe_kernel<opus_gemm_a16w16_persistent_traits...,219405.5,696,315.2
+mi355x_isl100k,PREFILL,7,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3584, 448, ...",106548.0,644,165.4
+mi355x_isl100k,PREFILL,7,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,75842.1,1988,38.1
+mi355x_isl100k,PREFILL,7,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,68064.4,6164,11.0
+mi355x_isl100k,PREFILL,7,Other,"void vllm::gather_and_maybe_dequant_cache_page<__hip_bfloat16, unsigned char, ",62926.6,288,218.5
+mi355x_isl100k,PREFILL,7,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",62413.5,6659,9.4
+mi355x_isl100k,PREFILL,7,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,51302.9,7068,7.3
+mi355x_isl100k,PREFILL,7,Other,__amd_rocclr_copyBuffer.kd,43709.6,6469,6.8
+mi355x_isl100k,PREFILL,7,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",27995.5,1608,17.4
+mi355x_isl100k,PREFILL,7,Other,void at::native::,26503.8,1537,17.2
+mi355x_isl100k,PREFILL,7,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,24839.5,1608,15.4
+mi355x_isl100k,PREFILL,7,Other,"void gqa_d192_v128_kernel<opus_gqa_d192_traits<32, 64, 8, true, true> >",21060.7,24,877.5
+mi355x_isl100k,PREFILL,7,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",15182.8,210,72.3
+mi355x_isl100k,PREFILL,7,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",13593.8,2204,6.2
+mi355x_isl100k,PREFILL,7,Other,_dcp_a2a_pack_send_kernel.kd,11963.1,1988,6.0
+mi355x_isl100k,PREFILL,7,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",10974.1,1824,6.0
+mi355x_isl100k,PREFILL,7,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",10560.6,1824,5.8
+mi355x_isl100k,PREFILL,7,Other,_dcp_a2a_unpack_combine_kernel.kd,9081.2,1988,4.6
+mi355x_isl100k,PREFILL,7,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",8894.9,1488,6.0
+mi355x_isl100k,PREFILL,7,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8843.8,447,19.8
+mi355x_isl100k,PREFILL,7,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,8164.5,760,10.7
+mi355x_isl100k,PREFILL,7,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",7340.7,1198,6.1
+mi355x_isl100k,PREFILL,7,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",7201.1,912,7.9
+mi355x_isl100k,PREFILL,7,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",6363.7,380,16.7
+mi355x_isl100k,PREFILL,7,Other,mscclKernel_Sum_hip_bfloat16_LL_false,6157.2,380,16.2
+mi355x_isl100k,PREFILL,7,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3072, 384, ...",4117.6,184,22.4
+mi355x_isl100k,PREFILL,7,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",3885.5,769,5.1
+mi355x_isl100k,PREFILL,7,Other,_prepare_dflash_inputs_kernel.kd,2651.2,76,34.9
+mi355x_isl100k,PREFILL,7,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",2411.5,447,5.4
+mi355x_isl100k,PREFILL,7,Other,void ,2408.7,438,5.5
+mi355x_isl100k,PREFILL,7,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",2103.7,447,4.7
+mi355x_isl100k,PREFILL,7,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1746.0,420,4.2
+mi355x_isl100k,PREFILL,7,Other,kernel.kd,1629.8,380,4.3
+mi355x_isl100k,PREFILL,7,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1496.2,380,3.9
+mi355x_isl100k,PREFILL,7,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",1471.0,228,6.5
+mi355x_isl100k,PREFILL,7,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",1445.2,228,6.3
+mi355x_isl100k,PREFILL,7,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,1097.5,228,4.8
+mi355x_isl100k,PREFILL,7,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,984.1,228,4.3
+mi355x_isl100k,PREFILL,7,Other,"void at::native::vectorized_gather_kernel<16, long>",950.5,152,6.3
+mi355x_isl100k,PREFILL,7,Other,_expand_page_indices_kernel.kd,887.0,210,4.2
+mi355x_isl100k,PREFILL,7,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add...",718.9,27,26.6
+mi355x_isl100k,PREFILL,7,Other,_chunk_metadata_kernel.kd,710.4,27,26.3
+mi355x_isl100k,PREFILL,7,Other,_dcp_local_seq_lens_kernel.kd,678.7,152,4.5
+mi355x_isl100k,PREFILL,7,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_...",657.1,27,24.3
+mi355x_isl100k,PREFILL,7,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",652.1,152,4.3
+mi355x_isl100k,PREFILL,7,Other,_rejection_kernel.kd,637.3,67,9.5
+mi355x_isl100k,PREFILL,7,Other,__amd_rocclr_fillBufferAligned.kd,631.5,143,4.4
+mi355x_isl100k,PREFILL,7,Other,_compute_slot_mappings_kernel.kd,598.9,76,7.9
+mi355x_isl100k,PREFILL,7,Other,precopy_mamba_align_fused_kernel.kd,581.4,76,7.6
+mi355x_isl100k,PREFILL,7,Other,_bias_kernel.kd,549.0,76,7.2
+mi355x_isl100k,PREFILL,7,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",506.4,76,6.7
+mi355x_isl100k,PREFILL,7,Other,_compute_local_logits_stats_kernel.kd,443.7,67,6.6
+mi355x_isl100k,PREFILL,7,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",419.9,76,5.5
+mi355x_isl100k,PREFILL,7,Other,_scatter_num_accepted_kernel.kd,397.6,76,5.2
+mi355x_isl100k,PREFILL,7,Other,preprocess_mamba_align_fused_kernel.kd,379.5,76,5.0
+mi355x_isl100k,PREFILL,7,Other,postprocess_mamba_fused_kernel.kd,374.3,76,4.9
+mi355x_isl100k,PREFILL,7,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",370.7,76,4.9
+mi355x_isl100k,PREFILL,7,Other,_prepare_pos_seq_lens_kernel.kd,360.5,76,4.7
+mi355x_isl100k,PREFILL,7,Other,_gather_block_tables_kernel.kd,351.8,76,4.6
+mi355x_isl100k,PREFILL,7,Other,_post_update_kernel.kd,320.7,76,4.2
+mi355x_isl100k,PREFILL,7,Other,_prepare_prefill_inputs_kernel.kd,223.6,9,24.8
+mi355x_isl100k,PREFILL,7,Other,_apply_write_kernel.kd,203.7,17,12.0
+mi355x_isl100k,PREFILL,7,Other,_expand_idx_mapping_kernel.kd,162.3,67,2.4
+mi355x_isl100k,PREFILL,7,Other,_zero_kv_blocks_kernel.kd,69.8,8,8.7
+mi355x_isl100k,PREFILL,7,Other,__amd_rocclr_streamOpsWrite.kd,24.6,7,3.5
+mi355x_isl100k,PREFILL,7,Quantization,dynamic per-group quant,17754.7,828,21.4
+mi355x_isl100k,PREFILL,7,Sampling,Sampling,3534.9,827,4.3
+mi355x_isl100k,PREFILL,7,Sampling,ArgMax/Reduce,2824.2,541,5.2
+mi355x_isl100k,PREFILL,7,Triton Fused,Triton fused op,6561.6,1760,3.7
+mi355x_isl100k,DECODE,0,Activation,SiLU/SwiGLU,1337.2,330,4.1
+mi355x_isl100k,DECODE,0,Attention,MLA attn residual,100181.0,12342,8.1
+mi355x_isl100k,DECODE,0,Communication,CustomAR 2-stage,110100.8,13068,8.4
+mi355x_isl100k,DECODE,0,Communication,CustomAR 1-stage,58097.9,6072,9.6
+mi355x_isl100k,DECODE,0,Communication,NCCL/RCCL,36694.7,2046,17.9
+mi355x_isl100k,DECODE,0,GEMM,hipBLASLt (Cijk),257554.8,22110,11.6
+mi355x_isl100k,DECODE,0,GEMM,AITER hgemm bf16,245963.9,29898,8.2
+mi355x_isl100k,DECODE,0,GEMM,AITER flydsl MoE,155683.7,6072,25.6
+mi355x_isl100k,DECODE,0,GEMM,AITER wfp4 batched,15800.7,3168,5.0
+mi355x_isl100k,DECODE,0,GEMM,rocBLAS splitK,9881.4,462,21.4
+mi355x_isl100k,DECODE,0,KDA Linear Attn,KDA gated-delta,89697.4,4554,19.7
+mi355x_isl100k,DECODE,0,KDA Linear Attn,KDA conv1d,26007.8,4554,5.7
+mi355x_isl100k,DECODE,0,Memory,Fill,2398.5,528,4.5
+mi355x_isl100k,DECODE,0,MoE Routing,MoE sort mxfp4,105628.5,18216,5.8
+mi355x_isl100k,DECODE,0,MoE Routing,AITER grouped_topk,71158.6,6072,11.7
+mi355x_isl100k,DECODE,0,Normalization,Add+RMSNorm+quant,30530.2,6930,4.4
+mi355x_isl100k,DECODE,0,Normalization,LayerNorm,19501.8,4554,4.3
+mi355x_isl100k,DECODE,0,Normalization,RMSNorm,6653.3,1584,4.2
+mi355x_isl100k,DECODE,0,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,91326.6,6072,15.0
+mi355x_isl100k,DECODE,0,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,73905.4,1914,38.6
+mi355x_isl100k,DECODE,0,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",29018.6,1584,18.3
+mi355x_isl100k,DECODE,0,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",26187.0,5478,4.8
+mi355x_isl100k,DECODE,0,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,25032.6,6138,4.1
+mi355x_isl100k,DECODE,0,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,21937.6,1584,13.8
+mi355x_isl100k,DECODE,0,Other,__amd_rocclr_copyBuffer.kd,18086.9,4554,4.0
+mi355x_isl100k,DECODE,0,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",14308.5,198,72.3
+mi355x_isl100k,DECODE,0,Other,_dcp_a2a_pack_send_kernel.kd,11474.6,1914,6.0
+mi355x_isl100k,DECODE,0,Other,_dcp_a2a_unpack_combine_kernel.kd,8512.3,1914,4.4
+mi355x_isl100k,DECODE,0,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8405.9,396,21.2
+mi355x_isl100k,DECODE,0,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",8142.5,1914,4.3
+mi355x_isl100k,DECODE,0,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,7023.1,660,10.6
+mi355x_isl100k,DECODE,0,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",6604.3,1584,4.2
+mi355x_isl100k,DECODE,0,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",6587.4,1584,4.2
+mi355x_isl100k,DECODE,0,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5093.7,330,15.4
+mi355x_isl100k,DECODE,0,Other,mscclKernel_Sum_hip_bfloat16_LL_false,4591.7,330,13.9
+mi355x_isl100k,DECODE,0,Other,void at::native::,3867.0,858,4.5
+mi355x_isl100k,DECODE,0,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",3402.9,792,4.3
+mi355x_isl100k,DECODE,0,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",2779.6,660,4.2
+mi355x_isl100k,DECODE,0,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",2680.2,792,3.4
+mi355x_isl100k,DECODE,0,Other,_prepare_dflash_inputs_kernel.kd,2512.7,66,38.1
+mi355x_isl100k,DECODE,0,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",1880.4,462,4.1
+mi355x_isl100k,DECODE,0,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",1818.1,396,4.6
+mi355x_isl100k,DECODE,0,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1639.7,396,4.1
+mi355x_isl100k,DECODE,0,Other,void ,1624.6,396,4.1
+mi355x_isl100k,DECODE,0,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1605.8,396,4.1
+mi355x_isl100k,DECODE,0,Other,kernel.kd,1408.2,330,4.3
+mi355x_isl100k,DECODE,0,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1295.1,330,3.9
+mi355x_isl100k,DECODE,0,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,854.8,198,4.3
+mi355x_isl100k,DECODE,0,Other,_expand_page_indices_kernel.kd,822.9,198,4.2
+mi355x_isl100k,DECODE,0,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",791.2,198,4.0
+mi355x_isl100k,DECODE,0,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",790.8,198,4.0
+mi355x_isl100k,DECODE,0,Other,_rejection_kernel.kd,610.9,66,9.3
+mi355x_isl100k,DECODE,0,Other,"void at::native::vectorized_gather_kernel<16, long>",599.0,132,4.5
+mi355x_isl100k,DECODE,0,Other,_dcp_local_seq_lens_kernel.kd,597.1,132,4.5
+mi355x_isl100k,DECODE,0,Other,__amd_rocclr_fillBufferAligned.kd,563.1,132,4.3
+mi355x_isl100k,DECODE,0,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",544.6,132,4.1
+mi355x_isl100k,DECODE,0,Other,_bias_kernel.kd,457.9,66,6.9
+mi355x_isl100k,DECODE,0,Other,_compute_local_logits_stats_kernel.kd,430.5,66,6.5
+mi355x_isl100k,DECODE,0,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,422.7,198,2.1
+mi355x_isl100k,DECODE,0,Other,_compute_slot_mappings_kernel.kd,387.1,66,5.9
+mi355x_isl100k,DECODE,0,Other,_scatter_num_accepted_kernel.kd,365.0,66,5.5
+mi355x_isl100k,DECODE,0,Other,_post_update_kernel.kd,362.7,66,5.5
+mi355x_isl100k,DECODE,0,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",323.4,66,4.9
+mi355x_isl100k,DECODE,0,Other,_gather_block_tables_kernel.kd,300.1,66,4.5
+mi355x_isl100k,DECODE,0,Other,_prepare_pos_seq_lens_kernel.kd,294.4,66,4.5
+mi355x_isl100k,DECODE,0,Other,preprocess_mamba_align_fused_kernel.kd,290.5,66,4.4
+mi355x_isl100k,DECODE,0,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",285.8,66,4.3
+mi355x_isl100k,DECODE,0,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",276.9,66,4.2
+mi355x_isl100k,DECODE,0,Other,postprocess_mamba_fused_kernel.kd,271.1,66,4.1
+mi355x_isl100k,DECODE,0,Other,precopy_mamba_align_fused_kernel.kd,266.9,66,4.0
+mi355x_isl100k,DECODE,0,Other,_expand_idx_mapping_kernel.kd,172.5,66,2.6
+mi355x_isl100k,DECODE,0,Sampling,Sampling,3013.9,726,4.2
+mi355x_isl100k,DECODE,0,Sampling,ArgMax/Reduce,2427.9,462,5.3
+mi355x_isl100k,DECODE,0,Triton Fused,Triton fused op,6225.8,1716,3.6
+mi355x_isl100k,DECODE,1,Activation,SiLU/SwiGLU,1369.6,330,4.2
+mi355x_isl100k,DECODE,1,Attention,MLA attn residual,100088.7,12342,8.1
+mi355x_isl100k,DECODE,1,Communication,CustomAR 2-stage,108289.7,13068,8.3
+mi355x_isl100k,DECODE,1,Communication,CustomAR 1-stage,57320.8,6072,9.4
+mi355x_isl100k,DECODE,1,Communication,NCCL/RCCL,32871.0,2046,16.1
+mi355x_isl100k,DECODE,1,GEMM,hipBLASLt (Cijk),257441.3,22110,11.6
+mi355x_isl100k,DECODE,1,GEMM,AITER hgemm bf16,246794.9,29898,8.3
+mi355x_isl100k,DECODE,1,GEMM,AITER flydsl MoE,157538.6,6072,25.9
+mi355x_isl100k,DECODE,1,GEMM,AITER wfp4 batched,15671.1,3168,4.9
+mi355x_isl100k,DECODE,1,GEMM,rocBLAS splitK,9824.8,462,21.3
+mi355x_isl100k,DECODE,1,KDA Linear Attn,KDA gated-delta,90522.4,4554,19.9
+mi355x_isl100k,DECODE,1,KDA Linear Attn,KDA conv1d,25773.1,4554,5.7
+mi355x_isl100k,DECODE,1,Memory,Fill,2372.8,528,4.5
+mi355x_isl100k,DECODE,1,MoE Routing,MoE sort mxfp4,105671.8,18216,5.8
+mi355x_isl100k,DECODE,1,MoE Routing,AITER grouped_topk,71060.0,6072,11.7
+mi355x_isl100k,DECODE,1,Normalization,Add+RMSNorm+quant,30452.2,6930,4.4
+mi355x_isl100k,DECODE,1,Normalization,LayerNorm,19586.4,4554,4.3
+mi355x_isl100k,DECODE,1,Normalization,RMSNorm,6625.6,1584,4.2
+mi355x_isl100k,DECODE,1,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,89075.4,6072,14.7
+mi355x_isl100k,DECODE,1,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,73322.1,1914,38.3
+mi355x_isl100k,DECODE,1,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",28821.6,1584,18.2
+mi355x_isl100k,DECODE,1,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",26185.5,5478,4.8
+mi355x_isl100k,DECODE,1,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,25123.7,6138,4.1
+mi355x_isl100k,DECODE,1,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,22800.4,1584,14.4
+mi355x_isl100k,DECODE,1,Other,__amd_rocclr_copyBuffer.kd,18117.0,4554,4.0
+mi355x_isl100k,DECODE,1,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",14299.6,198,72.2
+mi355x_isl100k,DECODE,1,Other,_dcp_a2a_pack_send_kernel.kd,11524.0,1914,6.0
+mi355x_isl100k,DECODE,1,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8785.4,396,22.2
+mi355x_isl100k,DECODE,1,Other,_dcp_a2a_unpack_combine_kernel.kd,8546.2,1914,4.5
+mi355x_isl100k,DECODE,1,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",8110.2,1914,4.2
+mi355x_isl100k,DECODE,1,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,6988.6,660,10.6
+mi355x_isl100k,DECODE,1,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",6648.4,1584,4.2
+mi355x_isl100k,DECODE,1,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",6496.0,1584,4.1
+mi355x_isl100k,DECODE,1,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5014.9,330,15.2
+mi355x_isl100k,DECODE,1,Other,mscclKernel_Sum_hip_bfloat16_LL_false,4745.1,330,14.4
+mi355x_isl100k,DECODE,1,Other,void at::native::,3762.5,858,4.4
+mi355x_isl100k,DECODE,1,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",3398.8,792,4.3
+mi355x_isl100k,DECODE,1,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",2776.0,660,4.2
+mi355x_isl100k,DECODE,1,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",2650.9,792,3.3
+mi355x_isl100k,DECODE,1,Other,_prepare_dflash_inputs_kernel.kd,2509.2,66,38.0
+mi355x_isl100k,DECODE,1,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",1890.7,396,4.8
+mi355x_isl100k,DECODE,1,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",1867.4,462,4.0
+mi355x_isl100k,DECODE,1,Other,void ,1639.6,396,4.1
+mi355x_isl100k,DECODE,1,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1631.1,396,4.1
+mi355x_isl100k,DECODE,1,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1600.5,396,4.0
+mi355x_isl100k,DECODE,1,Other,kernel.kd,1415.2,330,4.3
+mi355x_isl100k,DECODE,1,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1286.4,330,3.9
+mi355x_isl100k,DECODE,1,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,837.3,198,4.2
+mi355x_isl100k,DECODE,1,Other,_expand_page_indices_kernel.kd,821.9,198,4.2
+mi355x_isl100k,DECODE,1,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",779.2,198,3.9
+mi355x_isl100k,DECODE,1,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",778.8,198,3.9
+mi355x_isl100k,DECODE,1,Other,"void at::native::vectorized_gather_kernel<16, long>",600.1,132,4.5
+mi355x_isl100k,DECODE,1,Other,_rejection_kernel.kd,590.3,66,8.9
+mi355x_isl100k,DECODE,1,Other,__amd_rocclr_fillBufferAligned.kd,569.9,132,4.3
+mi355x_isl100k,DECODE,1,Other,_dcp_local_seq_lens_kernel.kd,565.6,132,4.3
+mi355x_isl100k,DECODE,1,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",559.9,132,4.2
+mi355x_isl100k,DECODE,1,Other,_bias_kernel.kd,511.9,66,7.8
+mi355x_isl100k,DECODE,1,Other,_compute_local_logits_stats_kernel.kd,448.1,66,6.8
+mi355x_isl100k,DECODE,1,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,420.0,198,2.1
+mi355x_isl100k,DECODE,1,Other,_compute_slot_mappings_kernel.kd,370.6,66,5.6
+mi355x_isl100k,DECODE,1,Other,_scatter_num_accepted_kernel.kd,368.1,66,5.6
+mi355x_isl100k,DECODE,1,Other,_post_update_kernel.kd,362.7,66,5.5
+mi355x_isl100k,DECODE,1,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",323.5,66,4.9
+mi355x_isl100k,DECODE,1,Other,_gather_block_tables_kernel.kd,290.9,66,4.4
+mi355x_isl100k,DECODE,1,Other,preprocess_mamba_align_fused_kernel.kd,288.7,66,4.4
+mi355x_isl100k,DECODE,1,Other,_prepare_pos_seq_lens_kernel.kd,283.4,66,4.3
+mi355x_isl100k,DECODE,1,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",282.9,66,4.3
+mi355x_isl100k,DECODE,1,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",277.0,66,4.2
+mi355x_isl100k,DECODE,1,Other,postprocess_mamba_fused_kernel.kd,271.6,66,4.1
+mi355x_isl100k,DECODE,1,Other,precopy_mamba_align_fused_kernel.kd,265.3,66,4.0
+mi355x_isl100k,DECODE,1,Other,_expand_idx_mapping_kernel.kd,171.3,66,2.6
+mi355x_isl100k,DECODE,1,Sampling,Sampling,2954.3,726,4.1
+mi355x_isl100k,DECODE,1,Sampling,ArgMax/Reduce,2370.1,462,5.1
+mi355x_isl100k,DECODE,1,Triton Fused,Triton fused op,9834.4,1716,5.7
+mi355x_isl100k,DECODE,2,Activation,SiLU/SwiGLU,1397.5,330,4.2
+mi355x_isl100k,DECODE,2,Attention,MLA attn residual,100858.2,12342,8.2
+mi355x_isl100k,DECODE,2,Communication,CustomAR 2-stage,107434.2,13068,8.2
+mi355x_isl100k,DECODE,2,Communication,CustomAR 1-stage,58167.3,6072,9.6
+mi355x_isl100k,DECODE,2,Communication,NCCL/RCCL,32898.7,2046,16.1
+mi355x_isl100k,DECODE,2,GEMM,hipBLASLt (Cijk),257620.9,22110,11.7
+mi355x_isl100k,DECODE,2,GEMM,AITER hgemm bf16,246930.0,29898,8.3
+mi355x_isl100k,DECODE,2,GEMM,AITER flydsl MoE,154599.4,6072,25.5
+mi355x_isl100k,DECODE,2,GEMM,AITER wfp4 batched,15709.7,3168,5.0
+mi355x_isl100k,DECODE,2,GEMM,rocBLAS splitK,9927.7,462,21.5
+mi355x_isl100k,DECODE,2,KDA Linear Attn,KDA gated-delta,90322.1,4554,19.8
+mi355x_isl100k,DECODE,2,KDA Linear Attn,KDA conv1d,25877.4,4554,5.7
+mi355x_isl100k,DECODE,2,Memory,Fill,2398.6,528,4.5
+mi355x_isl100k,DECODE,2,MoE Routing,MoE sort mxfp4,106184.7,18216,5.8
+mi355x_isl100k,DECODE,2,MoE Routing,AITER grouped_topk,71568.0,6072,11.8
+mi355x_isl100k,DECODE,2,Normalization,Add+RMSNorm+quant,31200.8,6930,4.5
+mi355x_isl100k,DECODE,2,Normalization,LayerNorm,18887.9,4554,4.1
+mi355x_isl100k,DECODE,2,Normalization,RMSNorm,6715.1,1584,4.2
+mi355x_isl100k,DECODE,2,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,89585.9,6072,14.8
+mi355x_isl100k,DECODE,2,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,73431.1,1914,38.4
+mi355x_isl100k,DECODE,2,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",28181.8,1584,17.8
+mi355x_isl100k,DECODE,2,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",26122.7,5478,4.8
+mi355x_isl100k,DECODE,2,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,25738.6,6138,4.2
+mi355x_isl100k,DECODE,2,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,22878.3,1584,14.4
+mi355x_isl100k,DECODE,2,Other,__amd_rocclr_copyBuffer.kd,18110.9,4554,4.0
+mi355x_isl100k,DECODE,2,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",14420.3,198,72.8
+mi355x_isl100k,DECODE,2,Other,_dcp_a2a_pack_send_kernel.kd,11572.5,1914,6.0
+mi355x_isl100k,DECODE,2,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8995.7,396,22.7
+mi355x_isl100k,DECODE,2,Other,_dcp_a2a_unpack_combine_kernel.kd,8728.9,1914,4.6
+mi355x_isl100k,DECODE,2,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",8278.4,1914,4.3
+mi355x_isl100k,DECODE,2,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,7084.9,660,10.7
+mi355x_isl100k,DECODE,2,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",6667.1,1584,4.2
+mi355x_isl100k,DECODE,2,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",6498.9,1584,4.1
+mi355x_isl100k,DECODE,2,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5044.2,330,15.3
+mi355x_isl100k,DECODE,2,Other,mscclKernel_Sum_hip_bfloat16_LL_false,4844.3,330,14.7
+mi355x_isl100k,DECODE,2,Other,void at::native::,3742.3,858,4.4
+mi355x_isl100k,DECODE,2,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",3429.9,792,4.3
+mi355x_isl100k,DECODE,2,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",2767.9,660,4.2
+mi355x_isl100k,DECODE,2,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",2653.6,792,3.4
+mi355x_isl100k,DECODE,2,Other,_prepare_dflash_inputs_kernel.kd,2533.3,66,38.4
+mi355x_isl100k,DECODE,2,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",1874.2,462,4.1
+mi355x_isl100k,DECODE,2,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",1854.0,396,4.7
+mi355x_isl100k,DECODE,2,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1624.1,396,4.1
+mi355x_isl100k,DECODE,2,Other,void ,1613.6,396,4.1
+mi355x_isl100k,DECODE,2,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1605.6,396,4.1
+mi355x_isl100k,DECODE,2,Other,kernel.kd,1447.7,330,4.4
+mi355x_isl100k,DECODE,2,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1298.2,330,3.9
+mi355x_isl100k,DECODE,2,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,839.3,198,4.2
+mi355x_isl100k,DECODE,2,Other,_expand_page_indices_kernel.kd,821.1,198,4.1
+mi355x_isl100k,DECODE,2,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",783.1,198,4.0
+mi355x_isl100k,DECODE,2,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",781.6,198,3.9
+mi355x_isl100k,DECODE,2,Other,_rejection_kernel.kd,602.0,66,9.1
+mi355x_isl100k,DECODE,2,Other,"void at::native::vectorized_gather_kernel<16, long>",599.4,132,4.5
+mi355x_isl100k,DECODE,2,Other,_dcp_local_seq_lens_kernel.kd,590.1,132,4.5
+mi355x_isl100k,DECODE,2,Other,__amd_rocclr_fillBufferAligned.kd,567.8,132,4.3
+mi355x_isl100k,DECODE,2,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",556.3,132,4.2
+mi355x_isl100k,DECODE,2,Other,_bias_kernel.kd,458.9,66,7.0
+mi355x_isl100k,DECODE,2,Other,_compute_local_logits_stats_kernel.kd,431.2,66,6.5
+mi355x_isl100k,DECODE,2,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,410.8,198,2.1
+mi355x_isl100k,DECODE,2,Other,_compute_slot_mappings_kernel.kd,384.8,66,5.8
+mi355x_isl100k,DECODE,2,Other,_scatter_num_accepted_kernel.kd,366.4,66,5.6
+mi355x_isl100k,DECODE,2,Other,_post_update_kernel.kd,360.6,66,5.5
+mi355x_isl100k,DECODE,2,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",333.5,66,5.1
+mi355x_isl100k,DECODE,2,Other,_prepare_pos_seq_lens_kernel.kd,292.6,66,4.4
+mi355x_isl100k,DECODE,2,Other,preprocess_mamba_align_fused_kernel.kd,292.2,66,4.4
+mi355x_isl100k,DECODE,2,Other,_gather_block_tables_kernel.kd,288.9,66,4.4
+mi355x_isl100k,DECODE,2,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",286.6,66,4.3
+mi355x_isl100k,DECODE,2,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",275.3,66,4.2
+mi355x_isl100k,DECODE,2,Other,precopy_mamba_align_fused_kernel.kd,272.5,66,4.1
+mi355x_isl100k,DECODE,2,Other,postprocess_mamba_fused_kernel.kd,268.6,66,4.1
+mi355x_isl100k,DECODE,2,Other,_expand_idx_mapping_kernel.kd,166.7,66,2.5
+mi355x_isl100k,DECODE,2,Sampling,Sampling,2974.1,726,4.1
+mi355x_isl100k,DECODE,2,Sampling,ArgMax/Reduce,2395.9,462,5.2
+mi355x_isl100k,DECODE,2,Triton Fused,Triton fused op,9992.5,1716,5.8
+mi355x_isl100k,DECODE,3,Activation,SiLU/SwiGLU,2529.5,330,7.7
+mi355x_isl100k,DECODE,3,Attention,MLA attn residual,100514.5,12342,8.1
+mi355x_isl100k,DECODE,3,Communication,CustomAR 2-stage,104874.6,13068,8.0
+mi355x_isl100k,DECODE,3,Communication,CustomAR 1-stage,52483.9,6072,8.6
+mi355x_isl100k,DECODE,3,Communication,NCCL/RCCL,37322.5,2046,18.2
+mi355x_isl100k,DECODE,3,GEMM,hipBLASLt (Cijk),258144.2,22110,11.7
+mi355x_isl100k,DECODE,3,GEMM,AITER hgemm bf16,245276.5,29898,8.2
+mi355x_isl100k,DECODE,3,GEMM,AITER flydsl MoE,157475.6,6072,25.9
+mi355x_isl100k,DECODE,3,GEMM,AITER wfp4 batched,15756.7,3168,5.0
+mi355x_isl100k,DECODE,3,GEMM,rocBLAS splitK,9880.1,462,21.4
+mi355x_isl100k,DECODE,3,KDA Linear Attn,KDA gated-delta,90211.5,4554,19.8
+mi355x_isl100k,DECODE,3,KDA Linear Attn,KDA conv1d,26104.8,4554,5.7
+mi355x_isl100k,DECODE,3,Memory,Fill,2351.2,528,4.5
+mi355x_isl100k,DECODE,3,MoE Routing,MoE sort mxfp4,106696.3,18216,5.9
+mi355x_isl100k,DECODE,3,MoE Routing,AITER grouped_topk,71351.3,6072,11.8
+mi355x_isl100k,DECODE,3,Normalization,Add+RMSNorm+quant,30247.5,6930,4.4
+mi355x_isl100k,DECODE,3,Normalization,LayerNorm,19594.7,4554,4.3
+mi355x_isl100k,DECODE,3,Normalization,RMSNorm,6499.3,1584,4.1
+mi355x_isl100k,DECODE,3,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,92698.3,6072,15.3
+mi355x_isl100k,DECODE,3,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,73632.6,1914,38.5
+mi355x_isl100k,DECODE,3,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",27253.1,1584,17.2
+mi355x_isl100k,DECODE,3,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",26387.6,5478,4.8
+mi355x_isl100k,DECODE,3,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,25165.3,6138,4.1
+mi355x_isl100k,DECODE,3,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,23928.9,1584,15.1
+mi355x_isl100k,DECODE,3,Other,__amd_rocclr_copyBuffer.kd,17973.8,4554,3.9
+mi355x_isl100k,DECODE,3,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",14321.1,198,72.3
+mi355x_isl100k,DECODE,3,Other,_dcp_a2a_pack_send_kernel.kd,11568.2,1914,6.0
+mi355x_isl100k,DECODE,3,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8981.5,396,22.7
+mi355x_isl100k,DECODE,3,Other,_dcp_a2a_unpack_combine_kernel.kd,8557.9,1914,4.5
+mi355x_isl100k,DECODE,3,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",8078.4,1914,4.2
+mi355x_isl100k,DECODE,3,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,7004.2,660,10.6
+mi355x_isl100k,DECODE,3,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",6667.3,1584,4.2
+mi355x_isl100k,DECODE,3,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",6651.9,1584,4.2
+mi355x_isl100k,DECODE,3,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5085.2,330,15.4
+mi355x_isl100k,DECODE,3,Other,mscclKernel_Sum_hip_bfloat16_LL_false,4640.3,330,14.1
+mi355x_isl100k,DECODE,3,Other,void at::native::,3703.0,858,4.3
+mi355x_isl100k,DECODE,3,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",3402.4,792,4.3
+mi355x_isl100k,DECODE,3,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",2745.8,660,4.2
+mi355x_isl100k,DECODE,3,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",2681.5,792,3.4
+mi355x_isl100k,DECODE,3,Other,_prepare_dflash_inputs_kernel.kd,2526.7,66,38.3
+mi355x_isl100k,DECODE,3,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",1872.7,462,4.1
+mi355x_isl100k,DECODE,3,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",1858.8,396,4.7
+mi355x_isl100k,DECODE,3,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1628.3,396,4.1
+mi355x_isl100k,DECODE,3,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1626.7,396,4.1
+mi355x_isl100k,DECODE,3,Other,void ,1600.0,396,4.0
+mi355x_isl100k,DECODE,3,Other,kernel.kd,1411.5,330,4.3
+mi355x_isl100k,DECODE,3,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1256.1,330,3.8
+mi355x_isl100k,DECODE,3,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,832.1,198,4.2
+mi355x_isl100k,DECODE,3,Other,_expand_page_indices_kernel.kd,819.2,198,4.1
+mi355x_isl100k,DECODE,3,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",778.6,198,3.9
+mi355x_isl100k,DECODE,3,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",772.4,198,3.9
+mi355x_isl100k,DECODE,3,Other,_rejection_kernel.kd,625.9,66,9.5
+mi355x_isl100k,DECODE,3,Other,"void at::native::vectorized_gather_kernel<16, long>",606.2,132,4.6
+mi355x_isl100k,DECODE,3,Other,__amd_rocclr_fillBufferAligned.kd,566.4,132,4.3
+mi355x_isl100k,DECODE,3,Other,_dcp_local_seq_lens_kernel.kd,557.5,132,4.2
+mi355x_isl100k,DECODE,3,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",543.1,132,4.1
+mi355x_isl100k,DECODE,3,Other,_bias_kernel.kd,509.2,66,7.7
+mi355x_isl100k,DECODE,3,Other,_compute_local_logits_stats_kernel.kd,463.7,66,7.0
+mi355x_isl100k,DECODE,3,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,415.2,198,2.1
+mi355x_isl100k,DECODE,3,Other,_compute_slot_mappings_kernel.kd,372.4,66,5.6
+mi355x_isl100k,DECODE,3,Other,_scatter_num_accepted_kernel.kd,364.3,66,5.5
+mi355x_isl100k,DECODE,3,Other,_post_update_kernel.kd,353.1,66,5.3
+mi355x_isl100k,DECODE,3,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",323.9,66,4.9
+mi355x_isl100k,DECODE,3,Other,_gather_block_tables_kernel.kd,299.7,66,4.5
+mi355x_isl100k,DECODE,3,Other,preprocess_mamba_align_fused_kernel.kd,289.0,66,4.4
+mi355x_isl100k,DECODE,3,Other,_prepare_pos_seq_lens_kernel.kd,288.7,66,4.4
+mi355x_isl100k,DECODE,3,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",282.2,66,4.3
+mi355x_isl100k,DECODE,3,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",278.9,66,4.2
+mi355x_isl100k,DECODE,3,Other,postprocess_mamba_fused_kernel.kd,275.5,66,4.2
+mi355x_isl100k,DECODE,3,Other,precopy_mamba_align_fused_kernel.kd,272.7,66,4.1
+mi355x_isl100k,DECODE,3,Other,_expand_idx_mapping_kernel.kd,176.4,66,2.7
+mi355x_isl100k,DECODE,3,Sampling,Sampling,2990.4,726,4.1
+mi355x_isl100k,DECODE,3,Sampling,ArgMax/Reduce,2400.7,462,5.2
+mi355x_isl100k,DECODE,3,Triton Fused,Triton fused op,6215.0,1716,3.6
+mi355x_isl100k,DECODE,4,Activation,SiLU/SwiGLU,2529.9,330,7.7
+mi355x_isl100k,DECODE,4,Attention,MLA attn residual,100739.2,12342,8.2
+mi355x_isl100k,DECODE,4,Communication,CustomAR 2-stage,107329.8,13068,8.2
+mi355x_isl100k,DECODE,4,Communication,CustomAR 1-stage,55070.2,6072,9.1
+mi355x_isl100k,DECODE,4,Communication,NCCL/RCCL,36015.7,2046,17.6
+mi355x_isl100k,DECODE,4,GEMM,hipBLASLt (Cijk),257924.4,22110,11.7
+mi355x_isl100k,DECODE,4,GEMM,AITER hgemm bf16,247981.0,29898,8.3
+mi355x_isl100k,DECODE,4,GEMM,AITER flydsl MoE,156330.9,6072,25.7
+mi355x_isl100k,DECODE,4,GEMM,AITER wfp4 batched,15634.0,3168,4.9
+mi355x_isl100k,DECODE,4,GEMM,rocBLAS splitK,9879.0,462,21.4
+mi355x_isl100k,DECODE,4,KDA Linear Attn,KDA gated-delta,90680.3,4554,19.9
+mi355x_isl100k,DECODE,4,KDA Linear Attn,KDA conv1d,25953.0,4554,5.7
+mi355x_isl100k,DECODE,4,Memory,Fill,2376.8,528,4.5
+mi355x_isl100k,DECODE,4,MoE Routing,MoE sort mxfp4,105379.3,18216,5.8
+mi355x_isl100k,DECODE,4,MoE Routing,AITER grouped_topk,71505.8,6072,11.8
+mi355x_isl100k,DECODE,4,Normalization,Add+RMSNorm+quant,30207.9,6930,4.4
+mi355x_isl100k,DECODE,4,Normalization,LayerNorm,19212.7,4554,4.2
+mi355x_isl100k,DECODE,4,Normalization,RMSNorm,6739.4,1584,4.3
+mi355x_isl100k,DECODE,4,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,91458.0,6072,15.1
+mi355x_isl100k,DECODE,4,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,73642.7,1914,38.5
+mi355x_isl100k,DECODE,4,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",27265.9,1584,17.2
+mi355x_isl100k,DECODE,4,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",26300.9,5478,4.8
+mi355x_isl100k,DECODE,4,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,25628.4,6138,4.2
+mi355x_isl100k,DECODE,4,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,24173.2,1584,15.3
+mi355x_isl100k,DECODE,4,Other,__amd_rocclr_copyBuffer.kd,18061.7,4554,4.0
+mi355x_isl100k,DECODE,4,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",14288.9,198,72.2
+mi355x_isl100k,DECODE,4,Other,_dcp_a2a_pack_send_kernel.kd,11765.5,1914,6.1
+mi355x_isl100k,DECODE,4,Other,_dcp_a2a_unpack_combine_kernel.kd,8742.1,1914,4.6
+mi355x_isl100k,DECODE,4,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8426.0,396,21.3
+mi355x_isl100k,DECODE,4,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",8243.5,1914,4.3
+mi355x_isl100k,DECODE,4,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,6951.8,660,10.5
+mi355x_isl100k,DECODE,4,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",6543.0,1584,4.1
+mi355x_isl100k,DECODE,4,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",6459.3,1584,4.1
+mi355x_isl100k,DECODE,4,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5036.1,330,15.3
+mi355x_isl100k,DECODE,4,Other,mscclKernel_Sum_hip_bfloat16_LL_false,4660.8,330,14.1
+mi355x_isl100k,DECODE,4,Other,void at::native::,3729.9,858,4.3
+mi355x_isl100k,DECODE,4,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",3388.2,792,4.3
+mi355x_isl100k,DECODE,4,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",2748.5,660,4.2
+mi355x_isl100k,DECODE,4,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",2616.3,792,3.3
+mi355x_isl100k,DECODE,4,Other,_prepare_dflash_inputs_kernel.kd,2527.4,66,38.3
+mi355x_isl100k,DECODE,4,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",1860.9,462,4.0
+mi355x_isl100k,DECODE,4,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",1860.4,396,4.7
+mi355x_isl100k,DECODE,4,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1617.5,396,4.1
+mi355x_isl100k,DECODE,4,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1609.9,396,4.1
+mi355x_isl100k,DECODE,4,Other,void ,1604.5,396,4.1
+mi355x_isl100k,DECODE,4,Other,kernel.kd,1416.3,330,4.3
+mi355x_isl100k,DECODE,4,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1279.0,330,3.9
+mi355x_isl100k,DECODE,4,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,865.8,198,4.4
+mi355x_isl100k,DECODE,4,Other,_expand_page_indices_kernel.kd,821.4,198,4.1
+mi355x_isl100k,DECODE,4,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",783.0,198,4.0
+mi355x_isl100k,DECODE,4,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",781.1,198,3.9
+mi355x_isl100k,DECODE,4,Other,_rejection_kernel.kd,607.6,66,9.2
+mi355x_isl100k,DECODE,4,Other,"void at::native::vectorized_gather_kernel<16, long>",602.8,132,4.6
+mi355x_isl100k,DECODE,4,Other,__amd_rocclr_fillBufferAligned.kd,566.2,132,4.3
+mi355x_isl100k,DECODE,4,Other,_dcp_local_seq_lens_kernel.kd,566.1,132,4.3
+mi355x_isl100k,DECODE,4,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",542.8,132,4.1
+mi355x_isl100k,DECODE,4,Other,_bias_kernel.kd,496.5,66,7.5
+mi355x_isl100k,DECODE,4,Other,_compute_local_logits_stats_kernel.kd,446.2,66,6.8
+mi355x_isl100k,DECODE,4,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,412.2,198,2.1
+mi355x_isl100k,DECODE,4,Other,_scatter_num_accepted_kernel.kd,365.9,66,5.5
+mi355x_isl100k,DECODE,4,Other,_post_update_kernel.kd,354.9,66,5.4
+mi355x_isl100k,DECODE,4,Other,_compute_slot_mappings_kernel.kd,353.9,66,5.4
+mi355x_isl100k,DECODE,4,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",324.9,66,4.9
+mi355x_isl100k,DECODE,4,Other,_gather_block_tables_kernel.kd,287.3,66,4.4
+mi355x_isl100k,DECODE,4,Other,_prepare_pos_seq_lens_kernel.kd,286.1,66,4.3
+mi355x_isl100k,DECODE,4,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",282.8,66,4.3
+mi355x_isl100k,DECODE,4,Other,preprocess_mamba_align_fused_kernel.kd,282.1,66,4.3
+mi355x_isl100k,DECODE,4,Other,postprocess_mamba_fused_kernel.kd,274.6,66,4.2
+mi355x_isl100k,DECODE,4,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",266.5,66,4.0
+mi355x_isl100k,DECODE,4,Other,precopy_mamba_align_fused_kernel.kd,265.5,66,4.0
+mi355x_isl100k,DECODE,4,Other,_expand_idx_mapping_kernel.kd,164.8,66,2.5
+mi355x_isl100k,DECODE,4,Sampling,Sampling,2999.6,726,4.1
+mi355x_isl100k,DECODE,4,Sampling,ArgMax/Reduce,2333.8,462,5.1
+mi355x_isl100k,DECODE,4,Triton Fused,Triton fused op,6438.2,1716,3.8
+mi355x_isl100k,DECODE,5,Activation,SiLU/SwiGLU,1400.4,330,4.2
+mi355x_isl100k,DECODE,5,Attention,MLA attn residual,100257.0,12342,8.1
+mi355x_isl100k,DECODE,5,Communication,CustomAR 2-stage,104429.6,13068,8.0
+mi355x_isl100k,DECODE,5,Communication,CustomAR 1-stage,56499.9,6072,9.3
+mi355x_isl100k,DECODE,5,Communication,NCCL/RCCL,31052.7,2046,15.2
+mi355x_isl100k,DECODE,5,GEMM,hipBLASLt (Cijk),257050.8,22110,11.6
+mi355x_isl100k,DECODE,5,GEMM,AITER hgemm bf16,247246.4,29898,8.3
+mi355x_isl100k,DECODE,5,GEMM,AITER flydsl MoE,156332.9,6072,25.7
+mi355x_isl100k,DECODE,5,GEMM,AITER wfp4 batched,16088.0,3168,5.1
+mi355x_isl100k,DECODE,5,GEMM,rocBLAS splitK,9880.1,462,21.4
+mi355x_isl100k,DECODE,5,KDA Linear Attn,KDA gated-delta,90417.0,4554,19.9
+mi355x_isl100k,DECODE,5,KDA Linear Attn,KDA conv1d,25718.4,4554,5.6
+mi355x_isl100k,DECODE,5,Memory,Fill,2433.8,528,4.6
+mi355x_isl100k,DECODE,5,MoE Routing,MoE sort mxfp4,106138.2,18216,5.8
+mi355x_isl100k,DECODE,5,MoE Routing,AITER grouped_topk,71463.4,6072,11.8
+mi355x_isl100k,DECODE,5,Normalization,Add+RMSNorm+quant,31642.4,6930,4.6
+mi355x_isl100k,DECODE,5,Normalization,LayerNorm,19634.7,4554,4.3
+mi355x_isl100k,DECODE,5,Normalization,RMSNorm,6895.5,1584,4.4
+mi355x_isl100k,DECODE,5,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,89347.4,6072,14.7
+mi355x_isl100k,DECODE,5,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,73717.1,1914,38.5
+mi355x_isl100k,DECODE,5,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",27150.5,1584,17.1
+mi355x_isl100k,DECODE,5,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",26394.7,5478,4.8
+mi355x_isl100k,DECODE,5,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,26340.2,6138,4.3
+mi355x_isl100k,DECODE,5,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,23648.4,1584,14.9
+mi355x_isl100k,DECODE,5,Other,__amd_rocclr_copyBuffer.kd,18536.4,4554,4.1
+mi355x_isl100k,DECODE,5,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",14415.5,198,72.8
+mi355x_isl100k,DECODE,5,Other,_dcp_a2a_pack_send_kernel.kd,11845.8,1914,6.2
+mi355x_isl100k,DECODE,5,Other,_dcp_a2a_unpack_combine_kernel.kd,8939.7,1914,4.7
+mi355x_isl100k,DECODE,5,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8932.1,396,22.6
+mi355x_isl100k,DECODE,5,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",8416.7,1914,4.4
+mi355x_isl100k,DECODE,5,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,7036.1,660,10.7
+mi355x_isl100k,DECODE,5,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",6778.8,1584,4.3
+mi355x_isl100k,DECODE,5,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",6687.1,1584,4.2
+mi355x_isl100k,DECODE,5,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5025.0,330,15.2
+mi355x_isl100k,DECODE,5,Other,mscclKernel_Sum_hip_bfloat16_LL_false,4708.4,330,14.3
+mi355x_isl100k,DECODE,5,Other,void at::native::,3819.5,858,4.5
+mi355x_isl100k,DECODE,5,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",3464.1,792,4.4
+mi355x_isl100k,DECODE,5,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",2820.3,660,4.3
+mi355x_isl100k,DECODE,5,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",2687.0,792,3.4
+mi355x_isl100k,DECODE,5,Other,_prepare_dflash_inputs_kernel.kd,2531.4,66,38.4
+mi355x_isl100k,DECODE,5,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",1935.0,396,4.9
+mi355x_isl100k,DECODE,5,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",1916.5,462,4.1
+mi355x_isl100k,DECODE,5,Other,void ,1688.5,396,4.3
+mi355x_isl100k,DECODE,5,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1661.9,396,4.2
+mi355x_isl100k,DECODE,5,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1640.6,396,4.1
+mi355x_isl100k,DECODE,5,Other,kernel.kd,1409.2,330,4.3
+mi355x_isl100k,DECODE,5,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1348.9,330,4.1
+mi355x_isl100k,DECODE,5,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,882.5,198,4.5
+mi355x_isl100k,DECODE,5,Other,_expand_page_indices_kernel.kd,843.9,198,4.3
+mi355x_isl100k,DECODE,5,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",810.7,198,4.1
+mi355x_isl100k,DECODE,5,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",807.0,198,4.1
+mi355x_isl100k,DECODE,5,Other,"void at::native::vectorized_gather_kernel<16, long>",618.2,132,4.7
+mi355x_isl100k,DECODE,5,Other,_rejection_kernel.kd,598.1,66,9.1
+mi355x_isl100k,DECODE,5,Other,__amd_rocclr_fillBufferAligned.kd,582.4,132,4.4
+mi355x_isl100k,DECODE,5,Other,_dcp_local_seq_lens_kernel.kd,572.4,132,4.3
+mi355x_isl100k,DECODE,5,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",556.9,132,4.2
+mi355x_isl100k,DECODE,5,Other,_bias_kernel.kd,519.0,66,7.9
+mi355x_isl100k,DECODE,5,Other,_compute_local_logits_stats_kernel.kd,462.3,66,7.0
+mi355x_isl100k,DECODE,5,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,415.3,198,2.1
+mi355x_isl100k,DECODE,5,Other,_compute_slot_mappings_kernel.kd,380.7,66,5.8
+mi355x_isl100k,DECODE,5,Other,_scatter_num_accepted_kernel.kd,376.2,66,5.7
+mi355x_isl100k,DECODE,5,Other,_post_update_kernel.kd,366.3,66,5.5
+mi355x_isl100k,DECODE,5,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",332.0,66,5.0
+mi355x_isl100k,DECODE,5,Other,_gather_block_tables_kernel.kd,299.3,66,4.5
+mi355x_isl100k,DECODE,5,Other,_prepare_pos_seq_lens_kernel.kd,299.1,66,4.5
+mi355x_isl100k,DECODE,5,Other,preprocess_mamba_align_fused_kernel.kd,295.5,66,4.5
+mi355x_isl100k,DECODE,5,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",287.9,66,4.4
+mi355x_isl100k,DECODE,5,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",286.1,66,4.3
+mi355x_isl100k,DECODE,5,Other,postprocess_mamba_fused_kernel.kd,279.3,66,4.2
+mi355x_isl100k,DECODE,5,Other,precopy_mamba_align_fused_kernel.kd,277.1,66,4.2
+mi355x_isl100k,DECODE,5,Other,_expand_idx_mapping_kernel.kd,176.6,66,2.7
+mi355x_isl100k,DECODE,5,Sampling,Sampling,3050.5,726,4.2
+mi355x_isl100k,DECODE,5,Sampling,ArgMax/Reduce,2464.0,462,5.3
+mi355x_isl100k,DECODE,5,Triton Fused,Triton fused op,9967.0,1716,5.8
+mi355x_isl100k,DECODE,6,Activation,SiLU/SwiGLU,1388.6,330,4.2
+mi355x_isl100k,DECODE,6,Attention,MLA attn residual,100299.1,12342,8.1
+mi355x_isl100k,DECODE,6,Communication,CustomAR 2-stage,105908.5,13068,8.1
+mi355x_isl100k,DECODE,6,Communication,CustomAR 1-stage,57116.2,6072,9.4
+mi355x_isl100k,DECODE,6,Communication,NCCL/RCCL,31822.5,2046,15.6
+mi355x_isl100k,DECODE,6,GEMM,hipBLASLt (Cijk),258570.5,22110,11.7
+mi355x_isl100k,DECODE,6,GEMM,AITER hgemm bf16,245618.6,29898,8.2
+mi355x_isl100k,DECODE,6,GEMM,AITER flydsl MoE,155527.7,6072,25.6
+mi355x_isl100k,DECODE,6,GEMM,AITER wfp4 batched,15911.8,3168,5.0
+mi355x_isl100k,DECODE,6,GEMM,rocBLAS splitK,9846.8,462,21.3
+mi355x_isl100k,DECODE,6,KDA Linear Attn,KDA gated-delta,90588.0,4554,19.9
+mi355x_isl100k,DECODE,6,KDA Linear Attn,KDA conv1d,26171.1,4554,5.7
+mi355x_isl100k,DECODE,6,Memory,Fill,2440.6,528,4.6
+mi355x_isl100k,DECODE,6,MoE Routing,MoE sort mxfp4,106400.3,18216,5.8
+mi355x_isl100k,DECODE,6,MoE Routing,AITER grouped_topk,71491.4,6072,11.8
+mi355x_isl100k,DECODE,6,Normalization,Add+RMSNorm+quant,31197.7,6930,4.5
+mi355x_isl100k,DECODE,6,Normalization,LayerNorm,19974.6,4554,4.4
+mi355x_isl100k,DECODE,6,Normalization,RMSNorm,6711.6,1584,4.2
+mi355x_isl100k,DECODE,6,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,89697.5,6072,14.8
+mi355x_isl100k,DECODE,6,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,73357.4,1914,38.3
+mi355x_isl100k,DECODE,6,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",27491.9,1584,17.4
+mi355x_isl100k,DECODE,6,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",26329.3,5478,4.8
+mi355x_isl100k,DECODE,6,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,25872.9,6138,4.2
+mi355x_isl100k,DECODE,6,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,23215.2,1584,14.7
+mi355x_isl100k,DECODE,6,Other,__amd_rocclr_copyBuffer.kd,18552.0,4554,4.1
+mi355x_isl100k,DECODE,6,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",14458.8,198,73.0
+mi355x_isl100k,DECODE,6,Other,_dcp_a2a_pack_send_kernel.kd,11674.8,1914,6.1
+mi355x_isl100k,DECODE,6,Other,_dcp_a2a_unpack_combine_kernel.kd,8712.7,1914,4.6
+mi355x_isl100k,DECODE,6,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8519.0,396,21.5
+mi355x_isl100k,DECODE,6,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",8279.7,1914,4.3
+mi355x_isl100k,DECODE,6,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,6986.5,660,10.6
+mi355x_isl100k,DECODE,6,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",6875.0,1584,4.3
+mi355x_isl100k,DECODE,6,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",6793.8,1584,4.3
+mi355x_isl100k,DECODE,6,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5043.8,330,15.3
+mi355x_isl100k,DECODE,6,Other,mscclKernel_Sum_hip_bfloat16_LL_false,4553.9,330,13.8
+mi355x_isl100k,DECODE,6,Other,void at::native::,3794.5,858,4.4
+mi355x_isl100k,DECODE,6,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",3520.1,792,4.4
+mi355x_isl100k,DECODE,6,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",2844.2,660,4.3
+mi355x_isl100k,DECODE,6,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",2679.1,792,3.4
+mi355x_isl100k,DECODE,6,Other,_prepare_dflash_inputs_kernel.kd,2525.4,66,38.3
+mi355x_isl100k,DECODE,6,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",1923.6,462,4.2
+mi355x_isl100k,DECODE,6,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",1918.7,396,4.8
+mi355x_isl100k,DECODE,6,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1658.9,396,4.2
+mi355x_isl100k,DECODE,6,Other,void ,1648.9,396,4.2
+mi355x_isl100k,DECODE,6,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1638.6,396,4.1
+mi355x_isl100k,DECODE,6,Other,kernel.kd,1442.6,330,4.4
+mi355x_isl100k,DECODE,6,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1321.9,330,4.0
+mi355x_isl100k,DECODE,6,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,890.4,198,4.5
+mi355x_isl100k,DECODE,6,Other,_expand_page_indices_kernel.kd,838.1,198,4.2
+mi355x_isl100k,DECODE,6,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",806.5,198,4.1
+mi355x_isl100k,DECODE,6,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",802.5,198,4.1
+mi355x_isl100k,DECODE,6,Other,"void at::native::vectorized_gather_kernel<16, long>",611.5,132,4.6
+mi355x_isl100k,DECODE,6,Other,_rejection_kernel.kd,598.4,66,9.1
+mi355x_isl100k,DECODE,6,Other,_dcp_local_seq_lens_kernel.kd,578.3,132,4.4
+mi355x_isl100k,DECODE,6,Other,__amd_rocclr_fillBufferAligned.kd,578.0,132,4.4
+mi355x_isl100k,DECODE,6,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",567.8,132,4.3
+mi355x_isl100k,DECODE,6,Other,_bias_kernel.kd,464.8,66,7.0
+mi355x_isl100k,DECODE,6,Other,_compute_local_logits_stats_kernel.kd,429.1,66,6.5
+mi355x_isl100k,DECODE,6,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,412.8,198,2.1
+mi355x_isl100k,DECODE,6,Other,_compute_slot_mappings_kernel.kd,387.8,66,5.9
+mi355x_isl100k,DECODE,6,Other,_scatter_num_accepted_kernel.kd,377.9,66,5.7
+mi355x_isl100k,DECODE,6,Other,_post_update_kernel.kd,362.8,66,5.5
+mi355x_isl100k,DECODE,6,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",339.4,66,5.1
+mi355x_isl100k,DECODE,6,Other,_gather_block_tables_kernel.kd,295.9,66,4.5
+mi355x_isl100k,DECODE,6,Other,_prepare_pos_seq_lens_kernel.kd,291.9,66,4.4
+mi355x_isl100k,DECODE,6,Other,preprocess_mamba_align_fused_kernel.kd,290.8,66,4.4
+mi355x_isl100k,DECODE,6,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",288.5,66,4.4
+mi355x_isl100k,DECODE,6,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",287.6,66,4.4
+mi355x_isl100k,DECODE,6,Other,postprocess_mamba_fused_kernel.kd,277.1,66,4.2
+mi355x_isl100k,DECODE,6,Other,precopy_mamba_align_fused_kernel.kd,271.5,66,4.1
+mi355x_isl100k,DECODE,6,Other,_expand_idx_mapping_kernel.kd,175.2,66,2.7
+mi355x_isl100k,DECODE,6,Sampling,Sampling,3080.3,726,4.2
+mi355x_isl100k,DECODE,6,Sampling,ArgMax/Reduce,2285.8,462,4.9
+mi355x_isl100k,DECODE,6,Triton Fused,Triton fused op,9853.3,1716,5.7
+mi355x_isl100k,DECODE,7,Activation,SiLU/SwiGLU,1422.9,330,4.3
+mi355x_isl100k,DECODE,7,Attention,MLA attn residual,100644.5,12342,8.2
+mi355x_isl100k,DECODE,7,Communication,CustomAR 2-stage,104429.9,13068,8.0
+mi355x_isl100k,DECODE,7,Communication,CustomAR 1-stage,52997.5,6072,8.7
+mi355x_isl100k,DECODE,7,Communication,NCCL/RCCL,35289.3,2046,17.2
+mi355x_isl100k,DECODE,7,GEMM,hipBLASLt (Cijk),258897.6,22110,11.7
+mi355x_isl100k,DECODE,7,GEMM,AITER hgemm bf16,244607.9,29898,8.2
+mi355x_isl100k,DECODE,7,GEMM,AITER flydsl MoE,158178.7,6072,26.1
+mi355x_isl100k,DECODE,7,GEMM,AITER wfp4 batched,15714.6,3168,5.0
+mi355x_isl100k,DECODE,7,GEMM,rocBLAS splitK,9841.6,462,21.3
+mi355x_isl100k,DECODE,7,KDA Linear Attn,KDA gated-delta,90427.2,4554,19.9
+mi355x_isl100k,DECODE,7,KDA Linear Attn,KDA conv1d,26057.5,4554,5.7
+mi355x_isl100k,DECODE,7,Memory,Fill,2432.9,528,4.6
+mi355x_isl100k,DECODE,7,MoE Routing,MoE sort mxfp4,106227.0,18216,5.8
+mi355x_isl100k,DECODE,7,MoE Routing,AITER grouped_topk,71295.7,6072,11.7
+mi355x_isl100k,DECODE,7,Normalization,Add+RMSNorm+quant,31847.4,6930,4.6
+mi355x_isl100k,DECODE,7,Normalization,LayerNorm,20068.6,4554,4.4
+mi355x_isl100k,DECODE,7,Normalization,RMSNorm,6705.4,1584,4.2
+mi355x_isl100k,DECODE,7,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,91833.7,6072,15.1
+mi355x_isl100k,DECODE,7,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,73296.5,1914,38.3
+mi355x_isl100k,DECODE,7,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",27576.1,1584,17.4
+mi355x_isl100k,DECODE,7,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",26356.5,5478,4.8
+mi355x_isl100k,DECODE,7,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,25858.1,6138,4.2
+mi355x_isl100k,DECODE,7,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,23910.4,1584,15.1
+mi355x_isl100k,DECODE,7,Other,__amd_rocclr_copyBuffer.kd,18421.6,4554,4.0
+mi355x_isl100k,DECODE,7,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",14258.1,198,72.0
+mi355x_isl100k,DECODE,7,Other,_dcp_a2a_pack_send_kernel.kd,11403.7,1914,6.0
+mi355x_isl100k,DECODE,7,Other,_dcp_a2a_unpack_combine_kernel.kd,8715.9,1914,4.6
+mi355x_isl100k,DECODE,7,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8499.1,396,21.5
+mi355x_isl100k,DECODE,7,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",8258.1,1914,4.3
+mi355x_isl100k,DECODE,7,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,7073.8,660,10.7
+mi355x_isl100k,DECODE,7,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",6841.4,1584,4.3
+mi355x_isl100k,DECODE,7,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",6827.9,1584,4.3
+mi355x_isl100k,DECODE,7,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5076.7,330,15.4
+mi355x_isl100k,DECODE,7,Other,mscclKernel_Sum_hip_bfloat16_LL_false,4858.3,330,14.7
+mi355x_isl100k,DECODE,7,Other,void at::native::,3838.6,858,4.5
+mi355x_isl100k,DECODE,7,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",3476.7,792,4.4
+mi355x_isl100k,DECODE,7,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",2842.2,660,4.3
+mi355x_isl100k,DECODE,7,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",2718.2,792,3.4
+mi355x_isl100k,DECODE,7,Other,_prepare_dflash_inputs_kernel.kd,2513.9,66,38.1
+mi355x_isl100k,DECODE,7,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",1936.9,462,4.2
+mi355x_isl100k,DECODE,7,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",1855.1,396,4.7
+mi355x_isl100k,DECODE,7,Other,void ,1681.5,396,4.2
+mi355x_isl100k,DECODE,7,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1656.0,396,4.2
+mi355x_isl100k,DECODE,7,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1637.5,396,4.1
+mi355x_isl100k,DECODE,7,Other,kernel.kd,1410.4,330,4.3
+mi355x_isl100k,DECODE,7,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1308.0,330,4.0
+mi355x_isl100k,DECODE,7,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,850.7,198,4.3
+mi355x_isl100k,DECODE,7,Other,_expand_page_indices_kernel.kd,835.7,198,4.2
+mi355x_isl100k,DECODE,7,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",797.3,198,4.0
+mi355x_isl100k,DECODE,7,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",794.7,198,4.0
+mi355x_isl100k,DECODE,7,Other,_rejection_kernel.kd,632.8,66,9.6
+mi355x_isl100k,DECODE,7,Other,"void at::native::vectorized_gather_kernel<16, long>",612.2,132,4.6
+mi355x_isl100k,DECODE,7,Other,__amd_rocclr_fillBufferAligned.kd,584.4,132,4.4
+mi355x_isl100k,DECODE,7,Other,_dcp_local_seq_lens_kernel.kd,570.2,132,4.3
+mi355x_isl100k,DECODE,7,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",567.3,132,4.3
+mi355x_isl100k,DECODE,7,Other,_bias_kernel.kd,458.1,66,6.9
+mi355x_isl100k,DECODE,7,Other,_compute_local_logits_stats_kernel.kd,440.8,66,6.7
+mi355x_isl100k,DECODE,7,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,412.9,198,2.1
+mi355x_isl100k,DECODE,7,Other,_compute_slot_mappings_kernel.kd,368.1,66,5.6
+mi355x_isl100k,DECODE,7,Other,_scatter_num_accepted_kernel.kd,362.0,66,5.5
+mi355x_isl100k,DECODE,7,Other,_post_update_kernel.kd,335.2,66,5.1
+mi355x_isl100k,DECODE,7,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",321.4,66,4.9
+mi355x_isl100k,DECODE,7,Other,_gather_block_tables_kernel.kd,297.7,66,4.5
+mi355x_isl100k,DECODE,7,Other,_prepare_pos_seq_lens_kernel.kd,293.9,66,4.5
+mi355x_isl100k,DECODE,7,Other,postprocess_mamba_fused_kernel.kd,289.7,66,4.4
+mi355x_isl100k,DECODE,7,Other,preprocess_mamba_align_fused_kernel.kd,288.9,66,4.4
+mi355x_isl100k,DECODE,7,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",286.2,66,4.3
+mi355x_isl100k,DECODE,7,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",274.6,66,4.2
+mi355x_isl100k,DECODE,7,Other,precopy_mamba_align_fused_kernel.kd,270.7,66,4.1
+mi355x_isl100k,DECODE,7,Other,_expand_idx_mapping_kernel.kd,164.1,66,2.5
+mi355x_isl100k,DECODE,7,Sampling,Sampling,3087.9,726,4.3
+mi355x_isl100k,DECODE,7,Sampling,ArgMax/Reduce,2390.7,462,5.2
+mi355x_isl100k,DECODE,7,Triton Fused,Triton fused op,6411.6,1716,3.7
+b300_isl100k,DECODE,0,Activation,SiLU/SwiGLU,1695.8,820,2.1
+b300_isl100k,DECODE,0,Attention,TokenSpeed MLA (NV),98699.9,9512,10.4
+b300_isl100k,DECODE,0,Attention,MLA attn residual,18805.0,2788,6.7
+b300_isl100k,DECODE,0,Communication,NCCL/RCCL,9256.5,328,28.2
+b300_isl100k,DECODE,0,GEMM,CUTLASS MXFP4 GEMM,567170.6,30176,18.8
+b300_isl100k,DECODE,0,GEMM,cuBLASLt splitK,56530.4,12792,4.4
+b300_isl100k,DECODE,0,KDA Linear Attn,KDA gated-delta,111627.8,11316,9.9
+b300_isl100k,DECODE,0,KDA Linear Attn,KDA conv1d,66332.5,11316,5.9
+b300_isl100k,DECODE,0,Memory,Fill,5817.2,5084,1.1
+b300_isl100k,DECODE,0,Memory,Memcpy,4350.8,2296,1.9
+b300_isl100k,DECODE,0,MoE Routing,MoE Routing (NV),246804.1,30176,8.2
+b300_isl100k,DECODE,0,MoE Routing,MoE Finalize (NV),68889.4,15088,4.6
+b300_isl100k,DECODE,0,Normalization,RMSNorm,113935.2,19844,5.7
+b300_isl100k,DECODE,0,Normalization,LayerNorm,24189.5,11316,2.1
+b300_isl100k,DECODE,0,Other,"void fused_a_gemm_kernel<1, 3584, 7168, 16, 8, 256, 16>",249723.7,15088,16.6
+b300_isl100k,DECODE,0,Other,nvjet_sm103_tst_64x8_64x16_2x1_v_bz_splitK_TNT,222428.6,11644,19.1
+b300_isl100k,DECODE,0,Other,"void fused_a_gemm_kernel<1, 1536, 7168, 16, 8, 256, 16>",153684.0,19024,8.1
+b300_isl100k,DECODE,0,Other,void flashinfer::trtllm_mnnvl_allreduce::oneshotAllreduceFusionKernel<,118564.9,15580,7.6
+b300_isl100k,DECODE,0,Other,kernel_cutlass_kernel_vllmmodel_executorkernelslinearcute_dsl_ll_bf16_splitkL...,115306.6,15088,7.6
+b300_isl100k,DECODE,0,Other,kernel_cutlass_kernel_vllmmodelskimi_k3nvidiaopscute_dsllatent_moe_tailfused_...,106002.7,15088,7.0
+b300_isl100k,DECODE,0,Other,nvjet_sm103_tst_64x8_64x16_4x1_v_bz_TNT,103864.4,15580,6.7
+b300_isl100k,DECODE,0,Other,"void fused_a_gemm_kernel<1, 7168, 768, 16, 8, 256, 3>",77712.0,15088,5.2
+b300_isl100k,DECODE,0,Other,void ,71638.2,9512,7.5
+b300_isl100k,DECODE,0,Other,"(anonymous namespace)::direct_dcp_q_gather_multimem_kernel(uint4 const*, uint...",58384.3,4756,12.3
+b300_isl100k,DECODE,0,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,36372.4,15252,2.4
+b300_isl100k,DECODE,0,Other,void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_12...,34627.7,11316,3.1
+b300_isl100k,DECODE,0,Other,"void fused_a_gemm_kernel<1, 2112, 7168, 16, 8, 256, 16>",33970.0,3936,8.6
+b300_isl100k,DECODE,0,Other,kernel_cutlass_kernel_vllmmodelskimi_k3nvidiaopscute_dsllatent_moe_taillampor...,33763.5,15088,2.2
+b300_isl100k,DECODE,0,Other,kernel_cutlass_kernel_flashinferquantizationkernelsmxfp8_quantizeMXFP8Quantiz...,30023.6,15088,2.0
+b300_isl100k,DECODE,0,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 8, 3, 1, false, ...",22223.0,3608,6.2
+b300_isl100k,DECODE,0,Other,"void fused_a_gemm_kernel<1, 2304, 1536, 16, 8, 256, 6>",21575.6,3936,5.5
+b300_isl100k,DECODE,0,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 7, 3, 1, false, ...",21343.9,3608,5.9
+b300_isl100k,DECODE,0,Other,void flashinfer::trtllm_mnnvl_allreduce::twoshotAllreduceKernel<,20823.8,1804,11.5
+b300_isl100k,DECODE,0,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 6, 3, 1, false, ...",19385.5,3608,5.4
+b300_isl100k,DECODE,0,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 5, 3, 1, false, ...",18966.4,3608,5.3
+b300_isl100k,DECODE,0,Other,nvjet_sm103_tst_64x8_64x16_4x2_h_bz_TNT,18785.8,1640,11.5
+b300_isl100k,DECODE,0,Other,nvjet_sm103_tst_64x8_64x16_4x1_v_bz_NNT,18461.0,3936,4.7
+b300_isl100k,DECODE,0,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 4, 3, 1, false, ...",18233.2,3608,5.1
+b300_isl100k,DECODE,0,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,16977.6,4756,3.6
+b300_isl100k,DECODE,0,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 3, 3, 1, false, ...",16859.6,3608,4.7
+b300_isl100k,DECODE,0,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 9, 3, 1, false, ...",16760.7,2624,6.4
+b300_isl100k,DECODE,0,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 2, 3, 1, false, ...",16203.6,3608,4.5
+b300_isl100k,DECODE,0,Other,nvjet_sm103_tst_16x64_64x16_4x1_v_bz_TNN,13833.5,3936,3.5
+b300_isl100k,DECODE,0,Other,vllm::direct_dcp::increment_epoch_kernel(long*),13656.5,9512,1.4
+b300_isl100k,DECODE,0,Other,"(anonymous namespace)::signal_kernel(long const*, long const*, long, long)",13550.5,4756,2.8
+b300_isl100k,DECODE,0,Other,nvjet_sm103_tst_128x8_64x12_2x1_v_bz_splitK_TNT,13477.2,164,82.2
+b300_isl100k,DECODE,0,Other,nvjet_sm103_tst_64x16_64x16_4x1_v_bz_TNT,10977.5,1640,6.7
+b300_isl100k,DECODE,0,Other,nvjet_sm103_tst_384x8_64x4_2x1_v_bz_TNT,10925.4,1148,9.5
+b300_isl100k,DECODE,0,Other,"void flashinfer::trtllm_mnnvl_allreduce::rmsNormLamport<__nv_bfloat16, ",10083.1,1640,6.1
+b300_isl100k,DECODE,0,Other,nvjet_sm103_tst_64x8_64x16_1x2_h_bz_splitK_TNT,9324.5,820,11.4
+b300_isl100k,DECODE,0,Other,"void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocas...",8806.6,2132,4.1
+b300_isl100k,DECODE,0,Other,nvjet_sm103_tst_192x16_64x8_2x1_2cta_v_bz_splitK_TNT,7974.9,164,48.6
+b300_isl100k,DECODE,0,Other,"void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocas...",5374.1,3608,1.5
+b300_isl100k,DECODE,0,Other,void at::native::,5318.7,1640,3.2
+b300_isl100k,DECODE,0,Other,_compute_local_logits_stats_kernel,4548.7,164,27.7
+b300_isl100k,DECODE,0,Other,nvjet_sm103_tst_8x64_64x16_4x1_v_bz_TNN,3241.2,820,4.0
+b300_isl100k,DECODE,0,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",2870.8,984,2.9
+b300_isl100k,DECODE,0,Other,nvjet_sm103_tst_64x8_64x16_2x2_h_bz_NNT,2849.9,820,3.5
+b300_isl100k,DECODE,0,Other,_prepare_dflash_inputs_kernel,2545.2,164,15.5
+b300_isl100k,DECODE,0,Other,"void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda...",2364.3,1148,2.1
+b300_isl100k,DECODE,0,Other,"void vllm::concat_and_cache_mla_kernel<__nv_bfloat16, unsigned char, ",1657.0,820,2.0
+b300_isl100k,DECODE,0,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 2, true>",1503.4,492,3.1
+b300_isl100k,DECODE,0,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",1472.8,820,1.8
+b300_isl100k,DECODE,0,Other,_rejection_kernel,1098.8,164,6.7
+b300_isl100k,DECODE,0,Other,_stage_spec_decode_metadata_kernel,947.8,492,1.9
+b300_isl100k,DECODE,0,Other,_get_aligned_state_indices_kernel,938.5,492,1.9
+b300_isl100k,DECODE,0,Other,_gather_block_tables_kernel,856.2,164,5.2
+b300_isl100k,DECODE,0,Other,_post_update_kernel,853.7,164,5.2
+b300_isl100k,DECODE,0,Other,_compute_slot_mappings_kernel,755.8,164,4.6
+b300_isl100k,DECODE,0,Other,"void at::native::vectorized_gather_kernel<16, long>",685.1,328,2.1
+b300_isl100k,DECODE,0,Other,_dcp_local_seq_lens_kernel,556.2,328,1.7
+b300_isl100k,DECODE,0,Other,postprocess_mamba_fused_kernel,484.4,164,3.0
+b300_isl100k,DECODE,0,Other,precopy_mamba_align_fused_kernel,483.8,164,2.9
+b300_isl100k,DECODE,0,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",450.6,164,2.7
+b300_isl100k,DECODE,0,Other,preprocess_mamba_align_fused_kernel,369.5,164,2.3
+b300_isl100k,DECODE,0,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",332.9,164,2.0
+b300_isl100k,DECODE,0,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",285.9,164,1.7
+b300_isl100k,DECODE,0,Other,_prepare_pos_seq_lens_kernel,276.1,164,1.7
+b300_isl100k,DECODE,0,Other,_expand_idx_mapping_kernel,234.3,164,1.4
+b300_isl100k,DECODE,0,Other,_scatter_num_accepted_kernel,232.4,164,1.4
+b300_isl100k,DECODE,0,Sampling,Sampling,8872.9,1804,4.9
+b300_isl100k,DECODE,0,Sampling,ArgMax/Reduce,4019.0,1148,3.5
+b300_isl100k,DECODE,0,Triton Fused,Triton fused op,7021.8,4264,1.6
+b300_isl100k,DECODE,1,Activation,SiLU/SwiGLU,1638.8,820,2.0
+b300_isl100k,DECODE,1,Attention,TokenSpeed MLA (NV),99220.4,9512,10.4
+b300_isl100k,DECODE,1,Attention,MLA attn residual,18775.6,2788,6.7
+b300_isl100k,DECODE,1,Communication,NCCL/RCCL,9234.0,328,28.2
+b300_isl100k,DECODE,1,GEMM,CUTLASS MXFP4 GEMM,572099.0,30176,19.0
+b300_isl100k,DECODE,1,GEMM,cuBLASLt splitK,56361.5,12792,4.4
+b300_isl100k,DECODE,1,KDA Linear Attn,KDA gated-delta,111213.3,11316,9.8
+b300_isl100k,DECODE,1,KDA Linear Attn,KDA conv1d,66159.7,11316,5.8
+b300_isl100k,DECODE,1,Memory,Fill,5948.8,5084,1.2
+b300_isl100k,DECODE,1,Memory,Memcpy,4386.5,2296,1.9
+b300_isl100k,DECODE,1,MoE Routing,MoE Routing (NV),249155.0,30176,8.3
+b300_isl100k,DECODE,1,MoE Routing,MoE Finalize (NV),68950.5,15088,4.6
+b300_isl100k,DECODE,1,Normalization,RMSNorm,109994.2,19844,5.5
+b300_isl100k,DECODE,1,Normalization,LayerNorm,23923.1,11316,2.1
+b300_isl100k,DECODE,1,Other,"void fused_a_gemm_kernel<1, 3584, 7168, 16, 8, 256, 16>",249583.8,15088,16.5
+b300_isl100k,DECODE,1,Other,nvjet_sm103_tst_64x8_64x16_2x1_v_bz_splitK_TNT,222310.3,11644,19.1
+b300_isl100k,DECODE,1,Other,"void fused_a_gemm_kernel<1, 1536, 7168, 16, 8, 256, 16>",152954.3,19024,8.0
+b300_isl100k,DECODE,1,Other,void flashinfer::trtllm_mnnvl_allreduce::oneshotAllreduceFusionKernel<,116068.9,15580,7.4
+b300_isl100k,DECODE,1,Other,kernel_cutlass_kernel_vllmmodel_executorkernelslinearcute_dsl_ll_bf16_splitkL...,115291.8,15088,7.6
+b300_isl100k,DECODE,1,Other,kernel_cutlass_kernel_vllmmodelskimi_k3nvidiaopscute_dsllatent_moe_tailfused_...,106534.3,15088,7.1
+b300_isl100k,DECODE,1,Other,nvjet_sm103_tst_64x8_64x16_4x1_v_bz_TNT,104023.8,15580,6.7
+b300_isl100k,DECODE,1,Other,"void fused_a_gemm_kernel<1, 7168, 768, 16, 8, 256, 3>",77606.6,15088,5.1
+b300_isl100k,DECODE,1,Other,void ,70561.9,9512,7.4
+b300_isl100k,DECODE,1,Other,"(anonymous namespace)::direct_dcp_q_gather_multimem_kernel(uint4 const*, uint...",57659.3,4756,12.1
+b300_isl100k,DECODE,1,Other,void flashinfer::trtllm_mnnvl_allreduce::twoshotAllreduceKernel<,36020.0,1804,20.0
+b300_isl100k,DECODE,1,Other,void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_12...,35063.8,11316,3.1
+b300_isl100k,DECODE,1,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,34284.7,15252,2.2
+b300_isl100k,DECODE,1,Other,"void fused_a_gemm_kernel<1, 2112, 7168, 16, 8, 256, 16>",34028.9,3936,8.6
+b300_isl100k,DECODE,1,Other,kernel_cutlass_kernel_vllmmodelskimi_k3nvidiaopscute_dsllatent_moe_taillampor...,33277.0,15088,2.2
+b300_isl100k,DECODE,1,Other,kernel_cutlass_kernel_flashinferquantizationkernelsmxfp8_quantizeMXFP8Quantiz...,30094.6,15088,2.0
+b300_isl100k,DECODE,1,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 8, 3, 1, false, ...",22449.9,3608,6.2
+b300_isl100k,DECODE,1,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 7, 3, 1, false, ...",21547.8,3608,6.0
+b300_isl100k,DECODE,1,Other,"void fused_a_gemm_kernel<1, 2304, 1536, 16, 8, 256, 6>",21531.6,3936,5.5
+b300_isl100k,DECODE,1,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 6, 3, 1, false, ...",19714.6,3608,5.5
+b300_isl100k,DECODE,1,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 5, 3, 1, false, ...",19189.3,3608,5.3
+b300_isl100k,DECODE,1,Other,nvjet_sm103_tst_64x8_64x16_4x1_v_bz_NNT,18913.1,3936,4.8
+b300_isl100k,DECODE,1,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 4, 3, 1, false, ...",18513.3,3608,5.1
+b300_isl100k,DECODE,1,Other,nvjet_sm103_tst_64x8_64x16_4x2_h_bz_TNT,18363.9,1640,11.2
+b300_isl100k,DECODE,1,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 3, 3, 1, false, ...",17227.6,3608,4.8
+b300_isl100k,DECODE,1,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 9, 3, 1, false, ...",16904.6,2624,6.4
+b300_isl100k,DECODE,1,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,16805.7,4756,3.5
+b300_isl100k,DECODE,1,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 2, 3, 1, false, ...",16252.8,3608,4.5
+b300_isl100k,DECODE,1,Other,vllm::direct_dcp::increment_epoch_kernel(long*),14454.9,9512,1.5
+b300_isl100k,DECODE,1,Other,nvjet_sm103_tst_16x64_64x16_4x1_v_bz_TNN,13930.7,3936,3.5
+b300_isl100k,DECODE,1,Other,nvjet_sm103_tst_128x8_64x12_2x1_v_bz_splitK_TNT,13384.0,164,81.6
+b300_isl100k,DECODE,1,Other,"(anonymous namespace)::signal_kernel(long const*, long const*, long, long)",12833.4,4756,2.7
+b300_isl100k,DECODE,1,Other,nvjet_sm103_tst_64x16_64x16_4x1_v_bz_TNT,11019.9,1640,6.7
+b300_isl100k,DECODE,1,Other,nvjet_sm103_tst_384x8_64x4_2x1_v_bz_TNT,10998.9,1148,9.6
+b300_isl100k,DECODE,1,Other,"void flashinfer::trtllm_mnnvl_allreduce::rmsNormLamport<__nv_bfloat16, ",9299.6,1640,5.7
+b300_isl100k,DECODE,1,Other,nvjet_sm103_tst_64x8_64x16_1x2_h_bz_splitK_TNT,9258.0,820,11.3
+b300_isl100k,DECODE,1,Other,"void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocas...",8482.0,2132,4.0
+b300_isl100k,DECODE,1,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",8152.7,4920,1.7
+b300_isl100k,DECODE,1,Other,nvjet_sm103_tst_192x16_64x8_2x1_2cta_v_bz_splitK_TNT,7963.2,164,48.6
+b300_isl100k,DECODE,1,Other,"void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocas...",5578.7,3608,1.5
+b300_isl100k,DECODE,1,Other,void at::native::,4828.1,1640,2.9
+b300_isl100k,DECODE,1,Other,_compute_local_logits_stats_kernel,4401.6,164,26.8
+b300_isl100k,DECODE,1,Other,nvjet_sm103_tst_8x64_64x16_4x1_v_bz_TNN,3131.4,820,3.8
+b300_isl100k,DECODE,1,Other,nvjet_sm103_tst_64x8_64x16_2x2_h_bz_NNT,2911.2,820,3.6
+b300_isl100k,DECODE,1,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",2820.0,984,2.9
+b300_isl100k,DECODE,1,Other,_prepare_dflash_inputs_kernel,2452.0,164,15.0
+b300_isl100k,DECODE,1,Other,"void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda...",2262.6,1148,2.0
+b300_isl100k,DECODE,1,Other,"void vllm::concat_and_cache_mla_kernel<__nv_bfloat16, unsigned char, ",1622.6,820,2.0
+b300_isl100k,DECODE,1,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 2, true>",1529.9,492,3.1
+b300_isl100k,DECODE,1,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",1482.9,820,1.8
+b300_isl100k,DECODE,1,Other,_rejection_kernel,1042.3,164,6.4
+b300_isl100k,DECODE,1,Other,_stage_spec_decode_metadata_kernel,943.2,492,1.9
+b300_isl100k,DECODE,1,Other,_get_aligned_state_indices_kernel,934.3,492,1.9
+b300_isl100k,DECODE,1,Other,_gather_block_tables_kernel,861.9,164,5.3
+b300_isl100k,DECODE,1,Other,_post_update_kernel,860.2,164,5.2
+b300_isl100k,DECODE,1,Other,_compute_slot_mappings_kernel,752.1,164,4.6
+b300_isl100k,DECODE,1,Other,"void at::native::vectorized_gather_kernel<16, long>",686.4,328,2.1
+b300_isl100k,DECODE,1,Other,_dcp_local_seq_lens_kernel,558.8,328,1.7
+b300_isl100k,DECODE,1,Other,precopy_mamba_align_fused_kernel,489.4,164,3.0
+b300_isl100k,DECODE,1,Other,postprocess_mamba_fused_kernel,489.2,164,3.0
+b300_isl100k,DECODE,1,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",454.1,164,2.8
+b300_isl100k,DECODE,1,Other,preprocess_mamba_align_fused_kernel,355.9,164,2.2
+b300_isl100k,DECODE,1,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",334.9,164,2.0
+b300_isl100k,DECODE,1,Other,_prepare_pos_seq_lens_kernel,265.7,164,1.6
+b300_isl100k,DECODE,1,Other,_expand_idx_mapping_kernel,223.9,164,1.4
+b300_isl100k,DECODE,1,Other,_scatter_num_accepted_kernel,221.8,164,1.4
+b300_isl100k,DECODE,1,Sampling,Sampling,8647.9,1804,4.8
+b300_isl100k,DECODE,1,Sampling,ArgMax/Reduce,3584.8,1148,3.1
+b300_isl100k,DECODE,1,Triton Fused,Triton fused op,6425.9,4264,1.5
+b300_isl100k,DECODE,2,Activation,SiLU/SwiGLU,1618.0,820,2.0
+b300_isl100k,DECODE,2,Attention,TokenSpeed MLA (NV),99507.2,9512,10.5
+b300_isl100k,DECODE,2,Attention,MLA attn residual,18699.7,2788,6.7
+b300_isl100k,DECODE,2,Communication,NCCL/RCCL,9192.4,328,28.0
+b300_isl100k,DECODE,2,GEMM,CUTLASS MXFP4 GEMM,572098.1,30176,19.0
+b300_isl100k,DECODE,2,GEMM,cuBLASLt splitK,56497.7,12792,4.4
+b300_isl100k,DECODE,2,KDA Linear Attn,KDA gated-delta,111423.4,11316,9.8
+b300_isl100k,DECODE,2,KDA Linear Attn,KDA conv1d,65800.2,11316,5.8
+b300_isl100k,DECODE,2,Memory,Fill,5716.9,5084,1.1
+b300_isl100k,DECODE,2,Memory,Memcpy,4481.4,2296,2.0
+b300_isl100k,DECODE,2,MoE Routing,MoE Routing (NV),247564.9,30176,8.2
+b300_isl100k,DECODE,2,MoE Routing,MoE Finalize (NV),68704.2,15088,4.6
+b300_isl100k,DECODE,2,Normalization,RMSNorm,109315.1,19844,5.5
+b300_isl100k,DECODE,2,Normalization,LayerNorm,24222.9,11316,2.1
+b300_isl100k,DECODE,2,Other,"void fused_a_gemm_kernel<1, 3584, 7168, 16, 8, 256, 16>",250339.7,15088,16.6
+b300_isl100k,DECODE,2,Other,nvjet_sm103_tst_64x8_64x16_2x1_v_bz_splitK_TNT,222592.3,11644,19.1
+b300_isl100k,DECODE,2,Other,"void fused_a_gemm_kernel<1, 1536, 7168, 16, 8, 256, 16>",152829.4,19024,8.0
+b300_isl100k,DECODE,2,Other,kernel_cutlass_kernel_vllmmodel_executorkernelslinearcute_dsl_ll_bf16_splitkL...,115600.7,15088,7.7
+b300_isl100k,DECODE,2,Other,void flashinfer::trtllm_mnnvl_allreduce::oneshotAllreduceFusionKernel<,112179.6,15580,7.2
+b300_isl100k,DECODE,2,Other,kernel_cutlass_kernel_vllmmodelskimi_k3nvidiaopscute_dsllatent_moe_tailfused_...,106405.0,15088,7.1
+b300_isl100k,DECODE,2,Other,nvjet_sm103_tst_64x8_64x16_4x1_v_bz_TNT,103812.2,15580,6.7
+b300_isl100k,DECODE,2,Other,"void fused_a_gemm_kernel<1, 7168, 768, 16, 8, 256, 3>",79041.8,15088,5.2
+b300_isl100k,DECODE,2,Other,void ,71220.8,9512,7.5
+b300_isl100k,DECODE,2,Other,"(anonymous namespace)::direct_dcp_q_gather_multimem_kernel(uint4 const*, uint...",57729.3,4756,12.1
+b300_isl100k,DECODE,2,Other,void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_12...,34398.9,11316,3.0
+b300_isl100k,DECODE,2,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,34035.9,15252,2.2
+b300_isl100k,DECODE,2,Other,"void fused_a_gemm_kernel<1, 2112, 7168, 16, 8, 256, 16>",33970.0,3936,8.6
+b300_isl100k,DECODE,2,Other,kernel_cutlass_kernel_vllmmodelskimi_k3nvidiaopscute_dsllatent_moe_taillampor...,32292.7,15088,2.1
+b300_isl100k,DECODE,2,Other,kernel_cutlass_kernel_flashinferquantizationkernelsmxfp8_quantizeMXFP8Quantiz...,30062.8,15088,2.0
+b300_isl100k,DECODE,2,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 8, 3, 1, false, ...",22510.2,3608,6.2
+b300_isl100k,DECODE,2,Other,"void fused_a_gemm_kernel<1, 2304, 1536, 16, 8, 256, 6>",21676.4,3936,5.5
+b300_isl100k,DECODE,2,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 7, 3, 1, false, ...",21582.1,3608,6.0
+b300_isl100k,DECODE,2,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 6, 3, 1, false, ...",19736.2,3608,5.5
+b300_isl100k,DECODE,2,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 5, 3, 1, false, ...",19086.3,3608,5.3
+b300_isl100k,DECODE,2,Other,nvjet_sm103_tst_64x8_64x16_4x1_v_bz_NNT,18808.5,3936,4.8
+b300_isl100k,DECODE,2,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 4, 3, 1, false, ...",18377.3,3608,5.1
+b300_isl100k,DECODE,2,Other,void flashinfer::trtllm_mnnvl_allreduce::twoshotAllreduceKernel<,18253.4,1804,10.1
+b300_isl100k,DECODE,2,Other,nvjet_sm103_tst_64x8_64x16_4x2_h_bz_TNT,18190.2,1640,11.1
+b300_isl100k,DECODE,2,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 3, 3, 1, false, ...",17227.0,3608,4.8
+b300_isl100k,DECODE,2,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 9, 3, 1, false, ...",16914.5,2624,6.4
+b300_isl100k,DECODE,2,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,16868.9,4756,3.5
+b300_isl100k,DECODE,2,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 2, 3, 1, false, ...",16328.8,3608,4.5
+b300_isl100k,DECODE,2,Other,nvjet_sm103_tst_16x64_64x16_4x1_v_bz_TNN,13862.6,3936,3.5
+b300_isl100k,DECODE,2,Other,"(anonymous namespace)::signal_kernel(long const*, long const*, long, long)",13557.3,4756,2.9
+b300_isl100k,DECODE,2,Other,nvjet_sm103_tst_128x8_64x12_2x1_v_bz_splitK_TNT,13380.1,164,81.6
+b300_isl100k,DECODE,2,Other,vllm::direct_dcp::increment_epoch_kernel(long*),13155.2,9512,1.4
+b300_isl100k,DECODE,2,Other,nvjet_sm103_tst_64x16_64x16_4x1_v_bz_TNT,11135.5,1640,6.8
+b300_isl100k,DECODE,2,Other,nvjet_sm103_tst_384x8_64x4_2x1_v_bz_TNT,11028.3,1148,9.6
+b300_isl100k,DECODE,2,Other,"void flashinfer::trtllm_mnnvl_allreduce::rmsNormLamport<__nv_bfloat16, ",9409.4,1640,5.7
+b300_isl100k,DECODE,2,Other,nvjet_sm103_tst_64x8_64x16_1x2_h_bz_splitK_TNT,9354.8,820,11.4
+b300_isl100k,DECODE,2,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",8837.6,4920,1.8
+b300_isl100k,DECODE,2,Other,"void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocas...",8535.8,2132,4.0
+b300_isl100k,DECODE,2,Other,nvjet_sm103_tst_192x16_64x8_2x1_2cta_v_bz_splitK_TNT,7931.9,164,48.4
+b300_isl100k,DECODE,2,Other,"void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocas...",4950.4,3608,1.4
+b300_isl100k,DECODE,2,Other,void at::native::,4628.5,1640,2.8
+b300_isl100k,DECODE,2,Other,_compute_local_logits_stats_kernel,4430.4,164,27.0
+b300_isl100k,DECODE,2,Other,nvjet_sm103_tst_8x64_64x16_4x1_v_bz_TNN,3291.7,820,4.0
+b300_isl100k,DECODE,2,Other,nvjet_sm103_tst_64x8_64x16_2x2_h_bz_NNT,2917.4,820,3.6
+b300_isl100k,DECODE,2,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",2803.9,984,2.8
+b300_isl100k,DECODE,2,Other,_prepare_dflash_inputs_kernel,2529.3,164,15.4
+b300_isl100k,DECODE,2,Other,"void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda...",2381.7,1148,2.1
+b300_isl100k,DECODE,2,Other,"void vllm::concat_and_cache_mla_kernel<__nv_bfloat16, unsigned char, ",1610.0,820,2.0
+b300_isl100k,DECODE,2,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 2, true>",1530.9,492,3.1
+b300_isl100k,DECODE,2,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",1507.2,820,1.8
+b300_isl100k,DECODE,2,Other,_rejection_kernel,1036.4,164,6.3
+b300_isl100k,DECODE,2,Other,_stage_spec_decode_metadata_kernel,930.5,492,1.9
+b300_isl100k,DECODE,2,Other,_get_aligned_state_indices_kernel,918.3,492,1.9
+b300_isl100k,DECODE,2,Other,_gather_block_tables_kernel,841.3,164,5.1
+b300_isl100k,DECODE,2,Other,_post_update_kernel,835.2,164,5.1
+b300_isl100k,DECODE,2,Other,_compute_slot_mappings_kernel,736.3,164,4.5
+b300_isl100k,DECODE,2,Other,"void at::native::vectorized_gather_kernel<16, long>",660.9,328,2.0
+b300_isl100k,DECODE,2,Other,_dcp_local_seq_lens_kernel,551.4,328,1.7
+b300_isl100k,DECODE,2,Other,postprocess_mamba_fused_kernel,492.5,164,3.0
+b300_isl100k,DECODE,2,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",482.3,164,2.9
+b300_isl100k,DECODE,2,Other,precopy_mamba_align_fused_kernel,469.6,164,2.9
+b300_isl100k,DECODE,2,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",367.8,164,2.2
+b300_isl100k,DECODE,2,Other,preprocess_mamba_align_fused_kernel,328.3,164,2.0
+b300_isl100k,DECODE,2,Other,_prepare_pos_seq_lens_kernel,256.7,164,1.6
+b300_isl100k,DECODE,2,Other,_expand_idx_mapping_kernel,220.1,164,1.3
+b300_isl100k,DECODE,2,Other,_scatter_num_accepted_kernel,206.5,164,1.3
+b300_isl100k,DECODE,2,Sampling,Sampling,8713.2,1804,4.8
+b300_isl100k,DECODE,2,Sampling,ArgMax/Reduce,4632.8,1148,4.0
+b300_isl100k,DECODE,2,Triton Fused,Triton fused op,6527.1,4264,1.5
+b300_isl100k,DECODE,3,Activation,SiLU/SwiGLU,1692.3,820,2.1
+b300_isl100k,DECODE,3,Attention,TokenSpeed MLA (NV),98606.6,9512,10.4
+b300_isl100k,DECODE,3,Attention,MLA attn residual,18881.2,2788,6.8
+b300_isl100k,DECODE,3,Communication,NCCL/RCCL,9271.3,328,28.3
+b300_isl100k,DECODE,3,GEMM,CUTLASS MXFP4 GEMM,569802.8,30176,18.9
+b300_isl100k,DECODE,3,GEMM,cuBLASLt splitK,53524.1,12792,4.2
+b300_isl100k,DECODE,3,KDA Linear Attn,KDA gated-delta,112045.5,11316,9.9
+b300_isl100k,DECODE,3,KDA Linear Attn,KDA conv1d,66513.1,11316,5.9
+b300_isl100k,DECODE,3,Memory,Fill,6836.8,5084,1.3
+b300_isl100k,DECODE,3,Memory,Memcpy,4364.6,2296,1.9
+b300_isl100k,DECODE,3,MoE Routing,MoE Routing (NV),249070.1,30176,8.3
+b300_isl100k,DECODE,3,MoE Routing,MoE Finalize (NV),69651.7,15088,4.6
+b300_isl100k,DECODE,3,Normalization,RMSNorm,106561.2,19844,5.4
+b300_isl100k,DECODE,3,Normalization,LayerNorm,24396.8,11316,2.2
+b300_isl100k,DECODE,3,Other,"void fused_a_gemm_kernel<1, 3584, 7168, 16, 8, 256, 16>",249274.2,15088,16.5
+b300_isl100k,DECODE,3,Other,nvjet_sm103_tst_64x8_64x16_2x1_v_bz_splitK_TNT,220889.2,11644,19.0
+b300_isl100k,DECODE,3,Other,"void fused_a_gemm_kernel<1, 1536, 7168, 16, 8, 256, 16>",153135.5,19024,8.0
+b300_isl100k,DECODE,3,Other,void flashinfer::trtllm_mnnvl_allreduce::oneshotAllreduceFusionKernel<,119537.5,15580,7.7
+b300_isl100k,DECODE,3,Other,kernel_cutlass_kernel_vllmmodel_executorkernelslinearcute_dsl_ll_bf16_splitkL...,116415.5,15088,7.7
+b300_isl100k,DECODE,3,Other,kernel_cutlass_kernel_vllmmodelskimi_k3nvidiaopscute_dsllatent_moe_tailfused_...,106245.9,15088,7.0
+b300_isl100k,DECODE,3,Other,nvjet_sm103_tst_64x8_64x16_4x1_v_bz_TNT,103802.9,15580,6.7
+b300_isl100k,DECODE,3,Other,"void fused_a_gemm_kernel<1, 7168, 768, 16, 8, 256, 3>",76704.4,15088,5.1
+b300_isl100k,DECODE,3,Other,void ,70282.7,9512,7.4
+b300_isl100k,DECODE,3,Other,"(anonymous namespace)::direct_dcp_q_gather_multimem_kernel(uint4 const*, uint...",57387.7,4756,12.1
+b300_isl100k,DECODE,3,Other,void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_12...,35591.6,11316,3.1
+b300_isl100k,DECODE,3,Other,void flashinfer::trtllm_mnnvl_allreduce::twoshotAllreduceKernel<,34872.0,1804,19.3
+b300_isl100k,DECODE,3,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,34154.1,15252,2.2
+b300_isl100k,DECODE,3,Other,"void fused_a_gemm_kernel<1, 2112, 7168, 16, 8, 256, 16>",33835.4,3936,8.6
+b300_isl100k,DECODE,3,Other,kernel_cutlass_kernel_vllmmodelskimi_k3nvidiaopscute_dsllatent_moe_taillampor...,32269.1,15088,2.1
+b300_isl100k,DECODE,3,Other,kernel_cutlass_kernel_flashinferquantizationkernelsmxfp8_quantizeMXFP8Quantiz...,29588.6,15088,2.0
+b300_isl100k,DECODE,3,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 8, 3, 1, false, ...",22371.6,3608,6.2
+b300_isl100k,DECODE,3,Other,"void fused_a_gemm_kernel<1, 2304, 1536, 16, 8, 256, 6>",21740.4,3936,5.5
+b300_isl100k,DECODE,3,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 7, 3, 1, false, ...",21628.2,3608,6.0
+b300_isl100k,DECODE,3,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 6, 3, 1, false, ...",19912.7,3608,5.5
+b300_isl100k,DECODE,3,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 5, 3, 1, false, ...",19293.0,3608,5.3
+b300_isl100k,DECODE,3,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 4, 3, 1, false, ...",18619.9,3608,5.2
+b300_isl100k,DECODE,3,Other,nvjet_sm103_tst_64x8_64x16_4x2_h_bz_TNT,18026.5,1640,11.0
+b300_isl100k,DECODE,3,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 3, 3, 1, false, ...",17329.1,3608,4.8
+b300_isl100k,DECODE,3,Other,nvjet_sm103_tst_64x8_64x16_4x1_v_bz_NNT,17286.1,3936,4.4
+b300_isl100k,DECODE,3,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,17268.0,4756,3.6
+b300_isl100k,DECODE,3,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 9, 3, 1, false, ...",16910.8,2624,6.4
+b300_isl100k,DECODE,3,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 2, 3, 1, false, ...",16401.3,3608,4.5
+b300_isl100k,DECODE,3,Other,vllm::direct_dcp::increment_epoch_kernel(long*),14817.7,9512,1.6
+b300_isl100k,DECODE,3,Other,"(anonymous namespace)::signal_kernel(long const*, long const*, long, long)",14525.9,4756,3.1
+b300_isl100k,DECODE,3,Other,nvjet_sm103_tst_16x64_64x16_4x1_v_bz_TNN,14086.1,3936,3.6
+b300_isl100k,DECODE,3,Other,nvjet_sm103_tst_128x8_64x12_2x1_v_bz_splitK_TNT,13338.0,164,81.3
+b300_isl100k,DECODE,3,Other,nvjet_sm103_tst_384x8_64x4_2x1_v_bz_TNT,11074.2,1148,9.6
+b300_isl100k,DECODE,3,Other,nvjet_sm103_tst_64x16_64x16_4x1_v_bz_TNT,11066.5,1640,6.7
+b300_isl100k,DECODE,3,Other,nvjet_sm103_tst_64x8_64x16_1x2_h_bz_splitK_TNT,9452.0,820,11.5
+b300_isl100k,DECODE,3,Other,"void flashinfer::trtllm_mnnvl_allreduce::rmsNormLamport<__nv_bfloat16, ",9337.7,1640,5.7
+b300_isl100k,DECODE,3,Other,"void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocas...",8543.4,2132,4.0
+b300_isl100k,DECODE,3,Other,nvjet_sm103_tst_192x16_64x8_2x1_2cta_v_bz_splitK_TNT,7939.4,164,48.4
+b300_isl100k,DECODE,3,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",7922.1,4920,1.6
+b300_isl100k,DECODE,3,Other,"void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocas...",6014.1,3608,1.7
+b300_isl100k,DECODE,3,Other,void at::native::,4971.5,1640,3.0
+b300_isl100k,DECODE,3,Other,_compute_local_logits_stats_kernel,4284.4,164,26.1
+b300_isl100k,DECODE,3,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",3150.0,984,3.2
+b300_isl100k,DECODE,3,Other,nvjet_sm103_tst_8x64_64x16_4x1_v_bz_TNN,3112.1,820,3.8
+b300_isl100k,DECODE,3,Other,nvjet_sm103_tst_64x8_64x16_2x2_h_bz_NNT,2938.8,820,3.6
+b300_isl100k,DECODE,3,Other,_prepare_dflash_inputs_kernel,2644.7,164,16.1
+b300_isl100k,DECODE,3,Other,"void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda...",2579.0,1148,2.2
+b300_isl100k,DECODE,3,Other,"void vllm::concat_and_cache_mla_kernel<__nv_bfloat16, unsigned char, ",1839.9,820,2.2
+b300_isl100k,DECODE,3,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 2, true>",1624.2,492,3.3
+b300_isl100k,DECODE,3,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",1514.8,820,1.8
+b300_isl100k,DECODE,3,Other,_rejection_kernel,1184.0,164,7.2
+b300_isl100k,DECODE,3,Other,_get_aligned_state_indices_kernel,1081.8,492,2.2
+b300_isl100k,DECODE,3,Other,_stage_spec_decode_metadata_kernel,1079.5,492,2.2
+b300_isl100k,DECODE,3,Other,_post_update_kernel,1050.3,164,6.4
+b300_isl100k,DECODE,3,Other,_gather_block_tables_kernel,928.0,164,5.7
+b300_isl100k,DECODE,3,Other,_compute_slot_mappings_kernel,749.8,164,4.6
+b300_isl100k,DECODE,3,Other,"void at::native::vectorized_gather_kernel<16, long>",721.1,328,2.2
+b300_isl100k,DECODE,3,Other,_dcp_local_seq_lens_kernel,547.1,328,1.7
+b300_isl100k,DECODE,3,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",483.0,164,2.9
+b300_isl100k,DECODE,3,Other,postprocess_mamba_fused_kernel,469.9,164,2.9
+b300_isl100k,DECODE,3,Other,precopy_mamba_align_fused_kernel,458.9,164,2.8
+b300_isl100k,DECODE,3,Other,preprocess_mamba_align_fused_kernel,404.2,164,2.5
+b300_isl100k,DECODE,3,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",349.3,164,2.1
+b300_isl100k,DECODE,3,Other,_prepare_pos_seq_lens_kernel,328.4,164,2.0
+b300_isl100k,DECODE,3,Other,_expand_idx_mapping_kernel,288.0,164,1.8
+b300_isl100k,DECODE,3,Other,_scatter_num_accepted_kernel,264.3,164,1.6
+b300_isl100k,DECODE,3,Sampling,Sampling,8860.1,1804,4.9
+b300_isl100k,DECODE,3,Sampling,ArgMax/Reduce,4220.6,1148,3.7
+b300_isl100k,DECODE,3,Triton Fused,Triton fused op,7380.6,4264,1.7
+b300_isl100k,DECODE,4,Activation,SiLU/SwiGLU,1706.8,820,2.1
+b300_isl100k,DECODE,4,Attention,TokenSpeed MLA (NV),98969.1,9512,10.4
+b300_isl100k,DECODE,4,Attention,MLA attn residual,18734.2,2788,6.7
+b300_isl100k,DECODE,4,Communication,NCCL/RCCL,9228.0,328,28.1
+b300_isl100k,DECODE,4,GEMM,CUTLASS MXFP4 GEMM,567894.3,30176,18.8
+b300_isl100k,DECODE,4,GEMM,cuBLASLt splitK,52916.1,12792,4.1
+b300_isl100k,DECODE,4,KDA Linear Attn,KDA gated-delta,111537.6,11316,9.9
+b300_isl100k,DECODE,4,KDA Linear Attn,KDA conv1d,66180.5,11316,5.8
+b300_isl100k,DECODE,4,Memory,Fill,5959.7,5084,1.2
+b300_isl100k,DECODE,4,Memory,Memcpy,4354.0,2296,1.9
+b300_isl100k,DECODE,4,MoE Routing,MoE Routing (NV),248342.0,30176,8.2
+b300_isl100k,DECODE,4,MoE Routing,MoE Finalize (NV),69217.6,15088,4.6
+b300_isl100k,DECODE,4,Normalization,RMSNorm,111686.6,19844,5.6
+b300_isl100k,DECODE,4,Normalization,LayerNorm,24126.4,11316,2.1
+b300_isl100k,DECODE,4,Other,"void fused_a_gemm_kernel<1, 3584, 7168, 16, 8, 256, 16>",249732.1,15088,16.6
+b300_isl100k,DECODE,4,Other,nvjet_sm103_tst_64x8_64x16_2x1_v_bz_splitK_TNT,223097.3,11644,19.2
+b300_isl100k,DECODE,4,Other,"void fused_a_gemm_kernel<1, 1536, 7168, 16, 8, 256, 16>",153009.4,19024,8.0
+b300_isl100k,DECODE,4,Other,void flashinfer::trtllm_mnnvl_allreduce::oneshotAllreduceFusionKernel<,117497.3,15580,7.5
+b300_isl100k,DECODE,4,Other,kernel_cutlass_kernel_vllmmodel_executorkernelslinearcute_dsl_ll_bf16_splitkL...,115693.0,15088,7.7
+b300_isl100k,DECODE,4,Other,kernel_cutlass_kernel_vllmmodelskimi_k3nvidiaopscute_dsllatent_moe_tailfused_...,106222.5,15088,7.0
+b300_isl100k,DECODE,4,Other,nvjet_sm103_tst_64x8_64x16_4x1_v_bz_TNT,103724.5,15580,6.7
+b300_isl100k,DECODE,4,Other,"void fused_a_gemm_kernel<1, 7168, 768, 16, 8, 256, 3>",78795.8,15088,5.2
+b300_isl100k,DECODE,4,Other,void ,70414.4,9512,7.4
+b300_isl100k,DECODE,4,Other,"(anonymous namespace)::direct_dcp_q_gather_multimem_kernel(uint4 const*, uint...",57805.3,4756,12.2
+b300_isl100k,DECODE,4,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,34271.7,15252,2.2
+b300_isl100k,DECODE,4,Other,void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_12...,34185.5,11316,3.0
+b300_isl100k,DECODE,4,Other,"void fused_a_gemm_kernel<1, 2112, 7168, 16, 8, 256, 16>",34021.7,3936,8.6
+b300_isl100k,DECODE,4,Other,kernel_cutlass_kernel_vllmmodelskimi_k3nvidiaopscute_dsllatent_moe_taillampor...,33149.0,15088,2.2
+b300_isl100k,DECODE,4,Other,kernel_cutlass_kernel_flashinferquantizationkernelsmxfp8_quantizeMXFP8Quantiz...,29045.4,15088,1.9
+b300_isl100k,DECODE,4,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 8, 3, 1, false, ...",22290.2,3608,6.2
+b300_isl100k,DECODE,4,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 7, 3, 1, false, ...",21703.2,3608,6.0
+b300_isl100k,DECODE,4,Other,"void fused_a_gemm_kernel<1, 2304, 1536, 16, 8, 256, 6>",21680.8,3936,5.5
+b300_isl100k,DECODE,4,Other,void flashinfer::trtllm_mnnvl_allreduce::twoshotAllreduceKernel<,20243.2,1804,11.2
+b300_isl100k,DECODE,4,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 6, 3, 1, false, ...",19697.6,3608,5.5
+b300_isl100k,DECODE,4,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 5, 3, 1, false, ...",19040.0,3608,5.3
+b300_isl100k,DECODE,4,Other,nvjet_sm103_tst_64x8_64x16_4x1_v_bz_NNT,18758.8,3936,4.8
+b300_isl100k,DECODE,4,Other,nvjet_sm103_tst_64x8_64x16_4x2_h_bz_TNT,18454.8,1640,11.3
+b300_isl100k,DECODE,4,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 4, 3, 1, false, ...",18437.8,3608,5.1
+b300_isl100k,DECODE,4,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 3, 3, 1, false, ...",17135.8,3608,4.7
+b300_isl100k,DECODE,4,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 9, 3, 1, false, ...",17001.4,2624,6.5
+b300_isl100k,DECODE,4,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,16796.2,4756,3.5
+b300_isl100k,DECODE,4,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 2, 3, 1, false, ...",16545.2,3608,4.6
+b300_isl100k,DECODE,4,Other,nvjet_sm103_tst_16x64_64x16_4x1_v_bz_TNN,13798.5,3936,3.5
+b300_isl100k,DECODE,4,Other,nvjet_sm103_tst_128x8_64x12_2x1_v_bz_splitK_TNT,13357.8,164,81.4
+b300_isl100k,DECODE,4,Other,vllm::direct_dcp::increment_epoch_kernel(long*),13191.6,9512,1.4
+b300_isl100k,DECODE,4,Other,"(anonymous namespace)::signal_kernel(long const*, long const*, long, long)",13110.2,4756,2.8
+b300_isl100k,DECODE,4,Other,nvjet_sm103_tst_384x8_64x4_2x1_v_bz_TNT,11068.8,1148,9.6
+b300_isl100k,DECODE,4,Other,nvjet_sm103_tst_64x16_64x16_4x1_v_bz_TNT,10961.2,1640,6.7
+b300_isl100k,DECODE,4,Other,"void flashinfer::trtllm_mnnvl_allreduce::rmsNormLamport<__nv_bfloat16, ",9698.0,1640,5.9
+b300_isl100k,DECODE,4,Other,nvjet_sm103_tst_64x8_64x16_1x2_h_bz_splitK_TNT,9521.5,820,11.6
+b300_isl100k,DECODE,4,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",9060.1,4920,1.8
+b300_isl100k,DECODE,4,Other,"void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocas...",8647.8,2132,4.1
+b300_isl100k,DECODE,4,Other,nvjet_sm103_tst_192x16_64x8_2x1_2cta_v_bz_splitK_TNT,8065.6,164,49.2
+b300_isl100k,DECODE,4,Other,"void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocas...",5555.4,3608,1.5
+b300_isl100k,DECODE,4,Other,void at::native::,4716.4,1640,2.9
+b300_isl100k,DECODE,4,Other,_compute_local_logits_stats_kernel,4586.2,164,28.0
+b300_isl100k,DECODE,4,Other,nvjet_sm103_tst_8x64_64x16_4x1_v_bz_TNN,3134.9,820,3.8
+b300_isl100k,DECODE,4,Other,nvjet_sm103_tst_64x8_64x16_2x2_h_bz_NNT,2943.4,820,3.6
+b300_isl100k,DECODE,4,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",2909.1,984,3.0
+b300_isl100k,DECODE,4,Other,_prepare_dflash_inputs_kernel,2503.6,164,15.3
+b300_isl100k,DECODE,4,Other,"void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda...",2356.9,1148,2.1
+b300_isl100k,DECODE,4,Other,"void vllm::concat_and_cache_mla_kernel<__nv_bfloat16, unsigned char, ",1627.6,820,2.0
+b300_isl100k,DECODE,4,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 2, true>",1553.8,492,3.2
+b300_isl100k,DECODE,4,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",1523.1,820,1.9
+b300_isl100k,DECODE,4,Other,_rejection_kernel,1064.7,164,6.5
+b300_isl100k,DECODE,4,Other,_stage_spec_decode_metadata_kernel,993.7,492,2.0
+b300_isl100k,DECODE,4,Other,_get_aligned_state_indices_kernel,978.9,492,2.0
+b300_isl100k,DECODE,4,Other,_post_update_kernel,866.1,164,5.3
+b300_isl100k,DECODE,4,Other,_gather_block_tables_kernel,812.6,164,5.0
+b300_isl100k,DECODE,4,Other,_compute_slot_mappings_kernel,750.0,164,4.6
+b300_isl100k,DECODE,4,Other,"void at::native::vectorized_gather_kernel<16, long>",712.0,328,2.2
+b300_isl100k,DECODE,4,Other,_dcp_local_seq_lens_kernel,569.7,328,1.7
+b300_isl100k,DECODE,4,Other,postprocess_mamba_fused_kernel,480.7,164,2.9
+b300_isl100k,DECODE,4,Other,precopy_mamba_align_fused_kernel,480.4,164,2.9
+b300_isl100k,DECODE,4,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",452.8,164,2.8
+b300_isl100k,DECODE,4,Other,preprocess_mamba_align_fused_kernel,382.5,164,2.3
+b300_isl100k,DECODE,4,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",333.5,164,2.0
+b300_isl100k,DECODE,4,Other,_prepare_pos_seq_lens_kernel,285.2,164,1.7
+b300_isl100k,DECODE,4,Other,_expand_idx_mapping_kernel,237.2,164,1.4
+b300_isl100k,DECODE,4,Other,_scatter_num_accepted_kernel,233.5,164,1.4
+b300_isl100k,DECODE,4,Sampling,Sampling,8790.0,1804,4.9
+b300_isl100k,DECODE,4,Sampling,ArgMax/Reduce,4098.0,1148,3.6
+b300_isl100k,DECODE,4,Triton Fused,Triton fused op,6741.6,4264,1.6
+b300_isl100k,DECODE,5,Activation,SiLU/SwiGLU,1585.0,820,1.9
+b300_isl100k,DECODE,5,Attention,TokenSpeed MLA (NV),97625.6,9512,10.3
+b300_isl100k,DECODE,5,Attention,MLA attn residual,18427.1,2788,6.6
+b300_isl100k,DECODE,5,Communication,NCCL/RCCL,9224.9,328,28.1
+b300_isl100k,DECODE,5,GEMM,CUTLASS MXFP4 GEMM,569338.0,30176,18.9
+b300_isl100k,DECODE,5,GEMM,cuBLASLt splitK,52971.6,12792,4.1
+b300_isl100k,DECODE,5,KDA Linear Attn,KDA gated-delta,110490.2,11316,9.8
+b300_isl100k,DECODE,5,KDA Linear Attn,KDA conv1d,65515.8,11316,5.8
+b300_isl100k,DECODE,5,Memory,Fill,6398.1,5084,1.3
+b300_isl100k,DECODE,5,Memory,Memcpy,4369.0,2296,1.9
+b300_isl100k,DECODE,5,MoE Routing,MoE Routing (NV),247859.3,30176,8.2
+b300_isl100k,DECODE,5,MoE Routing,MoE Finalize (NV),69155.5,15088,4.6
+b300_isl100k,DECODE,5,Normalization,RMSNorm,105765.6,19844,5.3
+b300_isl100k,DECODE,5,Normalization,LayerNorm,22944.6,11316,2.0
+b300_isl100k,DECODE,5,Other,"void fused_a_gemm_kernel<1, 3584, 7168, 16, 8, 256, 16>",247634.1,15088,16.4
+b300_isl100k,DECODE,5,Other,nvjet_sm103_tst_64x8_64x16_2x1_v_bz_splitK_TNT,221619.0,11644,19.0
+b300_isl100k,DECODE,5,Other,"void fused_a_gemm_kernel<1, 1536, 7168, 16, 8, 256, 16>",151326.0,19024,8.0
+b300_isl100k,DECODE,5,Other,void flashinfer::trtllm_mnnvl_allreduce::oneshotAllreduceFusionKernel<,117663.1,15580,7.6
+b300_isl100k,DECODE,5,Other,kernel_cutlass_kernel_vllmmodel_executorkernelslinearcute_dsl_ll_bf16_splitkL...,114620.1,15088,7.6
+b300_isl100k,DECODE,5,Other,kernel_cutlass_kernel_vllmmodelskimi_k3nvidiaopscute_dsllatent_moe_tailfused_...,106984.6,15088,7.1
+b300_isl100k,DECODE,5,Other,nvjet_sm103_tst_64x8_64x16_4x1_v_bz_TNT,102374.6,15580,6.6
+b300_isl100k,DECODE,5,Other,"void fused_a_gemm_kernel<1, 7168, 768, 16, 8, 256, 3>",78088.4,15088,5.2
+b300_isl100k,DECODE,5,Other,void ,69486.2,9512,7.3
+b300_isl100k,DECODE,5,Other,"(anonymous namespace)::direct_dcp_q_gather_multimem_kernel(uint4 const*, uint...",58848.4,4756,12.4
+b300_isl100k,DECODE,5,Other,"void fused_a_gemm_kernel<1, 2112, 7168, 16, 8, 256, 16>",34352.7,3936,8.7
+b300_isl100k,DECODE,5,Other,void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_12...,33952.2,11316,3.0
+b300_isl100k,DECODE,5,Other,void flashinfer::trtllm_mnnvl_allreduce::twoshotAllreduceKernel<,32393.2,1804,18.0
+b300_isl100k,DECODE,5,Other,kernel_cutlass_kernel_vllmmodelskimi_k3nvidiaopscute_dsllatent_moe_taillampor...,31755.6,15088,2.1
+b300_isl100k,DECODE,5,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,31473.2,15252,2.1
+b300_isl100k,DECODE,5,Other,kernel_cutlass_kernel_flashinferquantizationkernelsmxfp8_quantizeMXFP8Quantiz...,30493.1,15088,2.0
+b300_isl100k,DECODE,5,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 8, 3, 1, false, ...",22278.6,3608,6.2
+b300_isl100k,DECODE,5,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 7, 3, 1, false, ...",21530.1,3608,6.0
+b300_isl100k,DECODE,5,Other,"void fused_a_gemm_kernel<1, 2304, 1536, 16, 8, 256, 6>",21349.8,3936,5.4
+b300_isl100k,DECODE,5,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 6, 3, 1, false, ...",19627.2,3608,5.4
+b300_isl100k,DECODE,5,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 5, 3, 1, false, ...",19042.5,3608,5.3
+b300_isl100k,DECODE,5,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 4, 3, 1, false, ...",18605.5,3608,5.2
+b300_isl100k,DECODE,5,Other,nvjet_sm103_tst_64x8_64x16_4x2_h_bz_TNT,17770.1,1640,10.8
+b300_isl100k,DECODE,5,Other,nvjet_sm103_tst_64x8_64x16_4x1_v_bz_NNT,17563.5,3936,4.5
+b300_isl100k,DECODE,5,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 3, 3, 1, false, ...",17173.3,3608,4.8
+b300_isl100k,DECODE,5,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 9, 3, 1, false, ...",16993.4,2624,6.5
+b300_isl100k,DECODE,5,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,16594.6,4756,3.5
+b300_isl100k,DECODE,5,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 2, 3, 1, false, ...",16418.5,3608,4.6
+b300_isl100k,DECODE,5,Other,"(anonymous namespace)::signal_kernel(long const*, long const*, long, long)",14711.8,4756,3.1
+b300_isl100k,DECODE,5,Other,nvjet_sm103_tst_16x64_64x16_4x1_v_bz_TNN,13663.7,3936,3.5
+b300_isl100k,DECODE,5,Other,vllm::direct_dcp::increment_epoch_kernel(long*),13582.0,9512,1.4
+b300_isl100k,DECODE,5,Other,nvjet_sm103_tst_128x8_64x12_2x1_v_bz_splitK_TNT,13364.3,164,81.5
+b300_isl100k,DECODE,5,Other,nvjet_sm103_tst_384x8_64x4_2x1_v_bz_TNT,10853.4,1148,9.5
+b300_isl100k,DECODE,5,Other,nvjet_sm103_tst_64x16_64x16_4x1_v_bz_TNT,10839.8,1640,6.6
+b300_isl100k,DECODE,5,Other,nvjet_sm103_tst_64x8_64x16_1x2_h_bz_splitK_TNT,9260.6,820,11.3
+b300_isl100k,DECODE,5,Other,"void flashinfer::trtllm_mnnvl_allreduce::rmsNormLamport<__nv_bfloat16, ",8709.8,1640,5.3
+b300_isl100k,DECODE,5,Other,"void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocas...",8259.4,2132,3.9
+b300_isl100k,DECODE,5,Other,nvjet_sm103_tst_192x16_64x8_2x1_2cta_v_bz_splitK_TNT,7926.5,164,48.3
+b300_isl100k,DECODE,5,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",7722.0,4920,1.6
+b300_isl100k,DECODE,5,Other,"void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocas...",5768.9,3608,1.6
+b300_isl100k,DECODE,5,Other,void at::native::,4737.1,1640,2.9
+b300_isl100k,DECODE,5,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",3068.0,984,3.1
+b300_isl100k,DECODE,5,Other,nvjet_sm103_tst_8x64_64x16_4x1_v_bz_TNN,3023.8,820,3.7
+b300_isl100k,DECODE,5,Other,nvjet_sm103_tst_64x8_64x16_2x2_h_bz_NNT,2901.1,820,3.5
+b300_isl100k,DECODE,5,Other,_compute_local_logits_stats_kernel,2719.6,164,16.6
+b300_isl100k,DECODE,5,Other,_prepare_dflash_inputs_kernel,2548.8,164,15.5
+b300_isl100k,DECODE,5,Other,"void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda...",2460.2,1148,2.1
+b300_isl100k,DECODE,5,Other,"void vllm::concat_and_cache_mla_kernel<__nv_bfloat16, unsigned char, ",1728.2,820,2.1
+b300_isl100k,DECODE,5,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 2, true>",1527.4,492,3.1
+b300_isl100k,DECODE,5,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",1480.2,820,1.8
+b300_isl100k,DECODE,5,Other,_rejection_kernel,1080.6,164,6.6
+b300_isl100k,DECODE,5,Other,_gather_block_tables_kernel,1042.1,164,6.4
+b300_isl100k,DECODE,5,Other,_get_aligned_state_indices_kernel,1038.5,492,2.1
+b300_isl100k,DECODE,5,Other,_stage_spec_decode_metadata_kernel,1035.1,492,2.1
+b300_isl100k,DECODE,5,Other,_post_update_kernel,1034.2,164,6.3
+b300_isl100k,DECODE,5,Other,_compute_slot_mappings_kernel,748.3,164,4.6
+b300_isl100k,DECODE,5,Other,"void at::native::vectorized_gather_kernel<16, long>",668.8,328,2.0
+b300_isl100k,DECODE,5,Other,_dcp_local_seq_lens_kernel,519.9,328,1.6
+b300_isl100k,DECODE,5,Other,postprocess_mamba_fused_kernel,464.7,164,2.8
+b300_isl100k,DECODE,5,Other,precopy_mamba_align_fused_kernel,462.9,164,2.8
+b300_isl100k,DECODE,5,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",457.9,164,2.8
+b300_isl100k,DECODE,5,Other,preprocess_mamba_align_fused_kernel,360.2,164,2.2
+b300_isl100k,DECODE,5,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",339.0,164,2.1
+b300_isl100k,DECODE,5,Other,_prepare_pos_seq_lens_kernel,319.1,164,1.9
+b300_isl100k,DECODE,5,Other,_expand_idx_mapping_kernel,277.4,164,1.7
+b300_isl100k,DECODE,5,Other,_scatter_num_accepted_kernel,248.3,164,1.5
+b300_isl100k,DECODE,5,Sampling,Sampling,6983.2,1804,3.9
+b300_isl100k,DECODE,5,Sampling,ArgMax/Reduce,4048.1,1148,3.5
+b300_isl100k,DECODE,5,Triton Fused,Triton fused op,6611.0,4264,1.6
+b300_isl100k,DECODE,6,Activation,SiLU/SwiGLU,1628.1,820,2.0
+b300_isl100k,DECODE,6,Attention,TokenSpeed MLA (NV),97807.6,9512,10.3
+b300_isl100k,DECODE,6,Attention,MLA attn residual,19035.6,2788,6.8
+b300_isl100k,DECODE,6,Communication,NCCL/RCCL,9267.3,328,28.3
+b300_isl100k,DECODE,6,GEMM,CUTLASS MXFP4 GEMM,568530.6,30176,18.8
+b300_isl100k,DECODE,6,GEMM,cuBLASLt splitK,56800.4,12792,4.4
+b300_isl100k,DECODE,6,KDA Linear Attn,KDA gated-delta,111692.3,11316,9.9
+b300_isl100k,DECODE,6,KDA Linear Attn,KDA conv1d,66113.9,11316,5.8
+b300_isl100k,DECODE,6,Memory,Fill,6722.8,5084,1.3
+b300_isl100k,DECODE,6,Memory,Memcpy,4426.5,2296,1.9
+b300_isl100k,DECODE,6,MoE Routing,MoE Routing (NV),248946.7,30176,8.2
+b300_isl100k,DECODE,6,MoE Routing,MoE Finalize (NV),69858.0,15088,4.6
+b300_isl100k,DECODE,6,Normalization,RMSNorm,107373.4,19844,5.4
+b300_isl100k,DECODE,6,Normalization,LayerNorm,24169.8,11316,2.1
+b300_isl100k,DECODE,6,Other,"void fused_a_gemm_kernel<1, 3584, 7168, 16, 8, 256, 16>",249090.2,15088,16.5
+b300_isl100k,DECODE,6,Other,nvjet_sm103_tst_64x8_64x16_2x1_v_bz_splitK_TNT,220755.8,11644,19.0
+b300_isl100k,DECODE,6,Other,"void fused_a_gemm_kernel<1, 1536, 7168, 16, 8, 256, 16>",153323.4,19024,8.1
+b300_isl100k,DECODE,6,Other,void flashinfer::trtllm_mnnvl_allreduce::oneshotAllreduceFusionKernel<,119992.4,15580,7.7
+b300_isl100k,DECODE,6,Other,kernel_cutlass_kernel_vllmmodel_executorkernelslinearcute_dsl_ll_bf16_splitkL...,115964.3,15088,7.7
+b300_isl100k,DECODE,6,Other,kernel_cutlass_kernel_vllmmodelskimi_k3nvidiaopscute_dsllatent_moe_tailfused_...,106491.2,15088,7.1
+b300_isl100k,DECODE,6,Other,nvjet_sm103_tst_64x8_64x16_4x1_v_bz_TNT,103642.3,15580,6.7
+b300_isl100k,DECODE,6,Other,"void fused_a_gemm_kernel<1, 7168, 768, 16, 8, 256, 3>",77176.9,15088,5.1
+b300_isl100k,DECODE,6,Other,void ,70178.3,9512,7.4
+b300_isl100k,DECODE,6,Other,"(anonymous namespace)::direct_dcp_q_gather_multimem_kernel(uint4 const*, uint...",56988.9,4756,12.0
+b300_isl100k,DECODE,6,Other,void flashinfer::trtllm_mnnvl_allreduce::twoshotAllreduceKernel<,36394.4,1804,20.2
+b300_isl100k,DECODE,6,Other,void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_12...,35139.5,11316,3.1
+b300_isl100k,DECODE,6,Other,"void fused_a_gemm_kernel<1, 2112, 7168, 16, 8, 256, 16>",33910.9,3936,8.6
+b300_isl100k,DECODE,6,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,33765.6,15252,2.2
+b300_isl100k,DECODE,6,Other,kernel_cutlass_kernel_vllmmodelskimi_k3nvidiaopscute_dsllatent_moe_taillampor...,32454.2,15088,2.2
+b300_isl100k,DECODE,6,Other,kernel_cutlass_kernel_flashinferquantizationkernelsmxfp8_quantizeMXFP8Quantiz...,28998.3,15088,1.9
+b300_isl100k,DECODE,6,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 8, 3, 1, false, ...",22331.8,3608,6.2
+b300_isl100k,DECODE,6,Other,"void fused_a_gemm_kernel<1, 2304, 1536, 16, 8, 256, 6>",21756.1,3936,5.5
+b300_isl100k,DECODE,6,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 7, 3, 1, false, ...",21564.4,3608,6.0
+b300_isl100k,DECODE,6,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 6, 3, 1, false, ...",19898.3,3608,5.5
+b300_isl100k,DECODE,6,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 5, 3, 1, false, ...",19395.9,3608,5.4
+b300_isl100k,DECODE,6,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 4, 3, 1, false, ...",18686.4,3608,5.2
+b300_isl100k,DECODE,6,Other,nvjet_sm103_tst_64x8_64x16_4x2_h_bz_TNT,18176.2,1640,11.1
+b300_isl100k,DECODE,6,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 3, 3, 1, false, ...",17365.5,3608,4.8
+b300_isl100k,DECODE,6,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,17252.1,4756,3.6
+b300_isl100k,DECODE,6,Other,nvjet_sm103_tst_64x8_64x16_4x1_v_bz_NNT,17131.9,3936,4.4
+b300_isl100k,DECODE,6,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 9, 3, 1, false, ...",16957.2,2624,6.5
+b300_isl100k,DECODE,6,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 2, 3, 1, false, ...",16521.2,3608,4.6
+b300_isl100k,DECODE,6,Other,"(anonymous namespace)::signal_kernel(long const*, long const*, long, long)",14645.8,4756,3.1
+b300_isl100k,DECODE,6,Other,vllm::direct_dcp::increment_epoch_kernel(long*),14343.8,9512,1.5
+b300_isl100k,DECODE,6,Other,nvjet_sm103_tst_16x64_64x16_4x1_v_bz_TNN,14003.2,3936,3.6
+b300_isl100k,DECODE,6,Other,nvjet_sm103_tst_128x8_64x12_2x1_v_bz_splitK_TNT,13370.6,164,81.5
+b300_isl100k,DECODE,6,Other,nvjet_sm103_tst_64x16_64x16_4x1_v_bz_TNT,10992.0,1640,6.7
+b300_isl100k,DECODE,6,Other,nvjet_sm103_tst_384x8_64x4_2x1_v_bz_TNT,10990.8,1148,9.6
+b300_isl100k,DECODE,6,Other,nvjet_sm103_tst_64x8_64x16_1x2_h_bz_splitK_TNT,9409.2,820,11.5
+b300_isl100k,DECODE,6,Other,"void flashinfer::trtllm_mnnvl_allreduce::rmsNormLamport<__nv_bfloat16, ",9238.2,1640,5.6
+b300_isl100k,DECODE,6,Other,"void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocas...",8505.4,2132,4.0
+b300_isl100k,DECODE,6,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",8155.5,4920,1.7
+b300_isl100k,DECODE,6,Other,nvjet_sm103_tst_192x16_64x8_2x1_2cta_v_bz_splitK_TNT,7947.9,164,48.5
+b300_isl100k,DECODE,6,Other,"void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocas...",5961.5,3608,1.7
+b300_isl100k,DECODE,6,Other,void at::native::,4901.9,1640,3.0
+b300_isl100k,DECODE,6,Other,nvjet_sm103_tst_8x64_64x16_4x1_v_bz_TNN,3185.8,820,3.9
+b300_isl100k,DECODE,6,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",3087.8,984,3.1
+b300_isl100k,DECODE,6,Other,nvjet_sm103_tst_64x8_64x16_2x2_h_bz_NNT,2939.0,820,3.6
+b300_isl100k,DECODE,6,Other,_compute_local_logits_stats_kernel,2888.3,164,17.6
+b300_isl100k,DECODE,6,Other,_prepare_dflash_inputs_kernel,2652.1,164,16.2
+b300_isl100k,DECODE,6,Other,"void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda...",2583.6,1148,2.3
+b300_isl100k,DECODE,6,Other,"void vllm::concat_and_cache_mla_kernel<__nv_bfloat16, unsigned char, ",1863.6,820,2.3
+b300_isl100k,DECODE,6,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 2, true>",1599.6,492,3.3
+b300_isl100k,DECODE,6,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",1532.0,820,1.9
+b300_isl100k,DECODE,6,Other,_rejection_kernel,1148.7,164,7.0
+b300_isl100k,DECODE,6,Other,_get_aligned_state_indices_kernel,1057.2,492,2.1
+b300_isl100k,DECODE,6,Other,_stage_spec_decode_metadata_kernel,1047.4,492,2.1
+b300_isl100k,DECODE,6,Other,_post_update_kernel,1027.8,164,6.3
+b300_isl100k,DECODE,6,Other,_gather_block_tables_kernel,910.0,164,5.5
+b300_isl100k,DECODE,6,Other,_compute_slot_mappings_kernel,764.0,164,4.7
+b300_isl100k,DECODE,6,Other,"void at::native::vectorized_gather_kernel<16, long>",673.4,328,2.1
+b300_isl100k,DECODE,6,Other,_dcp_local_seq_lens_kernel,539.4,328,1.6
+b300_isl100k,DECODE,6,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",482.7,164,2.9
+b300_isl100k,DECODE,6,Other,postprocess_mamba_fused_kernel,477.1,164,2.9
+b300_isl100k,DECODE,6,Other,precopy_mamba_align_fused_kernel,474.2,164,2.9
+b300_isl100k,DECODE,6,Other,preprocess_mamba_align_fused_kernel,362.5,164,2.2
+b300_isl100k,DECODE,6,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",343.3,164,2.1
+b300_isl100k,DECODE,6,Other,_prepare_pos_seq_lens_kernel,326.8,164,2.0
+b300_isl100k,DECODE,6,Other,_expand_idx_mapping_kernel,283.1,164,1.7
+b300_isl100k,DECODE,6,Other,_scatter_num_accepted_kernel,260.2,164,1.6
+b300_isl100k,DECODE,6,Sampling,Sampling,7179.1,1804,4.0
+b300_isl100k,DECODE,6,Sampling,ArgMax/Reduce,4451.5,1148,3.9
+b300_isl100k,DECODE,6,Triton Fused,Triton fused op,7209.9,4264,1.7
+b300_isl100k,DECODE,7,Activation,SiLU/SwiGLU,1640.8,820,2.0
+b300_isl100k,DECODE,7,Attention,TokenSpeed MLA (NV),99301.9,9512,10.4
+b300_isl100k,DECODE,7,Attention,MLA attn residual,18797.3,2788,6.7
+b300_isl100k,DECODE,7,Communication,NCCL/RCCL,9249.6,328,28.2
+b300_isl100k,DECODE,7,GEMM,CUTLASS MXFP4 GEMM,571742.9,30176,18.9
+b300_isl100k,DECODE,7,GEMM,cuBLASLt splitK,56690.4,12792,4.4
+b300_isl100k,DECODE,7,KDA Linear Attn,KDA gated-delta,111310.3,11316,9.8
+b300_isl100k,DECODE,7,KDA Linear Attn,KDA conv1d,65785.6,11316,5.8
+b300_isl100k,DECODE,7,Memory,Fill,5762.7,5084,1.1
+b300_isl100k,DECODE,7,Memory,Memcpy,4477.4,2296,2.0
+b300_isl100k,DECODE,7,MoE Routing,MoE Routing (NV),248449.5,30176,8.2
+b300_isl100k,DECODE,7,MoE Routing,MoE Finalize (NV),68565.9,15088,4.5
+b300_isl100k,DECODE,7,Normalization,RMSNorm,109003.5,19844,5.5
+b300_isl100k,DECODE,7,Normalization,LayerNorm,24166.1,11316,2.1
+b300_isl100k,DECODE,7,Other,"void fused_a_gemm_kernel<1, 3584, 7168, 16, 8, 256, 16>",249747.6,15088,16.6
+b300_isl100k,DECODE,7,Other,nvjet_sm103_tst_64x8_64x16_2x1_v_bz_splitK_TNT,222527.8,11644,19.1
+b300_isl100k,DECODE,7,Other,"void fused_a_gemm_kernel<1, 1536, 7168, 16, 8, 256, 16>",152959.2,19024,8.0
+b300_isl100k,DECODE,7,Other,kernel_cutlass_kernel_vllmmodel_executorkernelslinearcute_dsl_ll_bf16_splitkL...,115370.3,15088,7.6
+b300_isl100k,DECODE,7,Other,void flashinfer::trtllm_mnnvl_allreduce::oneshotAllreduceFusionKernel<,112019.2,15580,7.2
+b300_isl100k,DECODE,7,Other,kernel_cutlass_kernel_vllmmodelskimi_k3nvidiaopscute_dsllatent_moe_tailfused_...,106407.8,15088,7.1
+b300_isl100k,DECODE,7,Other,nvjet_sm103_tst_64x8_64x16_4x1_v_bz_TNT,103765.0,15580,6.7
+b300_isl100k,DECODE,7,Other,"void fused_a_gemm_kernel<1, 7168, 768, 16, 8, 256, 3>",78475.3,15088,5.2
+b300_isl100k,DECODE,7,Other,void ,70154.0,9512,7.4
+b300_isl100k,DECODE,7,Other,"(anonymous namespace)::direct_dcp_q_gather_multimem_kernel(uint4 const*, uint...",55999.1,4756,11.8
+b300_isl100k,DECODE,7,Other,void cutlass::Kernel2<cutlass_80_wmma_tensorop_bf16_s161616gemm_bf16_32x32_12...,34781.9,11316,3.1
+b300_isl100k,DECODE,7,Other,"void fused_a_gemm_kernel<1, 2112, 7168, 16, 8, 256, 16>",34079.8,3936,8.7
+b300_isl100k,DECODE,7,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,33008.5,15252,2.2
+b300_isl100k,DECODE,7,Other,kernel_cutlass_kernel_vllmmodelskimi_k3nvidiaopscute_dsllatent_moe_taillampor...,32754.0,15088,2.2
+b300_isl100k,DECODE,7,Other,kernel_cutlass_kernel_flashinferquantizationkernelsmxfp8_quantizeMXFP8Quantiz...,30513.5,15088,2.0
+b300_isl100k,DECODE,7,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 8, 3, 1, false, ...",22476.8,3608,6.2
+b300_isl100k,DECODE,7,Other,"void fused_a_gemm_kernel<1, 2304, 1536, 16, 8, 256, 6>",21705.9,3936,5.5
+b300_isl100k,DECODE,7,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 7, 3, 1, false, ...",21594.9,3608,6.0
+b300_isl100k,DECODE,7,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 6, 3, 1, false, ...",19748.4,3608,5.5
+b300_isl100k,DECODE,7,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 5, 3, 1, false, ...",19227.0,3608,5.3
+b300_isl100k,DECODE,7,Other,nvjet_sm103_tst_64x8_64x16_4x1_v_bz_NNT,18986.4,3936,4.8
+b300_isl100k,DECODE,7,Other,nvjet_sm103_tst_64x8_64x16_4x2_h_bz_TNT,18624.6,1640,11.4
+b300_isl100k,DECODE,7,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 4, 3, 1, false, ...",18488.0,3608,5.1
+b300_isl100k,DECODE,7,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 3, 3, 1, false, ...",17255.4,3608,4.8
+b300_isl100k,DECODE,7,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 9, 3, 1, false, ...",16993.1,2624,6.5
+b300_isl100k,DECODE,7,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,16947.2,4756,3.6
+b300_isl100k,DECODE,7,Other,"void sm100::fwd_prod_v2::attn_res_fwd_online_v2_kernel<7168, 2, 3, 1, false, ...",16290.1,3608,4.5
+b300_isl100k,DECODE,7,Other,vllm::direct_dcp::increment_epoch_kernel(long*),14253.8,9512,1.5
+b300_isl100k,DECODE,7,Other,nvjet_sm103_tst_16x64_64x16_4x1_v_bz_TNN,13852.8,3936,3.5
+b300_isl100k,DECODE,7,Other,nvjet_sm103_tst_128x8_64x12_2x1_v_bz_splitK_TNT,13361.8,164,81.5
+b300_isl100k,DECODE,7,Other,void flashinfer::trtllm_mnnvl_allreduce::twoshotAllreduceKernel<,13038.3,1804,7.2
+b300_isl100k,DECODE,7,Other,"(anonymous namespace)::signal_kernel(long const*, long const*, long, long)",12920.2,4756,2.7
+b300_isl100k,DECODE,7,Other,nvjet_sm103_tst_64x16_64x16_4x1_v_bz_TNT,11067.0,1640,6.7
+b300_isl100k,DECODE,7,Other,nvjet_sm103_tst_384x8_64x4_2x1_v_bz_TNT,10967.3,1148,9.6
+b300_isl100k,DECODE,7,Other,"void flashinfer::trtllm_mnnvl_allreduce::rmsNormLamport<__nv_bfloat16, ",9516.8,1640,5.8
+b300_isl100k,DECODE,7,Other,nvjet_sm103_tst_64x8_64x16_1x2_h_bz_splitK_TNT,9364.7,820,11.4
+b300_isl100k,DECODE,7,Other,"void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocas...",8635.4,2132,4.1
+b300_isl100k,DECODE,7,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",8053.0,4920,1.6
+b300_isl100k,DECODE,7,Other,nvjet_sm103_tst_192x16_64x8_2x1_2cta_v_bz_splitK_TNT,7965.4,164,48.6
+b300_isl100k,DECODE,7,Other,"void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocas...",4918.4,3608,1.4
+b300_isl100k,DECODE,7,Other,void at::native::,4792.4,1640,2.9
+b300_isl100k,DECODE,7,Other,_compute_local_logits_stats_kernel,4394.9,164,26.8
+b300_isl100k,DECODE,7,Other,nvjet_sm103_tst_8x64_64x16_4x1_v_bz_TNN,3289.9,820,4.0
+b300_isl100k,DECODE,7,Other,nvjet_sm103_tst_64x8_64x16_2x2_h_bz_NNT,2928.5,820,3.6
+b300_isl100k,DECODE,7,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",2781.7,984,2.8
+b300_isl100k,DECODE,7,Other,_prepare_dflash_inputs_kernel,2483.3,164,15.1
+b300_isl100k,DECODE,7,Other,"void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda...",2344.6,1148,2.0
+b300_isl100k,DECODE,7,Other,"void vllm::concat_and_cache_mla_kernel<__nv_bfloat16, unsigned char, ",1599.6,820,2.0
+b300_isl100k,DECODE,7,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 2, true>",1534.8,492,3.1
+b300_isl100k,DECODE,7,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",1471.7,820,1.8
+b300_isl100k,DECODE,7,Other,_rejection_kernel,1010.2,164,6.2
+b300_isl100k,DECODE,7,Other,_stage_spec_decode_metadata_kernel,928.9,492,1.9
+b300_isl100k,DECODE,7,Other,_get_aligned_state_indices_kernel,919.0,492,1.9
+b300_isl100k,DECODE,7,Other,_gather_block_tables_kernel,847.2,164,5.2
+b300_isl100k,DECODE,7,Other,_post_update_kernel,843.2,164,5.1
+b300_isl100k,DECODE,7,Other,_compute_slot_mappings_kernel,737.4,164,4.5
+b300_isl100k,DECODE,7,Other,"void at::native::vectorized_gather_kernel<16, long>",683.1,328,2.1
+b300_isl100k,DECODE,7,Other,_dcp_local_seq_lens_kernel,555.3,328,1.7
+b300_isl100k,DECODE,7,Other,postprocess_mamba_fused_kernel,492.2,164,3.0
+b300_isl100k,DECODE,7,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",480.0,164,2.9
+b300_isl100k,DECODE,7,Other,precopy_mamba_align_fused_kernel,464.3,164,2.8
+b300_isl100k,DECODE,7,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",371.5,164,2.3
+b300_isl100k,DECODE,7,Other,preprocess_mamba_align_fused_kernel,326.9,164,2.0
+b300_isl100k,DECODE,7,Other,_prepare_pos_seq_lens_kernel,256.6,164,1.6
+b300_isl100k,DECODE,7,Other,_expand_idx_mapping_kernel,219.9,164,1.3
+b300_isl100k,DECODE,7,Other,_scatter_num_accepted_kernel,204.2,164,1.2
+b300_isl100k,DECODE,7,Sampling,Sampling,8606.3,1804,4.8
+b300_isl100k,DECODE,7,Sampling,ArgMax/Reduce,4237.7,1148,3.7
+b300_isl100k,DECODE,7,Triton Fused,Triton fused op,6973.3,4264,1.6

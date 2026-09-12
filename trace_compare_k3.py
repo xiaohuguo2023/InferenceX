@@ -399,7 +399,23 @@ def _build_step_index(
 def _assign_stage_from_index(
     ts: float, step_index: Optional[list[tuple[float, float, str]]]
 ) -> Optional[str]:
-    """Assign a GPU kernel to PREFILL or DECODE using step intervals."""
+    """Assign a GPU kernel to PREFILL or DECODE using step intervals.
+
+    A kernel that falls in a GAP between two step annotations is charged to the
+    PREVIOUS step, not the next one: GPU work is asynchronous, so a kernel that
+    starts after step i's annotation has ended is step i's TAIL, not step i+1's
+    work.
+
+    This used to charge gap kernels to the NEXT step, which at the
+    PREFILL->DECODE boundary systematically donated prefill's tail to decode.
+    Measured on the ISL-100k conc-1 traces (2026-09-12): it inflated the MI355X
+    decode total by 14% (30,982 -> 26,642 us/step) and dragged one full
+    layer-pass of prefill-only chunk_* KDA kernels into the decode window
+    (207 calls -> 0). B300 was unaffected because its trace contains no PREFILL
+    steps, so the bias ran one way only and corrupted the comparison.
+    Regression tests: test_trace_compare_k3.py::test_gap_kernel_* and
+    ::test_no_prefill_kernels_in_decode.
+    """
     if not step_index:
         return None
 
@@ -415,11 +431,13 @@ def _assign_stage_from_index(
         else:
             return stage
 
-    # Kernel falls between steps (gap) — assign to nearest step
-    if lo < len(step_index):
-        return step_index[lo][2]
+    # Gap: `hi` is now the last interval that ENDS before ts. Charge the kernel
+    # to that step (its async tail). Only before the first step do we fall
+    # forward.
     if hi >= 0:
         return step_index[hi][2]
+    if lo < len(step_index):
+        return step_index[lo][2]
     return None
 
 
