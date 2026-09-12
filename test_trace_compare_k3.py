@@ -40,7 +40,7 @@ from trace_components import (
     stage_of,
 )
 
-MI355X_GLOB = "/dev/shm/prof_isl100k/*rank0*.json*"
+MI355X_GLOB = os.path.expanduser("~/work/k3_traces/prof_isl100k/*rank0*.json*")
 B300_GLOB = os.path.expanduser("~/work/b300/profile_20260911_102437/traces/*rank0*")
 
 

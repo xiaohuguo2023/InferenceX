@@ -16,7 +16,7 @@ from trace_components import COMPONENT_RULES, component_of, decode_kernels_per_s
 
 DOC = "docs/k3_vs_b300_conc1_isl100k.md"
 DEFAULTS = {
-    "MI355X": "/dev/shm/prof_isl100k/*rank0*.json*",
+    "MI355X": os.path.expanduser("~/work/k3_traces/prof_isl100k/*rank0*.json*"),
     "B300": os.path.expanduser("~/work/b300/profile_20260911_102437/traces/*rank0*"),
 }
 
@@ -106,7 +106,7 @@ L.append("\n### Provenance for this section\n")
 L.append("| item | value |")
 L.append("|---|---|")
 for k, v in [
- ("MI355X trace", "`/dev/shm/prof_isl100k/dp0_pp0_tp0_dcp0_ep0_rank0.*.pt.trace.json.gz`"),
+ ("MI355X trace", "`~/work/k3_traces/prof_isl100k/dp0_pp0_tp0_dcp0_ep0_rank0.*.pt.trace.json.gz`"),
  ("B300 trace", "`~/work/b300/profile_20260911_102437/traces/dp0_pp0_tp0_dcp0_ep0_rank0.*`"),
  ("extraction", "`/dev/shm/_mla_raw.py` — reuses `trace_compare_k3.py`'s `_parse_gpu_steps` / "
                 "`_build_step_index` / `_assign_stage_from_index`, so the DECODE window matches the tables above"),

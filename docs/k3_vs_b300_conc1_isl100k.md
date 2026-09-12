@@ -819,7 +819,7 @@ DECODE, rank0, ISL-matched (MI355X 99,845 / B300 ~99,757). GPU kernels only.
 
 | item | value |
 |---|---|
-| MI355X trace | `/dev/shm/prof_isl100k/dp0_pp0_tp0_dcp0_ep0_rank0.*.pt.trace.json.gz` |
+| MI355X trace | `~/work/k3_traces/prof_isl100k/dp0_pp0_tp0_dcp0_ep0_rank0.*.pt.trace.json.gz` |
 | B300 trace | `~/work/b300/profile_20260911_102437/traces/dp0_pp0_tp0_dcp0_ep0_rank0.*` |
 | extraction | `/dev/shm/_mla_raw.py` — reuses `trace_compare_k3.py`'s `_parse_gpu_steps` / `_build_step_index` / `_assign_stage_from_index`, so the DECODE window matches the tables above |
 | this section | `/dev/shm/_mk_component_section.py` |
