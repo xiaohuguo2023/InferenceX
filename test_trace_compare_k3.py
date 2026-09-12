@@ -110,10 +110,15 @@ REAL_KERNELS = [
     ("void aiter::add_rmsnorm_quant_kernel<std::bfloat16_t, std::bfloat16_t>", "Norm/quant"),
     ("layer_norm_gated_fwd_kernel.kd", "Norm/quant"),
     ("_fused_q_kv_rmsnorm_kernel", "Norm/quant"),
-    # --- Glue catch-all ---
+    # --- split out of the old Glue catch-all (see section 7) ---
     ("void vllm::situ_and_mul_kernel<c10::BFloat16>(c10::BFloat16*, c10::BFloat16 const*",
+     "Activation/gating"),
+    ("__amd_rocclr_copyBuffer.kd", "Memory/copy"),
+    # --- what legitimately remains in the catch-all ---
+    ("void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_kernel_i",
      "Glue/elementwise/misc"),
-    ("__amd_rocclr_copyBuffer.kd", "Glue/elementwise/misc"),
+    ("void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at:",
+     "Glue/elementwise/misc"),
 ]
 
 
@@ -335,3 +340,120 @@ def test_synthetic_decode_window_excludes_the_prefill_step(tmp_path):
     path = _synthetic_trace(tmp_path, n_decode_steps=3, chunk_kernels_in_decode=0)
     _, n_steps = decode_kernels_per_step(path)
     assert n_steps == pytest.approx(3.0, abs=1e-6)
+
+
+# ---------------------------------------------------------------------------
+# 5. trace_compare_k3.categorize_kernel -- the BACKEND classifier behind the
+#    doc's older per-rank tables. Previously untested.
+# ---------------------------------------------------------------------------
+
+BACKEND_KERNELS = [
+    # (kernel name, expected category, expected sub_kernel)
+    ("void aiter::cross_device_reduce_2stage<std::bfloat16_t, 8, false>(aiter::RankData*",
+     "Communication", "CustomAR 2-stage"),
+    ("void aiter::cross_device_reduce_1stage<std::bfloat16_t, 8, false>(aiter::RankData*",
+     "Communication", "CustomAR 1-stage"),
+    ("ncclDevKernel_Generic_1(ncclDevKernelArgsStorage<4096ul>) [clone .kd]",
+     "Communication", "NCCL/RCCL"),
+    ("fused_recurrent_kda_fwd_kernel.kd", "KDA Linear Attn", "KDA gated-delta"),
+    ("chunk_gated_delta_rule_fwd_kernel_h_blockdim64.kd", "KDA Linear Attn", "KDA gated-delta"),
+    ("_causal_conv1d_update_kernel.kd", "KDA Linear Attn", "KDA conv1d"),
+    ("_attn_res_kernel.kd", "Attention", "MLA attn residual"),
+    ("kernel_cutlass_split_kv_kernel_tokenspeed_mlamla_decode_fp8Blackwell",
+     "Attention", "TokenSpeed MLA (NV)"),
+    ("Cijk_Alik_Bljk_BSS_BH_Bias_S_HA_S_SAV_UserArgs_MT32x16x128_MI16x16x1", "GEMM", "hipBLASLt (Cijk)"),
+    ("void aiter::add_rmsnorm_quant_kernel<std::bfloat16_t, std::bfloat16_t>",
+     "Normalization", "Add+RMSNorm+quant"),
+]
+
+
+@pytest.mark.parametrize("name,cat,sub", BACKEND_KERNELS, ids=[k[:44] for k, _, _ in BACKEND_KERNELS])
+def test_categorize_kernel_backend_buckets(name, cat, sub):
+    got_cat, got_sub = T.categorize_kernel(name)
+    assert (got_cat, got_sub) == (cat, sub)
+
+
+def test_categorize_kernel_never_raises_and_always_returns_two_strings(decode):
+    """Run it over every real kernel name from both traces."""
+    for tag, (per_step, _) in decode.items():
+        for name in per_step:
+            cat, sub = T.categorize_kernel(name)
+            assert isinstance(cat, str) and cat, f"{tag}: empty category for {name}"
+            assert isinstance(sub, str) and sub, f"{tag}: empty sub_kernel for {name}"
+
+
+def test_categorize_kernel_does_not_bucket_a_quantiser_as_gemm():
+    """B300's MoE activation quantiser matches 'cutlass' -- it is not a GEMM.
+
+    categorize_kernel currently gets this wrong; trace_components fixes it. This
+    test documents the divergence so the older tables are not trusted for it.
+    """
+    q = "kernel_cutlass_kernel_flashinferquantizationkernelsmxfp8_quantizeMXFP8"
+    assert component_of(q) == "MoE routing/sort"   # trace_components: correct
+    # categorize_kernel has no rule for it at all -- it falls through to "Other",
+    # which is why the doc's older tables hide 183 us/step of B300 MoE quant work.
+    assert T.categorize_kernel(q)[0] == "Other"
+
+
+# ---------------------------------------------------------------------------
+# 6. The B300 MLA BMM attribution -- CONFIRMED by temporal adjacency, not
+#    inferred. nvjet_*_NNT runs immediately before the fused q-concat+KV-insert
+#    (BMM1 feeds it); nvjet_*_TNN runs immediately before the g_proj sigmoid
+#    gate that follows _v_up_proj (BMM2). 3936/3936 instances each, and the
+#    control nvjet_*_TNT shows a completely different neighbourhood.
+#    Evidence: /dev/shm/_neighbours.py
+# ---------------------------------------------------------------------------
+
+def test_b300_mla_bmm_kernels_are_in_mla_attention():
+    assert component_of("nvjet_sm103_tst_64x8_64x16_4x1_v_bz_NNT") == "MLA attention"
+    assert component_of("nvjet_sm103_tst_16x64_64x16_4x1_v_bz_TNN") == "MLA attention"
+
+
+def test_b300_dense_gemm_nvjet_is_not_swept_into_mla():
+    """The control: same kernel family, different transpose, must stay Dense."""
+    assert component_of("nvjet_sm103_tst_64x8_64x16_4x1_v_bz_TNT") == "Dense GEMM"
+    assert component_of("nvjet_sm103_tst_64x8_64x16_2x1_v_bz_splitK_TNT") == "Dense GEMM"
+
+
+# ---------------------------------------------------------------------------
+# 7. The components split out of the old Glue catch-all.
+# ---------------------------------------------------------------------------
+
+SPLIT_OUT = [
+    ("void vllm::situ_and_mul_kernel<c10::BFloat16>(c10::BFloat16*", "Activation/gating"),
+    ("void vllm::act_and_mul_kernel<c10::BFloat16, __nv_bfloat162", "Activation/gating"),
+    ("triton_poi_fused_mul_sigmoid_0", "Activation/gating"),
+    ("void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_cuda(",
+     "Activation/gating"),
+    ("__amd_rocclr_copyBuffer.kd", "Memory/copy"),
+    ("__amd_rocclr_fillBufferAligned.kd", "Memory/copy"),
+    ("memcpy32_post", "Memory/copy"),
+    ("_prepare_dflash_inputs_kernel.kd", "Spec-decode glue"),
+    ("_rejection_kernel.kd", "Spec-decode glue"),
+    ("_stage_spec_decode_metadata_kernel", "Spec-decode glue"),
+    ("_expand_page_indices_kernel.kd", "Spec-decode glue"),
+]
+
+
+@pytest.mark.parametrize("name,expected", SPLIT_OUT, ids=[k[:40] for k, _ in SPLIT_OUT])
+def test_glue_split_components(name, expected):
+    assert component_of(name) == expected
+
+
+def test_moe_silu_gemm_is_not_stolen_by_the_activation_rule(decode):
+    """'silu' appears in the MoE stage-1 GEMM name; the MoE rule must win."""
+    assert component_of(
+        "mfma_moe1_silu_mul_afp8_wfp4_fp8_t32x128x256_pm1_fp8q_sort_async_gui_xcd4_situv2"
+    ) == "MoE expert GEMM"
+
+
+@pytest.mark.parametrize("tag", ["MI355X", "B300"])
+def test_activation_gating_call_count_matches_across_platforms(decode, tag):
+    """Same model -> same number of activation/gate launches on both sides."""
+    if len(decode) < 2:
+        pytest.skip("need both traces")
+    counts = {}
+    for t, (per_step, _) in decode.items():
+        counts[t] = sum(c for k, (_, c) in per_step.items()
+                        if component_of(k) == "Activation/gating")
+    assert counts["MI355X"] == pytest.approx(counts["B300"], abs=1.0)

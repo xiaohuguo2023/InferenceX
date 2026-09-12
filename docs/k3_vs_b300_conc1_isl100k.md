@@ -524,13 +524,16 @@ DECODE, rank0, ISL-matched (MI355X 99,845 / B300 ~99,757). GPU kernels only.
 | Component | MI355X us/step | calls | B300 us/step | calls | Delta | Ratio | % MI355X step | % B300 step | % of gap |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | **MLA attention** | 3,754 | 330 | 1,942 | 327 | +1,812 | 1.93x | 14.1% | 9.8% | 27% |
-| **Glue/elementwise/misc** | 1,910 | 445 | 579 | 246 | +1,331 | 3.30x | 7.2% | 2.9% | 20% |
 | **Communication** | 3,818 | 410 | 2,727 | 478 | +1,091 | 1.40x | 14.3% | 13.7% | 16% |
+| **Glue/elementwise/misc** | 997 | 232 | 187 | 87 | +810 | 5.34x | 3.7% | 0.9% | 12% |
 | **KDA** | 1,753 | 138 | 1,085 | 138 | +668 | 1.62x | 6.6% | 5.5% | 10% |
 | **Norm/quant** | 863 | 199 | 263 | 102 | +600 | 3.28x | 3.2% | 1.3% | 9% |
 | **MoE routing/sort** | 2,679 | 368 | 2,108 | 368 | +571 | 1.27x | 10.1% | 10.6% | 8% |
 | **Dense GEMM** | 8,040 | 817 | 7,640 | 889 | +400 | 1.05x | 30.2% | 38.4% | 6% |
+| **Memory/copy** | 347 | 85 | 59 | 28 | +288 | 5.84x | 1.3% | 0.3% | 4% |
 | **MoE expert GEMM** | 3,743 | 184 | 3,458 | 184 | +284 | 1.08x | 14.0% | 17.4% | 4% |
+| **Activation/gating** | 499 | 122 | 272 | 122 | +228 | 1.84x | 1.9% | 1.4% | 3% |
+| **Spec-decode glue** | 66 | 6 | 61 | 9 | +5 | 1.08x | 0.2% | 0.3% | 0% |
 | **Sampling** | 82 | 18 | 79 | 18 | +4 | 1.05x | 0.3% | 0.4% | 0% |
 | **TOTAL** | **26,642** | 2,909 | **19,881** | 2,750 | **+6,761** | **1.34x** | 100% | 100% | 100% |
 
@@ -564,103 +567,6 @@ DECODE, rank0, ISL-matched (MI355X 99,845 / B300 ~99,757). GPU kernels only.
 | B300 | `void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::BFloat16, true, true, true>(c10...` | 19.3 | 5.0 | 3.87 | 1.0% |
 | B300 | `void vllm::concat_and_cache_mla_kernel<__nv_bfloat16, unsigned char, (vllm::Fp8KVCacheDataType)1>(__nv_bflo...` | 10.1 | 5.0 | 2.02 | 0.5% |
 
-### Glue/elementwise/misc — MI355X 1,910 us/step vs B300 579 us/step (3.30x, +1,331)
-
-| Platform | Kernel function | us/step | calls/step | us/call | % of component |
-|---|---|---:|---:|---:|---:|
-| MI355X | `void vllm::situ_and_mul_kernel<c10::BFloat16>(c10::BFloat16*, c10::BFloat16 const*, int, float, float) [clo...` | 379.3 | 93.0 | 4.08 | 19.9% |
-| MI355X | `void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_kernel_impl_nocast<at::native::fl...` | 365.4 | 77.0 | 4.74 | 19.1% |
-| MI355X | `__amd_rocclr_copyBuffer.kd` | 274.0 | 69.0 | 3.97 | 14.3% |
-| MI355X | `void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c10::BFloat16, c10::BFloat16, c...` | 100.1 | 24.0 | 4.17 | 5.2% |
-| MI355X | `void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_cuda(at::TensorIteratorBase&):...` | 99.8 | 24.0 | 4.16 | 5.2% |
-| MI355X | `triton_poi_fused__to_copy_cat_clamp_mul_reciprocal_view_0.kd` | 86.2 | 24.0 | 3.59 | 4.5% |
-| MI355X | `void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<ch...` | 51.6 | 12.0 | 4.30 | 2.7% |
-| MI355X | `_prepare_dflash_inputs_kernel.kd` | 38.1 | 1.0 | 38.07 | 2.0% |
-| MI355X | `void at::native::(anonymous namespace)::indexSelectSmallIndex<c10::BFloat16, long, unsigned int, 2, 2, -2>(...` | 36.9 | 8.0 | 4.61 | 1.9% |
-| MI355X | `void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<int>, std::array<char*, 1ul> >(in...` | 32.1 | 7.0 | 4.59 | 1.7% |
-| MI355X | `void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda_scatter_gather_internal_kerne...` | 29.5 | 7.0 | 4.21 | 1.5% |
-| MI355X | `void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_kernel_imp...` | 28.2 | 9.0 | 3.14 | 1.5% |
-| MI355X | `void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_400200_NS::detail::wrapped_scan...` | 24.8 | 6.0 | 4.14 | 1.3% |
-| MI355X | `void (anonymous namespace)::elementwise_kernel_with_index<int, at::native::arange_cuda_out(c10::Scalar cons...` | 24.6 | 6.0 | 4.10 | 1.3% |
-| MI355X | `void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_kernel_impl_nocast<at::native::di...` | 21.5 | 4.0 | 5.36 | 1.1% |
-| MI355X | `kernel.kd` | 21.3 | 5.0 | 4.27 | 1.1% |
-| MI355X | `triton_poi_fused_mul_silu_slice_0.kd` | 20.3 | 5.0 | 4.05 | 1.1% |
-| MI355X | `void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSelf_add<int>, std::array<char*,...` | 15.8 | 4.0 | 3.95 | 0.8% |
-| MI355X | `void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_add<long>, std::array<char*, 2ul...` | 13.0 | 3.0 | 4.32 | 0.7% |
-| MI355X | `void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda_scatter_gather_internal_kerne...` | 12.6 | 3.0 | 4.21 | 0.7% |
-| MI355X | `void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_kernel_impl<at::native::direct_co...` | 12.5 | 3.0 | 4.18 | 0.7% |
-| MI355X | `_expand_page_indices_kernel.kd` | 12.5 | 3.0 | 4.16 | 0.7% |
-| MI355X | `void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<int, int, int, at::native::bina...` | 12.0 | 3.0 | 4.00 | 0.6% |
-| MI355X | `void at::native::vectorized_elementwise_kernel<4, at::native::(anonymous namespace)::launch_clamp_scalar(at...` | 12.0 | 3.0 | 3.99 | 0.6% |
-| MI355X | `void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CU...` | 11.9 | 3.0 | 3.95 | 0.6% |
-| MI355X | `void at::native::(anonymous namespace)::CatArrayBatchedCopy_contig<at::native::(anonymous namespace)::Opaqu...` | 11.7 | 3.0 | 3.89 | 0.6% |
-| MI355X | `void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_kernel_impl_nocast<at::native::(a...` | 10.0 | 2.0 | 4.98 | 0.5% |
-| MI355X | `_rejection_kernel.kd` | 9.3 | 1.0 | 9.26 | 0.5% |
-| MI355X | `void at::native::vectorized_gather_kernel<16, long>(char*, char*, long*, int, long, long, long, long, bool)...` | 9.1 | 2.0 | 4.54 | 0.5% |
-| MI355X | `__amd_rocclr_fillBufferAligned.kd` | 8.5 | 2.0 | 4.27 | 0.4% |
-| MI355X | `void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSelf_add<long>, std::array<char*...` | 8.5 | 2.0 | 4.26 | 0.4% |
-| MI355X | `void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSelf_add<long>, std::array<char*...` | 8.3 | 2.0 | 4.13 | 0.4% |
-| MI355X | `void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_kernel_imp...` | 8.2 | 2.0 | 4.09 | 0.4% |
-| MI355X | `triton_poi_fused_add_bitwise_and_bitwise_not_bitwise_or_ge_lt_mul_sub_0.kd` | 8.1 | 2.0 | 4.07 | 0.4% |
-| MI355X | `_bias_kernel.kd` | 6.9 | 1.0 | 6.94 | 0.4% |
-| MI355X | `_compute_local_logits_stats_kernel.kd` | 6.5 | 1.0 | 6.52 | 0.3% |
-| MI355X | `void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>, std::array<char*, 3ul>, 4, T...` | 6.4 | 3.0 | 2.13 | 0.3% |
-| MI355X | `void at::native::(anonymous namespace)::CatArrayBatchedCopy_contig<at::native::(anonymous namespace)::Opaqu...` | 6.0 | 1.0 | 5.96 | 0.3% |
-| MI355X | `_compute_slot_mappings_kernel.kd` | 5.9 | 1.0 | 5.86 | 0.3% |
-| MI355X | `_scatter_num_accepted_kernel.kd` | 5.5 | 1.0 | 5.53 | 0.3% |
-| MI355X | `_post_update_kernel.kd` | 5.5 | 1.0 | 5.49 | 0.3% |
-| MI355X | `void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat32_copy_kernel_cuda(at::Tensor...` | 4.9 | 1.0 | 4.90 | 0.3% |
-| MI355X | `_gather_block_tables_kernel.kd` | 4.5 | 1.0 | 4.55 | 0.2% |
-| MI355X | `_prepare_pos_seq_lens_kernel.kd` | 4.5 | 1.0 | 4.46 | 0.2% |
-| MI355X | `preprocess_mamba_align_fused_kernel.kd` | 4.4 | 1.0 | 4.40 | 0.2% |
-| MI355X | `void at::native::vectorized_elementwise_kernel<16, at::native::FillFunctor<bool>, std::array<char*, 1ul> >(...` | 4.2 | 1.0 | 4.21 | 0.2% |
-| MI355X | `void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>(long const*, c10::BFloat16*, c10::BFloat16*...` | 4.2 | 1.0 | 4.20 | 0.2% |
-| MI355X | `void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_put_kernel...` | 4.2 | 1.0 | 4.19 | 0.2% |
-| MI355X | `postprocess_mamba_fused_kernel.kd` | 4.1 | 1.0 | 4.11 | 0.2% |
-| MI355X | `void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_kernel_impl_nocast<at::native::di...` | 4.1 | 1.0 | 4.08 | 0.2% |
-| MI355X | `void at::native::(anonymous namespace)::indexSelectSmallIndex<c10::BFloat16, int, unsigned int, 2, 2, -2>(a...` | 4.0 | 1.0 | 4.05 | 0.2% |
-| MI355X | `precopy_mamba_align_fused_kernel.kd` | 4.0 | 1.0 | 4.04 | 0.2% |
-| MI355X | `_expand_idx_mapping_kernel.kd` | 2.6 | 1.0 | 2.61 | 0.1% |
-| B300 | `void vllm::situ_and_mul_kernel<c10::BFloat16>(c10::BFloat16*, c10::BFloat16 const*, int, float, float)` | 221.8 | 93.0 | 2.38 | 38.3% |
-| B300 | `triton_poi_fused_mul_sigmoid_0` | 39.6 | 24.0 | 1.65 | 6.8% |
-| B300 | `void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(...` | 32.9 | 29.0 | 1.14 | 5.7% |
-| B300 | `void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<...` | 29.4 | 7.0 | 4.19 | 5.1% |
-| B300 | `_compute_local_logits_stats_kernel` | 27.7 | 1.0 | 27.74 | 4.8% |
-| B300 | `void at::native::(anonymous namespace)::indexSelectSmallIndex<c10::BFloat16, long, unsigned int, 2, 2, -2>(...` | 27.1 | 8.0 | 3.39 | 4.7% |
-| B300 | `void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kern...` | 17.6 | 4.0 | 4.39 | 3.0% |
-| B300 | `_prepare_dflash_inputs_kernel` | 15.5 | 1.0 | 15.52 | 2.7% |
-| B300 | `void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda_scatter_gather_internal_kerne...` | 14.4 | 7.0 | 2.06 | 2.5% |
-| B300 | `void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kern...` | 14.1 | 8.0 | 1.76 | 2.4% |
-| B300 | `memcpy32_post` | 11.9 | 6.0 | 1.98 | 2.0% |
-| B300 | `void vllm::act_and_mul_kernel<c10::BFloat16, __nv_bfloat162, &(c10::BFloat16 vllm::silu_kernel<c10::BFloat1...` | 10.3 | 5.0 | 2.07 | 1.8% |
-| B300 | `void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kern...` | 9.5 | 7.0 | 1.35 | 1.6% |
-| B300 | `void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_kernel_imp...` | 9.3 | 3.0 | 3.10 | 1.6% |
-| B300 | `void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctorOnSel...` | 9.2 | 7.0 | 1.31 | 1.6% |
-| B300 | `void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<ch...` | 9.0 | 5.0 | 1.80 | 1.6% |
-| B300 | `void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::(anonymous names...` | 6.8 | 2.0 | 3.38 | 1.2% |
-| B300 | `_rejection_kernel` | 6.7 | 1.0 | 6.70 | 1.2% |
-| B300 | `_stage_spec_decode_metadata_kernel` | 5.8 | 3.0 | 1.93 | 1.0% |
-| B300 | `_get_aligned_state_indices_kernel` | 5.7 | 3.0 | 1.91 | 1.0% |
-| B300 | `void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_kernel_imp...` | 5.5 | 2.0 | 2.74 | 0.9% |
-| B300 | `_gather_block_tables_kernel` | 5.2 | 1.0 | 5.22 | 0.9% |
-| B300 | `_post_update_kernel` | 5.2 | 1.0 | 5.21 | 0.9% |
-| B300 | `_compute_slot_mappings_kernel` | 4.6 | 1.0 | 4.61 | 0.8% |
-| B300 | `void at::native::vectorized_gather_kernel<16, long>(char*, char*, long*, int, long, long, long, long, bool)` | 4.2 | 2.0 | 2.09 | 0.7% |
-| B300 | `triton_poi_fused_add_bitwise_and_bitwise_not_bitwise_or_ge_lt_mul_sub_0` | 3.2 | 2.0 | 1.62 | 0.6% |
-| B300 | `void at::native::(anonymous namespace)::indexSelectSmallIndex<c10::BFloat16, int, unsigned int, 2, 2, -2>(a...` | 3.1 | 1.0 | 3.07 | 0.5% |
-| B300 | `postprocess_mamba_fused_kernel` | 3.0 | 1.0 | 2.95 | 0.5% |
-| B300 | `precopy_mamba_align_fused_kernel` | 2.9 | 1.0 | 2.95 | 0.5% |
-| B300 | `void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_put_kernel...` | 2.7 | 1.0 | 2.73 | 0.5% |
-| B300 | `preprocess_mamba_align_fused_kernel` | 2.3 | 1.0 | 2.25 | 0.4% |
-| B300 | `void at::native::(anonymous namespace)::CatArrayBatchedCopy_vectorized<at::native::(anonymous namespace)::O...` | 2.2 | 1.0 | 2.23 | 0.4% |
-| B300 | `void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>(long const*, c10::BFloat16*, c10::BFloat16*...` | 2.0 | 1.0 | 2.03 | 0.4% |
-| B300 | `void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSelf_add<int>, std::array<char*,...` | 1.7 | 1.0 | 1.74 | 0.3% |
-| B300 | `_prepare_pos_seq_lens_kernel` | 1.7 | 1.0 | 1.68 | 0.3% |
-| B300 | `_expand_idx_mapping_kernel` | 1.4 | 1.0 | 1.43 | 0.2% |
-| B300 | `_scatter_num_accepted_kernel` | 1.4 | 1.0 | 1.42 | 0.2% |
-| B300 | `void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<bool>, std::array<char*, 1ul> >(i...` | 1.3 | 1.0 | 1.29 | 0.2% |
-| B300 | `void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<int>, std::array<char*, 1ul> >(in...` | 1.2 | 1.0 | 1.24 | 0.2% |
-
 ### Communication — MI355X 3,818 us/step vs B300 2,727 us/step (1.40x, +1,091)
 
 | Platform | Kernel function | us/step | calls/step | us/call | % of component |
@@ -686,6 +592,74 @@ DECODE, rank0, ISL-matched (MI355X 99,845 / B300 ~99,757). GPU kernels only.
 | B300 | `void flashinfer::trtllm_mnnvl_allreduce::twoshotAllreduceKernel<(unsigned char)8, __nv_bfloat16, true, floa...` | 57.3 | 1.0 | 57.26 | 2.1% |
 | B300 | `ncclDevKernel_AllGather_RING_LL(ncclDevKernelArgsStorage<4096ul>)` | 56.4 | 2.0 | 28.22 | 2.1% |
 | B300 | `_dcp_local_seq_lens_kernel` | 3.4 | 2.0 | 1.70 | 0.1% |
+
+### Glue/elementwise/misc — MI355X 997 us/step vs B300 187 us/step (5.34x, +810)
+
+| Platform | Kernel function | us/step | calls/step | us/call | % of component |
+|---|---|---:|---:|---:|---:|
+| MI355X | `void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_kernel_impl_nocast<at::native::fl...` | 365.4 | 77.0 | 4.74 | 36.6% |
+| MI355X | `void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c10::BFloat16, c10::BFloat16, c...` | 100.1 | 24.0 | 4.17 | 10.0% |
+| MI355X | `triton_poi_fused__to_copy_cat_clamp_mul_reciprocal_view_0.kd` | 86.2 | 24.0 | 3.59 | 8.6% |
+| MI355X | `void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<ch...` | 51.6 | 12.0 | 4.30 | 5.2% |
+| MI355X | `void at::native::(anonymous namespace)::indexSelectSmallIndex<c10::BFloat16, long, unsigned int, 2, 2, -2>(...` | 36.9 | 8.0 | 4.61 | 3.7% |
+| MI355X | `void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<int>, std::array<char*, 1ul> >(in...` | 32.1 | 7.0 | 4.59 | 3.2% |
+| MI355X | `void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda_scatter_gather_internal_kerne...` | 29.5 | 7.0 | 4.21 | 3.0% |
+| MI355X | `void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_kernel_imp...` | 28.2 | 9.0 | 3.14 | 2.8% |
+| MI355X | `void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_400200_NS::detail::wrapped_scan...` | 24.8 | 6.0 | 4.14 | 2.5% |
+| MI355X | `void (anonymous namespace)::elementwise_kernel_with_index<int, at::native::arange_cuda_out(c10::Scalar cons...` | 24.6 | 6.0 | 4.10 | 2.5% |
+| MI355X | `kernel.kd` | 21.3 | 5.0 | 4.27 | 2.1% |
+| MI355X | `void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSelf_add<int>, std::array<char*,...` | 15.8 | 4.0 | 3.95 | 1.6% |
+| MI355X | `void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_add<long>, std::array<char*, 2ul...` | 13.0 | 3.0 | 4.32 | 1.3% |
+| MI355X | `void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda_scatter_gather_internal_kerne...` | 12.6 | 3.0 | 4.21 | 1.3% |
+| MI355X | `void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<int, int, int, at::native::bina...` | 12.0 | 3.0 | 4.00 | 1.2% |
+| MI355X | `void at::native::vectorized_elementwise_kernel<4, at::native::(anonymous namespace)::launch_clamp_scalar(at...` | 12.0 | 3.0 | 3.99 | 1.2% |
+| MI355X | `void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CU...` | 11.9 | 3.0 | 3.95 | 1.2% |
+| MI355X | `void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_kernel_impl_nocast<at::native::(a...` | 10.0 | 2.0 | 4.98 | 1.0% |
+| MI355X | `void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSelf_add<long>, std::array<char*...` | 8.5 | 2.0 | 4.26 | 0.9% |
+| MI355X | `void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSelf_add<long>, std::array<char*...` | 8.3 | 2.0 | 4.13 | 0.8% |
+| MI355X | `void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_kernel_imp...` | 8.2 | 2.0 | 4.09 | 0.8% |
+| MI355X | `triton_poi_fused_add_bitwise_and_bitwise_not_bitwise_or_ge_lt_mul_sub_0.kd` | 8.1 | 2.0 | 4.07 | 0.8% |
+| MI355X | `_bias_kernel.kd` | 6.9 | 1.0 | 6.94 | 0.7% |
+| MI355X | `void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>, std::array<char*, 3ul>, 4, T...` | 6.4 | 3.0 | 2.13 | 0.6% |
+| MI355X | `_compute_slot_mappings_kernel.kd` | 5.9 | 1.0 | 5.86 | 0.6% |
+| MI355X | `_scatter_num_accepted_kernel.kd` | 5.5 | 1.0 | 5.53 | 0.6% |
+| MI355X | `_post_update_kernel.kd` | 5.5 | 1.0 | 5.49 | 0.6% |
+| MI355X | `void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat32_copy_kernel_cuda(at::Tensor...` | 4.9 | 1.0 | 4.90 | 0.5% |
+| MI355X | `_gather_block_tables_kernel.kd` | 4.5 | 1.0 | 4.55 | 0.5% |
+| MI355X | `_prepare_pos_seq_lens_kernel.kd` | 4.5 | 1.0 | 4.46 | 0.4% |
+| MI355X | `preprocess_mamba_align_fused_kernel.kd` | 4.4 | 1.0 | 4.40 | 0.4% |
+| MI355X | `void at::native::vectorized_elementwise_kernel<16, at::native::FillFunctor<bool>, std::array<char*, 1ul> >(...` | 4.2 | 1.0 | 4.21 | 0.4% |
+| MI355X | `void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>(long const*, c10::BFloat16*, c10::BFloat16*...` | 4.2 | 1.0 | 4.20 | 0.4% |
+| MI355X | `void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_put_kernel...` | 4.2 | 1.0 | 4.19 | 0.4% |
+| MI355X | `postprocess_mamba_fused_kernel.kd` | 4.1 | 1.0 | 4.11 | 0.4% |
+| MI355X | `void at::native::(anonymous namespace)::indexSelectSmallIndex<c10::BFloat16, int, unsigned int, 2, 2, -2>(a...` | 4.0 | 1.0 | 4.05 | 0.4% |
+| MI355X | `precopy_mamba_align_fused_kernel.kd` | 4.0 | 1.0 | 4.04 | 0.4% |
+| MI355X | `_expand_idx_mapping_kernel.kd` | 2.6 | 1.0 | 2.61 | 0.3% |
+| B300 | `void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<float>, std::array<char*, 1ul> >(...` | 32.9 | 29.0 | 1.14 | 17.6% |
+| B300 | `void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctor_add<...` | 29.4 | 7.0 | 4.19 | 15.7% |
+| B300 | `void at::native::(anonymous namespace)::indexSelectSmallIndex<c10::BFloat16, long, unsigned int, 2, 2, -2>(...` | 27.1 | 8.0 | 3.39 | 14.5% |
+| B300 | `void at::native::_scatter_gather_elementwise_kernel<128, 8, at::native::_cuda_scatter_gather_internal_kerne...` | 14.4 | 7.0 | 2.06 | 7.7% |
+| B300 | `void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_kernel_imp...` | 9.3 | 3.0 | 3.10 | 5.0% |
+| B300 | `void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::CUDAFunctorOnSel...` | 9.2 | 7.0 | 1.31 | 4.9% |
+| B300 | `void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add<c10::BFloat16>, std::array<ch...` | 9.0 | 5.0 | 1.80 | 4.8% |
+| B300 | `void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::(anonymous names...` | 6.8 | 2.0 | 3.38 | 3.6% |
+| B300 | `void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_kernel_imp...` | 5.5 | 2.0 | 2.74 | 2.9% |
+| B300 | `_gather_block_tables_kernel` | 5.2 | 1.0 | 5.22 | 2.8% |
+| B300 | `_post_update_kernel` | 5.2 | 1.0 | 5.21 | 2.8% |
+| B300 | `_compute_slot_mappings_kernel` | 4.6 | 1.0 | 4.61 | 2.5% |
+| B300 | `triton_poi_fused_add_bitwise_and_bitwise_not_bitwise_or_ge_lt_mul_sub_0` | 3.2 | 2.0 | 1.62 | 1.7% |
+| B300 | `void at::native::(anonymous namespace)::indexSelectSmallIndex<c10::BFloat16, int, unsigned int, 2, 2, -2>(a...` | 3.1 | 1.0 | 3.07 | 1.6% |
+| B300 | `postprocess_mamba_fused_kernel` | 3.0 | 1.0 | 2.95 | 1.6% |
+| B300 | `precopy_mamba_align_fused_kernel` | 2.9 | 1.0 | 2.95 | 1.6% |
+| B300 | `void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_put_kernel...` | 2.7 | 1.0 | 2.73 | 1.5% |
+| B300 | `preprocess_mamba_align_fused_kernel` | 2.3 | 1.0 | 2.25 | 1.2% |
+| B300 | `void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>(long const*, c10::BFloat16*, c10::BFloat16*...` | 2.0 | 1.0 | 2.03 | 1.1% |
+| B300 | `void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSelf_add<int>, std::array<char*,...` | 1.7 | 1.0 | 1.74 | 0.9% |
+| B300 | `_prepare_pos_seq_lens_kernel` | 1.7 | 1.0 | 1.68 | 0.9% |
+| B300 | `_expand_idx_mapping_kernel` | 1.4 | 1.0 | 1.43 | 0.8% |
+| B300 | `_scatter_num_accepted_kernel` | 1.4 | 1.0 | 1.42 | 0.8% |
+| B300 | `void at::native::vectorized_elementwise_kernel<8, at::native::FillFunctor<bool>, std::array<char*, 1ul> >(i...` | 1.3 | 1.0 | 1.29 | 0.7% |
+| B300 | `void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<int>, std::array<char*, 1ul> >(in...` | 1.2 | 1.0 | 1.24 | 0.7% |
 
 ### KDA — MI355X 1,753 us/step vs B300 1,085 us/step (1.62x, +668)
 
@@ -771,6 +745,25 @@ DECODE, rank0, ISL-matched (MI355X 99,845 / B300 ~99,757). GPU kernels only.
 | B300 | `nvjet_sm103_tst_8x64_64x16_4x1_v_bz_TNN` | 19.8 | 5.0 | 3.95 | 0.3% |
 | B300 | `nvjet_sm103_tst_64x8_64x16_2x2_h_bz_NNT` | 17.4 | 5.0 | 3.48 | 0.2% |
 
+### Memory/copy — MI355X 347 us/step vs B300 59 us/step (5.84x, +288)
+
+| Platform | Kernel function | us/step | calls/step | us/call | % of component |
+|---|---|---:|---:|---:|---:|
+| MI355X | `__amd_rocclr_copyBuffer.kd` | 274.0 | 69.0 | 3.97 | 78.9% |
+| MI355X | `void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_kernel_impl_nocast<at::native::di...` | 21.5 | 4.0 | 5.36 | 6.2% |
+| MI355X | `void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_kernel_impl<at::native::direct_co...` | 12.5 | 3.0 | 4.18 | 3.6% |
+| MI355X | `void at::native::(anonymous namespace)::CatArrayBatchedCopy_contig<at::native::(anonymous namespace)::Opaqu...` | 11.7 | 3.0 | 3.89 | 3.4% |
+| MI355X | `void at::native::vectorized_gather_kernel<16, long>(char*, char*, long*, int, long, long, long, long, bool)...` | 9.1 | 2.0 | 4.54 | 2.6% |
+| MI355X | `__amd_rocclr_fillBufferAligned.kd` | 8.5 | 2.0 | 4.27 | 2.5% |
+| MI355X | `void at::native::(anonymous namespace)::CatArrayBatchedCopy_contig<at::native::(anonymous namespace)::Opaqu...` | 6.0 | 1.0 | 5.96 | 1.7% |
+| MI355X | `void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_kernel_impl_nocast<at::native::di...` | 4.1 | 1.0 | 4.08 | 1.2% |
+| B300 | `void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kern...` | 17.6 | 4.0 | 4.39 | 29.6% |
+| B300 | `void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kern...` | 14.1 | 8.0 | 1.76 | 23.8% |
+| B300 | `memcpy32_post` | 11.9 | 6.0 | 1.98 | 20.0% |
+| B300 | `void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::direct_copy_kern...` | 9.5 | 7.0 | 1.35 | 15.9% |
+| B300 | `void at::native::vectorized_gather_kernel<16, long>(char*, char*, long*, int, long, long, long, long, bool)` | 4.2 | 2.0 | 2.09 | 7.0% |
+| B300 | `void at::native::(anonymous namespace)::CatArrayBatchedCopy_vectorized<at::native::(anonymous namespace)::O...` | 2.2 | 1.0 | 2.23 | 3.8% |
+
 ### MoE expert GEMM — MI355X 3,743 us/step vs B300 3,458 us/step (1.08x, +284)
 
 | Platform | Kernel function | us/step | calls/step | us/call | % of component |
@@ -779,6 +772,31 @@ DECODE, rank0, ISL-matched (MI355X 99,845 / B300 ~99,757). GPU kernels only.
 | MI355X | `gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf_spart4x2_v2.kd` | 1,383.7 | 92.0 | 15.04 | 37.0% |
 | B300 | `bmm_MxE4m3_MxE2m1MxE4m3_Fp32_Ab32_Bb32_Cb32_t128x8x512_s3_et128x8_m128x8x32_c1x1x1_rM_TN_transOut_schPd2x1x...` | 2,051.8 | 92.0 | 22.30 | 59.3% |
 | B300 | `bmm_Bfloat16_MxE2m1MxE4m3_Fp32_Ab32_Bb32_t128x8x512_s3_et128x8_m128x8x32_c1x1x1_rM_TN_transOut_schPd2x1x2x3...` | 1,406.5 | 92.0 | 15.29 | 40.7% |
+
+### Activation/gating — MI355X 499 us/step vs B300 272 us/step (1.84x, +228)
+
+| Platform | Kernel function | us/step | calls/step | us/call | % of component |
+|---|---|---:|---:|---:|---:|
+| MI355X | `void vllm::situ_and_mul_kernel<c10::BFloat16>(c10::BFloat16*, c10::BFloat16 const*, int, float, float) [clo...` | 379.3 | 93.0 | 4.08 | 76.0% |
+| MI355X | `void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_cuda(at::TensorIteratorBase&):...` | 99.8 | 24.0 | 4.16 | 20.0% |
+| MI355X | `triton_poi_fused_mul_silu_slice_0.kd` | 20.3 | 5.0 | 4.05 | 4.1% |
+| B300 | `void vllm::situ_and_mul_kernel<c10::BFloat16>(c10::BFloat16*, c10::BFloat16 const*, int, float, float)` | 221.8 | 93.0 | 2.38 | 81.6% |
+| B300 | `triton_poi_fused_mul_sigmoid_0` | 39.6 | 24.0 | 1.65 | 14.6% |
+| B300 | `void vllm::act_and_mul_kernel<c10::BFloat16, __nv_bfloat162, &(c10::BFloat16 vllm::silu_kernel<c10::BFloat1...` | 10.3 | 5.0 | 2.07 | 3.8% |
+
+### Spec-decode glue — MI355X 66 us/step vs B300 61 us/step (1.08x, +5)
+
+| Platform | Kernel function | us/step | calls/step | us/call | % of component |
+|---|---|---:|---:|---:|---:|
+| MI355X | `_prepare_dflash_inputs_kernel.kd` | 38.1 | 1.0 | 38.07 | 57.4% |
+| MI355X | `_expand_page_indices_kernel.kd` | 12.5 | 3.0 | 4.16 | 18.8% |
+| MI355X | `_rejection_kernel.kd` | 9.3 | 1.0 | 9.26 | 14.0% |
+| MI355X | `_compute_local_logits_stats_kernel.kd` | 6.5 | 1.0 | 6.52 | 9.8% |
+| B300 | `_compute_local_logits_stats_kernel` | 27.7 | 1.0 | 27.74 | 45.1% |
+| B300 | `_prepare_dflash_inputs_kernel` | 15.5 | 1.0 | 15.52 | 25.3% |
+| B300 | `_rejection_kernel` | 6.7 | 1.0 | 6.70 | 10.9% |
+| B300 | `_stage_spec_decode_metadata_kernel` | 5.8 | 3.0 | 1.93 | 9.4% |
+| B300 | `_get_aligned_state_indices_kernel` | 5.7 | 3.0 | 1.91 | 9.3% |
 
 ### Sampling — MI355X 82 us/step vs B300 79 us/step (1.05x, +4)
 

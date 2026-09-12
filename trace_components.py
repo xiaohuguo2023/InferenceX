@@ -67,6 +67,22 @@ COMPONENT_RULES: list[tuple[str, tuple[str, ...]]] = [
     )),
     ("Norm/quant", ("rmsnorm", "layernorm", "layer_norm", "norm", "quant")),
     ("Sampling", ("sampl", "argmax", "multinomial", "softmax_warp")),
+    # Split out of the old Glue catch-all so the comparison is readable. Each of
+    # these is real model work present on BOTH platforms, not analyser residue.
+    ("Activation/gating", (
+        "situ_and_mul", "act_and_mul", "silu", "swiglu",
+        # the MLA output gate: attn_out * g_proj(h).sigmoid(). B300 fuses it
+        # (triton_poi_fused_mul_sigmoid); we run a separate sigmoid then a mul.
+        "sigmoid",
+    )),
+    ("Memory/copy", (
+        "copybuffer", "fillbuffer", "memcpy", "memset", "catarraybatchedcopy",
+        "direct_copy", "vectorized_gather",
+    )),
+    ("Spec-decode glue", (
+        "dflash", "rejection", "spec_decode_metadata", "aligned_state_indices",
+        "expand_page_indices", "logits_stats", "gumbel", "resample",
+    )),
 ]
 CATCHALL = "Glue/elementwise/misc"
 
