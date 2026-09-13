@@ -116,6 +116,15 @@ aiter change *sooner*, not later.
 The aiter PR's own justification is empirical and the margin is thin — "1030
 shapes, 0 violations, worst actual/bound **0.998**" — so carry that measurement
 in its description.
+
+**MEASURED: the vLLM PR is independently testable against STOCK aiter.** Both
+python hunks of `0001-k3-dcp8-code.patch` were reverted in `/opt/aiter-local`
+(`get_block_n_fp8` 80/96/112 + `.get` default in `aiter/mla.py`; `min`->`max` in
+`aiter/ops/attention.py`) and the full suite re-run: **540 passed, 0 failed** —
+identical to the patched result. So upstream CI, which has stock aiter, will go
+green. Instrumenting the stock `get_block_n_fp8[...]` lookup showed it is
+**never reached** on the cprr path, i.e. that aiter hunk belongs to a different
+(non-cprr) fp8 decode path and is not a hidden dependency of this PR.
 **Tests:** unit asserting sizing (`get_mla_metadata_info_v1`) and runtime
 (`get_mla_metadata_v1`) receive the **same** value — consistency is the actual
 requirement, not the number.
