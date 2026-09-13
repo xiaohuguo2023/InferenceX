@@ -172,6 +172,13 @@ causal-mask maths. It asserts:
   nothing, because a kernel ignoring global positions still produces
   plausible-looking output.
 
+**Open follow-up — the same-config route A/B.** `VLLM_ROCM_AITER_MLA_DCP_VERIFY`
+makes `asm` vs `segmented` a one-variable experiment on an identical build and
+workload, but we have never actually run it for *performance* (the knob was
+built to bisect the AL collapse). The PR description promises this as a
+follow-up, so it should be run once the box is free: conc-1 DCP8, one arm each,
+report ITL p50/p90 and intvty p90 with request_count and OSL beside them.
+
 No model weights are needed: the MLA dims come from DeepSeek-R1's *config*
 (the model upstream's own MLA tests already use) with only the head count
 overridden, and the parallel groups are single-process stubs.

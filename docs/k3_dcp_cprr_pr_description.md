@@ -12,8 +12,12 @@ Branch: `xguo/rocm-mla-dcp-cprr-verify` (4 commits, +1077/−9, 5 files)
 
 ## Purpose
 
-Today, when decode context parallelism (DCP) is combined with speculative
-decoding on ROCm, **every** verify step leaves the AITER ASM MLA path.
+**Makes the AITER ASM MLA decode path reachable when decode context parallelism
+(DCP) is combined with speculative decoding on ROCm. Today it is not reachable
+at all in that configuration.**
+
+Today, when DCP is combined with speculative decoding on ROCm, **every** verify
+step leaves the AITER ASM MLA path.
 
 `#51705` added DCP multi-token verify via the *segmented* route, which expands a
 verify group into one single-query row per token and carries the causal window
@@ -86,12 +90,22 @@ there is a test asserting exactly that.
   cap is supplied; it is a pure memory optimisation, is inert without a caller
   that passes a cap to the *sizing* call, and can land in either order. Until it
   does, this PR sizes that scratch generously.
-- **What is not claimed.** We do not have a clean end-to-end A/B of this route
-  against the segmented route at an identical configuration, so no end-to-end
-  speedup is claimed here. The argument for the route is that it is the only way
-  to reach the ASM MLA path under DCP + spec decode at all, plus the KV-read
-  structure in the table above. The numbers quoted are kernel-level and
-  numerical, and are reproduced below.
+- **This is an enablement change, not a tuning change.** That is why the
+  headline is a capability rather than a percentage. On ROCm today, turning on
+  DCP together with speculative decoding silently costs you the entire AITER ASM
+  MLA path: every step has `qlen > 1`, so every step takes the Triton segmented
+  route, and none of the ASM MLA work applies. This PR is what makes that
+  configuration able to use the ASM kernels at all. The relevant comparison is
+  therefore "ASM path reachable or not", and the supporting evidence is the
+  KV-read structure above plus the kernel-level and numerical results below.
+- **The head-to-head is one environment variable.** Because the route is
+  selected at runtime, `VLLM_ROCM_AITER_MLA_DCP_VERIFY=asm` vs `segmented`
+  compares the two routes on an identical build, model and workload, with no
+  rebuild and no other variable moving. Reviewers can reproduce that on their
+  own hardware. We are not quoting an end-to-end percentage in this description
+  yet because we want a same-config A/B we can fully stand behind rather than a
+  number carried over from a differently-configured run; we will follow up with
+  one.
 
 ---
 
