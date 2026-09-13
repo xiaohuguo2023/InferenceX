@@ -38,7 +38,8 @@ fi
 
 export MODEL=moonshotai/Kimi-K3
 export MODEL_PATH="${MODEL_SNAPSHOT%/}"
-export TP=8 CONC DURATION=3600
+export TP=8 CONC
+export DURATION="${DURATION:-3600}"
 
 # EP_SIZE=1 is NOT optional. The recipe is pure TP8; --enable-expert-parallel
 # costs 6.1% and makes the run non-comparable to every number above.
@@ -65,14 +66,19 @@ export AIPERF_UV_CACHE_DIR="${AIPERF_UV_CACHE_DIR:-/dev/shm/aiperf-uv-cache}"
 case "$CONC" in
   1)
     export DCP_SIZE=8
-    export KV_OFFLOADING=dram KV_OFFLOAD_BACKEND=lmcache TOTAL_CPU_DRAM_GB=803
+    export KV_OFFLOADING=dram KV_OFFLOAD_BACKEND=lmcache
+    export TOTAL_CPU_DRAM_GB="${TOTAL_CPU_DRAM_GB:-803}"
     # The nightly-rocm asset index is not immutable and rotates dev pins; dev105
     # and dev89 are already gone. Re-pin if this stops resolving.
-    export LMCACHE_VERSION="${LMCACHE_VERSION:-0.5.5.dev114+rocm7.2}"
+    export LMCACHE_VERSION="${LMCACHE_VERSION:-0.5.6.dev3+rocm7.2}"
+    export KV_OFFLOAD_BACKEND_METADATA="$(
+      printf '{"name":"lmcache","version":"%s"}' "$LMCACHE_VERSION"
+    )"
     ;;
   2|4)
     export DCP_SIZE=1
     export KV_OFFLOADING=none
+    unset KV_OFFLOAD_BACKEND KV_OFFLOAD_BACKEND_METADATA
     ;;
   *)
     echo "ERROR: CONC must be 1, 2 or 4 (those are the measured points)" >&2; exit 1;;
@@ -129,14 +135,35 @@ preflight() {
     #     nightly-rocm100-* tags are ROCm 10 and measured ~9.5% SLOWER on this
     #     workload (they also break the torch profiler in vLLM workers and make
     #     the aiter GEMM tuner report 0 us). Every published number is 7.2.x.
-    local rocmv
-    rocmv=$(cat /opt/rocm/.info/version 2>/dev/null | cut -d. -f1,2)
+    # NOTE: this used to be `rocmv=$(cat ... 2>/dev/null | cut ...)`, which dies
+    # under `set -euo pipefail` when the file is missing -- 2>/dev/null hides the
+    # message but not cat's exit code, so the script aborted before it could reach
+    # its own "not detectable" branch. rocm100 images ship no /opt/rocm at all and
+    # carry the ROCm build tag in torch.__version__ instead.
+    local rocmv=""
+    if [ -r /opt/rocm/.info/version ]; then
+        rocmv=$(cut -d. -f1,2 < /opt/rocm/.info/version 2>/dev/null || true)
+    fi
+    if [ -z "$rocmv" ]; then
+        rocmv=$(python3 -c "import torch,re;m=re.search(r'rocm([0-9]+[.][0-9]+)',torch.__version__);print(m.group(1) if m else '')" 2>/dev/null || true)
+    fi
     if [ -z "$rocmv" ]; then
         echo "  ..  ROCm version not detectable (/opt/rocm/.info/version missing)"
+    elif [ "$rocmv" != "7.2" ] && [ "${ALLOW_NON_72_ROCM:-0}" = "1" ]; then
+        # Escape hatch for multi-stream work ONLY. The ROCR/CLR cross-stream
+        # backport (vLLM #55099) that makes multi-stream pay off has not reached
+        # the published 7.2.x nightlies -- their libhsa-runtime64/libamdhip64 are
+        # byte-identical to the 7.2.3 pin -- so the fixed runtime is currently
+        # only available on rocm100 images. A run under this override is NOT
+        # comparable to any published 7.2.3 number; it is only valid against
+        # another run on the SAME image.
+        echo "  !!  ROCm $rocmv (ALLOW_NON_72_ROCM=1). NOT comparable to published" >&2
+        echo "      7.2.3 numbers -- only A/B against the same image." >&2
     elif [ "$rocmv" != "7.2" ]; then
         echo "PREFLIGHT FAIL: ROCm $rocmv -- the published numbers are ROCm 7.2.3." >&2
         echo "  A rocm100 image is ~9.5% slower here and is NOT comparable." >&2
         echo "  Fix: use the image pinned in patches/k3-dcp8/README.md." >&2
+        echo "  For multi-stream work on rocm100, set ALLOW_NON_72_ROCM=1." >&2
         bad=1
     else
         echo "  ok  ROCm $(cat /opt/rocm/.info/version)"
