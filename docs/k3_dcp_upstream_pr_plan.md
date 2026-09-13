@@ -88,11 +88,34 @@ go independently of the whole DCP story.
 Highest value-per-line of the set: measured **ITL p90 9.43 -> 8.18, intvty p90
 106.0 -> 122.2** at conc-1, because upstream's uncapped default starved DCP8 at
 low batch (32->456us, 64->242, 128->141, 256->103 at batch 1).
-**Direction matters and makes this safe alone:** vLLM passing
-`max_split_per_batch` when aiter lacks the tight bound is harmless (aiter sizes
-generously). The reverse — aiter tight bound without vLLM passing it — overflows
-reduce scratch ~7.7x and faults. So the vLLM PR may land first; the aiter PR
-must not.
+**CORRECTED — there is no ordering constraint between this and the aiter PR.**
+An earlier version of this plan claimed the aiter PR had to land second. That is
+wrong. The aiter change is one line inside `get_mla_metadata_info_v1`, gated by
+`if max_split_per_batch > 0:`, and the parameter **defaults to `-1`**, so it is
+unreachable for any caller that does not pass a cap to the *sizing* call. The
+only existing vLLM caller, `rocm_aiter_mla_sparse.py`, passes a cap to
+`get_mla_metadata_v1` (build) but **not** to `get_mla_metadata_info_v1`
+(sizing), so aiter-first is a no-op for it.
+
+| vLLM | aiter | result |
+|---|---|---|
+| old | old `max` | status quo |
+| **new** | old `max` | `max(loose, tile+cap)` >= loose — safe, merely wasteful |
+| old | **new `min`** | branch unreachable — no-op, safe |
+| new | new | tight bound: MLA reduce scratch 9.35 -> 2.38 GiB |
+
+What was mistaken for an ordering rule is really a **caller-side invariant**:
+the same cap must reach *both* the sizing call and the build call. That is a
+property of this one PR, and the test below asserts it.
+
+The genuine coupling is about benefit, not safety: this PR alone is safe but
+costs ~9.35 GiB of MLA reduce scratch, because stock aiter `max()`es the tight
+bound away. State that cost in the PR description. It argues for landing the
+aiter change *sooner*, not later.
+
+The aiter PR's own justification is empirical and the margin is thin — "1030
+shapes, 0 violations, worst actual/bound **0.998**" — so carry that measurement
+in its description.
 **Tests:** unit asserting sizing (`get_mla_metadata_info_v1`) and runtime
 (`get_mla_metadata_v1`) receive the **same** value — consistency is the actual
 requirement, not the number.
@@ -151,7 +174,9 @@ Verified to have power, not just to be green: forcing
 `0001-k3-dcp8-code.patch` (113 lines): fp8 MLA block-N lookup keys, the tight
 split-tile bound (`max`->`min`, reclaims MLA reduce scratch 9.35 -> 2.38 GiB),
 and a split-K guard for ASM a16w16 under cudagraph replay.
-**Must land after vLLM PR 5** (see the direction argument above).
+**Can land in either order relative to vLLM PR 5** — the split-bound change is
+inert until a caller passes a cap to the *sizing* call, which only PR 5 does
+(see the corrected table above). The full memory reclaim needs both.
 `0002-k3-tuned-gemm-csv.patch` (1618 lines) is tuned CSV data, likely not
 upstreamable as-is. `0003-flydsl-032-aux-attr.patch` is a local compat shim for
 flydsl 0.3.2 and should NOT be upstreamed — see the version trap below.
