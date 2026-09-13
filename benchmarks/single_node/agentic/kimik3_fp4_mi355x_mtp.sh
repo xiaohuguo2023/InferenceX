@@ -90,14 +90,53 @@ VLLM_PKG="$(python3 -c 'import os, vllm; print(os.path.dirname(vllm.__file__))')
 # Each apply is idempotent -- a *successful* reverse dry-run means it is in.
 apply_vllm_patch() {
     local p="$1"
+    # Per-image rebase: if <name>.patch.<vllm-sha> exists, prefer it. vLLM moves
+    # under us between nightlies (e.g. eed1f3d0 reworked kimi_k3/amd/kda.py and
+    # natively adopted most of kda.patch, leaving a smaller residual), and a
+    # partially-applying patch aborts the whole recipe under `set -e`.
+    local _sha
+    _sha=$(python3 -c 'import vllm;v=vllm.__version__;print(v.split("+g")[-1][:8] if "+g" in v else "")' 2>/dev/null || true)
+    if [ -n "$_sha" ] && [ -f "${p}.${_sha}" ]; then
+        echo "using per-image patch: $(basename "${p}.${_sha}")"
+        p="${p}.${_sha}"
+    elif ! patch --dry-run -p1 -d "$VLLM_PKG" <"$p" >/dev/null 2>&1 \
+         && ! patch --dry-run -R -p1 -d "$VLLM_PKG" <"$p" >/dev/null 2>&1; then
+        # No variant for THIS sha and the base does not apply. Different nightlies
+        # often share an identical pristine file, so try the other rebases before
+        # giving up -- otherwise every image bump needs a duplicate patch file.
+        local _v
+        for _v in "${p}".*; do
+            [ -f "$_v" ] || continue
+            if patch --dry-run -p1 -d "$VLLM_PKG" <"$_v" >/dev/null 2>&1; then
+                echo "base patch stale; reusing rebase: $(basename "$_v")"
+                p="$_v"; break
+            fi
+            # A rebase variant that is ALREADY applied reverse-applies cleanly
+            # but does NOT forward-apply, so the check above cannot see it.
+            # Without this branch a re-run falls back to the base patch, whose
+            # reverse check then also fails, and it gets force-applied on top of
+            # the variant -- "2 out of 6 hunks FAILED" and the run aborts.
+            if patch --dry-run -R -p1 -d "$VLLM_PKG" <"$_v" >/dev/null 2>&1; then
+                echo "rebase already applied: $(basename "$_v")"
+                p="$_v"; break
+            fi
+        done
+    fi
     if [ ! -f "$p" ]; then echo "!! missing patch: $p" >&2; return 1; fi
     if patch --dry-run -R -p1 -d "$VLLM_PKG" <"$p" >/dev/null 2>&1; then
         echo "patch already applied: ${p#"$REPO_ROOT"/}"
         return 0
     fi
-    patch -p1 -d "$VLLM_PKG" <"$p"
+    patch --batch -p1 -d "$VLLM_PKG" <"$p"
 }
-for _p in envs utils kda linear wvsplitkq_strided; do
+# amd_mla_gate_multistream: opt-in via K3_AMD_GATE_MULTI_STREAM=1, inert otherwise.
+# CAUTION: it patches models/kimi_k3/amd/mla.py. If that file is edited out-of-band
+# (another agent/editor working on overlap), the idempotency check below can
+# mis-detect state, "Assume -R" and REVERSE an already-applied patch -- that is how
+# kda.patch got reversed and produced SERVE_RC=1 earlier. Check for out-of-band
+# edits to amd/mla.py before running the recipe while overlap work is in flight.
+for _p in envs utils kda linear wvsplitkq_strided fused_allreduce_rms_norm latent_moe_runner packed_latent_tail \
+          amd_mla_gate_multistream; do
     apply_vllm_patch "$REPO_ROOT/patches/k3-perf/vllm/$_p.patch"
 done
 for _p in scheduler config cp_common speculator rocm_aiter_mla speculative_draft_dcp \
