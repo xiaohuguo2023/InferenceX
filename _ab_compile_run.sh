@@ -3,6 +3,7 @@
 #
 #   ARM=1 bash _ab_compile_run.sh     # config only, ZERO code change
 #   ARM=2 bash _ab_compile_run.sh     # config + upstream PR #56664 decorator
+#   ARM=3 bash _ab_compile_run.sh     # upstream scheduler PRs #54627 + #54625
 #
 # Run from the host. Needs the GPUs free.
 #
@@ -31,14 +32,18 @@
 set -euo pipefail
 
 CTR="${CTR:-k3-2671}"
-ARM="${ARM:?set ARM=1 (config only) or ARM=2 (config + decorator)}"
+ARM="${ARM:?set ARM=1 (config only), 2 (config + decorator) or 3 (scheduler PRs)}"
 IMG="${IMG:-vllm/vllm-openai-rocm:nightly-2671fedfc7ae604761990603fc736c0c4f21de57}"
 VLLM_PKG=/usr/local/lib/python3.12/dist-packages/vllm
 
 case "$ARM" in
-  1) TAG=abcompile_cfg_c1;   APPLY_DECORATOR=0 ;;
-  2) TAG=abcompile_deco_c1;  APPLY_DECORATOR=1 ;;
-  *) echo "ARM must be 1 or 2" >&2; exit 2 ;;
+  1) TAG=abcompile_cfg_c1;   APPLY_DECORATOR=0; SCHED_PRS="" ;;
+  2) TAG=abcompile_deco_c1;  APPLY_DECORATOR=1; SCHED_PRS="" ;;
+  # Arm 3: the two upstream scheduler PRs, both off by default upstream, so the
+  # arm is (patch) + (flags). Split from 1/2 because it targets a different
+  # cost: prefill/decode interleaving and admission order, not graph fusion.
+  3) TAG=absched_c1;         APPLY_DECORATOR=0; SCHED_PRS="54627 54625" ;;
+  *) echo "ARM must be 1, 2 or 3" >&2; exit 2 ;;
 esac
 
 # --- preflight: the GPUs must be free, and they must be free of OTHER people's
@@ -72,16 +77,53 @@ if [ "$APPLY_DECORATOR" = 1 ]; then
       "patch -p1 -d $VLLM_PKG < /workspace/patches/k3-perf/vllm/dspark_torch_compile.patch"
 fi
 
+# --- Arm 3: fetch the two scheduler PRs as patches and apply them. They are not
+# in any image, so they have to come from GitHub. Both features are off by
+# default, so the flags below are what actually turns them on.
+SCHED_ARGS=""
+for pr in $SCHED_PRS; do
+    raw=/dev/shm/_pr_${pr}.patch
+    f=/dev/shm/_pr_${pr}_vllm.patch
+    [ -s "$raw" ] || curl -fsSL "https://github.com/vllm-project/vllm/pull/${pr}.diff" -o "$raw"
+    # A PR .diff carries tests/ too, but the installed package has no tests/
+    # tree -- -p2 would strip a/tests/ to a path under vllm/ and fail with
+    # "can't find file to patch". Keep only the vllm/ hunks.
+    python3 /workspace/_filter_vllm_diff.py "$raw" "$f" >/dev/null
+    docker cp "$f" "$CTR":/tmp/ >/dev/null
+    docker exec "$CTR" bash -lc "cd $VLLM_PKG && patch -p2 --forward < /tmp/_pr_${pr}_vllm.patch" \
+      || { echo "PR $pr did not apply -- it has drifted from the image; rebase or drop it" >&2; exit 1; }
+done
+if [ -n "$SCHED_PRS" ]; then
+    # #54627: defer new prefills to every Nth step so decode runs in longer
+    #   uninterrupted stretches. Silently a no-op before that PR: the base
+    #   EngineCore._should_throttle_prefills() returns False unconditionally.
+    # #54625: admit a request whose prefix is already resident ahead of a cold
+    #   one, so the cold allocation cannot evict blocks the queued request needs.
+    #   Requires fcfs + prefix caching; threshold gates it to when KV is tight.
+    SCHED_ARGS="--prefill-schedule-interval ${PREFILL_SCHEDULE_INTERVAL:-4}"
+    SCHED_ARGS="$SCHED_ARGS --cache-aware-admission-window ${CACHE_AWARE_WINDOW:-4}"
+    SCHED_ARGS="$SCHED_ARGS --cache-aware-admission-threshold ${CACHE_AWARE_THRESHOLD:-0.9}"
+fi
+
 # --- LMCache's nightly-rocm index is NOT immutable and rotates its dev pins
 # (dev89, dev105, dev134 are all gone). A stale pin aborts the run ~8 min in,
 # AFTER patching, which is what creates the half-patched tree above.
 export LMCACHE_VERSION="${LMCACHE_VERSION:-0.5.6.dev3+rocm7.2}"
 
-echo "=== ARM $ARM -> $TAG (decorator=$APPLY_DECORATOR) ==="
+# Arms 1/2 test graph fusion; arm 3 tests the scheduler. Keep them disjoint --
+# an arm that moved both would measure neither.
+if [ -n "$SCHED_PRS" ]; then
+    COMPILE_JSON=""
+else
+    COMPILE_JSON=',\"use_inductor_graph_partition\":true'
+fi
+
+echo "=== ARM $ARM -> $TAG (decorator=$APPLY_DECORATOR, sched='$SCHED_ARGS') ==="
 docker exec "$CTR" bash -lc "cd /workspace && \
   CONC=1 TAG=$TAG \
   LMCACHE_VERSION=$LMCACHE_VERSION \
-  COMPILATION_EXTRA_JSON=',\"use_inductor_graph_partition\":true' \
+  COMPILATION_EXTRA_JSON='$COMPILE_JSON' \
+  EXTRA_VLLM_ARGS='--load-format auto $SCHED_ARGS' \
   setsid nohup bash benchmarks/single_node/agentic/repro/k3_mi355x_agentic_repro.sh \
   > /workspace/_${TAG}.log 2>&1 & echo launched"
 
@@ -90,7 +132,9 @@ cat <<EOF
 Launched. ~10 min to serve up, then 3600 s of aiperf.
 
 Watch:        tail -f _${TAG}.log
-Did it take?  grep -E 'Enabled custom fusions|rope_kvcache_cat_mla|graph partition' _${TAG}.log
+Did it take?  arms 1-2: grep -E 'rope_kvcache_cat_mla|graph partition' _${TAG}.log
+              arm 3:    grep -E 'prefill.schedule.interval|cache.aware.admission' \
+                          results_ixci/$TAG/vllm_command.txt
               ^ if 'rope_kvcache_cat_mla' is absent, the pass did NOT engage and
                 the arm is void -- do not report its number.
 Compare:      python3 _ab_route_report.py abroute_asm_c1 $TAG
