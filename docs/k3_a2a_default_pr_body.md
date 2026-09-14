@@ -19,6 +19,22 @@ Two deliberate limits on scope:
 - **`q_replicate` is not set.** `GlmMoeDsa` pairs `a2a` with `q_replicate=True`; that changes weight loading and is an independent question we have not measured, so it is left alone.
 - **This changes only the default.** `set_dcp_defaults` fills options the user left unset, so an explicit `--dcp-comm-backend` still wins. A test pins that, because a "default" that silently overrode the flag would be worse than no default at all.
 
+### Platform scope
+
+This is a **common-path** change: `vllm/model_executor/models/config.py` has no
+platform gating, and `a2a` is one of the two generic `DCPCommBackend` values
+rather than a ROCm backend, so the default moves on every platform.
+
+The measurements above are **MI355X (gfx950, 8-rank xGMI) only** — we have no
+NVIDIA DCP setup and have not measured `a2a` there. The mechanism is one
+`all_to_all_single` instead of `allgather(lse)` + `reduce_scatter(out)`; whether
+that balance holds over NVLink is an open question.
+
+There is precedent for the default itself being cross-platform: `GlmMoeDsa`
+already defaults to `a2a` through this same hook, and GLM-5.2 runs on NVIDIA
+(`tests/evals/gsm8k/configs/GLM-5.2-NVFP4-*.yaml`). If maintainers would rather
+see NVIDIA numbers first, or want this gated, say so and I will adjust.
+
 ### Note on prefill context parallelism
 
 `a2a` has a known caveat under PCP: #56677 pins `--dcp-comm-backend ag_rs` for a GLM-5.2 PCP4+DCP4 eval config, and GLM already defaults to `a2a`. The measurements above are **DCP-only, PCP off**; we have not measured `a2a` under PCP. Because this moves only the default, a K3 + PCP configuration can override it the same way that eval config does.
