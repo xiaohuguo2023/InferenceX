@@ -1,0 +1,35 @@
+Enable torch.compile for the Kimi-K3 DSpark draft model.
+
+Ported from upstream vLLM PR #56664 (OPEN as of 2026-09-14, author fululi12):
+https://github.com/vllm-project/vllm/pull/56664
+
+Without @support_torch_compile the DSpark forward graph is never compiled, so
+every configured Inductor fusion pass is inert on it. This is the draft model
+only -- the Kimi-K3 TARGET is still compile-free, so target-side passes stay
+inert either way.
+
+Pairs with COMPILATION_EXTRA_JSON='"use_inductor_graph_partition":true', which
+is what actually lets fuse_rope_kvcache_cat_mla resolve to true (see
+vllm/config/vllm.py::enable_rope_kvcache_mla_fusion). The decorator alone
+compiles the graph; the config alone unlocks the pass. Upstream measured them
+together (+6.7% intvty p90 at depth 3 on MI355X) and could not separate them --
+our A/B runs the config-only arm first precisely so we can.
+
+--- a/models/kimi_k3/nvidia/dspark_mla.py
++++ b/models/kimi_k3/nvidia/dspark_mla.py
+@@ -8,6 +8,7 @@
+ import torch.nn as nn
+
+ import vllm._custom_ops as ops
++from vllm.compilation.decorators import support_torch_compile
+ from vllm.config import VllmConfig
+ from vllm.model_executor.layers.layernorm import RMSNorm
+ from vllm.model_executor.layers.linear import (
+@@ -128,6 +129,7 @@ class K3DSparkDecoderLayer(nn.Module):
+         return hidden_states, residual
+
+
++@support_torch_compile
+ class K3DSparkModel(nn.Module):
+     def __init__(
+         self,

@@ -603,7 +603,13 @@ CUDAGRAPH_MODE="${CUDAGRAPH_MODE:-FULL_DECODE_ONLY}"
 # Decomposed, inductor upcasts to fp32 with temporaries; the shipped C++ op is
 # 43% faster at the concurrency-1 shape and is already below a bare clone.
 CUSTOM_OPS_JSON="${CUSTOM_OPS_JSON:-\"+fused_rms_norm_gated\",\"+situ_and_mul\"}"
-COMPILATION_CONFIG_ARGS=(--compilation-config "{\"mode\":3,\"cudagraph_mode\":\"$CUDAGRAPH_MODE\",\"max_cudagraph_capture_size\":$MAX_CUDAGRAPH_CAPTURE_SIZE,\"custom_ops\":[$CUSTOM_OPS_JSON],\"cudagraph_capture_sizes\":[$CUDAGRAPH_CAPTURE_SIZES]}")
+# Extra compilation-config keys, appended verbatim inside the JSON object.
+# Must start with a comma, e.g. COMPILATION_EXTRA_JSON=',"use_inductor_graph_partition":true'
+# Exists so a fusion A/B can move ONE key without duplicating the whole object
+# (argparse takes the last --compilation-config, so appending a second one via
+# EXTRA_VLLM_ARGS would silently drop every default above).
+COMPILATION_EXTRA_JSON="${COMPILATION_EXTRA_JSON:-}"
+COMPILATION_CONFIG_ARGS=(--compilation-config "{\"mode\":3,\"cudagraph_mode\":\"$CUDAGRAPH_MODE\",\"max_cudagraph_capture_size\":$MAX_CUDAGRAPH_CAPTURE_SIZE,\"custom_ops\":[$CUSTOM_OPS_JSON],\"cudagraph_capture_sizes\":[$CUDAGRAPH_CAPTURE_SIZES]$COMPILATION_EXTRA_JSON}")
 
 echo "Starting vllm server..."
 export PYTHONNOUSERSITE=1
