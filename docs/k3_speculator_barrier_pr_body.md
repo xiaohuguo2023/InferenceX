@@ -2,7 +2,18 @@
 
 **Fixes a boot blocker for decode context parallelism (DCP) combined with speculative decoding: the DFlash/DSpark speculator faults during CUDA graph capture.**
 
-Under DCP the draft is sharded, so the graph captured by `DFlashSpeculator.capture()` contains a context-parallel collective. Graph capture is only safe when every rank enters it aligned — a rank still finishing earlier work can have its collective recorded into a peer's graph, which faults at capture time. Nothing currently quiesces or aligns the ranks before `capture()` runs.
+When the DFlash/DSpark draft is **DCP-sharded**, the graph captured by `DFlashSpeculator.capture()` contains a context-parallel collective. Graph capture is only safe when every rank enters it aligned — a rank still finishing earlier work can have its collective recorded into a peer's graph, which faults. Nothing currently quiesces or aligns the ranks before `capture()` runs.
+
+Symptom: every rank dies in `Capturing model for DSpark speculator...` with
+`Memory access fault by GPU node-N ... Reason: Unknown`, at a **fresh fault address each time**, with a clean teardown.
+
+**It is a race, not an out-of-bounds access.** The decisive evidence is that booting the same configuration with `AMD_SERIALIZE_KERNEL=3 HIP_LAUNCH_BLOCKING=1` **succeeds**: a configuration that only fails when kernels overlap is a race by construction. The logs show ranks entering `capture()` staggered by ~1 s.
+
+### Why this has not been reported before
+
+The precondition is a **sharded** draft. The replicated draft of #51705 ran at `dcp=1`, so its captured graph contained no collective and there was nothing to race. That changed with **#55472** (merged 2026-09-08), which rebuilds the draft's `ParallelConfig` from the target's and therefore preserves `decode_context_parallel_size` — so a `--decode-context-parallel-size N` run with a DSpark draft now gets a draft at `dcp=N`. The window in which this is reachable upstream is about a week old.
+
+**Reproduction:** multi-rank, `decode_context_parallel_size > 1`, DSpark draft, CUDA graphs enabled. It is a startup race, so it is timing-dependent rather than deterministic; serializing kernel launches masks it.
 
 This adds that alignment, and only where it is needed:
 
@@ -59,4 +70,6 @@ with the barrier present:  3 passed
 
 `pre-commit run --files <changed files>` passes in full, including `mypy` 3.10–3.13, `typos`, `check-spdx-header` and `check-torch-cuda-call` — the last of which is why the synchronize goes through `torch.accelerator` rather than `torch.cuda` (RFC #30679).
 
-Observed downstream on 8x MI355X (gfx950, ROCm 7.2.3) with Kimi-K3 + DSpark at TP8/DCP8: without this change the speculator faults during capture at boot; with it, capture completes and the server reaches `Application startup complete`.
+Measured on 8x MI355X (gfx950, ROCm 7.2.3) with Kimi-K3 + DSpark at TP8/DCP8, both attention groups sharded (`target num_heads=12 dcp=8 decode_num_heads=96`, `draft num_heads=8 dcp=8 decode_num_heads=64`): every boot died at speculator capture; with the barrier the server reaches `Application startup complete` in 280 s with **no serialization penalty**, and a full concurrency sweep then ran 9/9 `rc=0`.
+
+To be precise about what was measured: that stack carries a local port that makes the DSpark draft DCP-sharded, which is what put us on this path first. The upstream reachability argument is the #55472 one above — a stock DCP + DSpark run now produces a sharded draft by the same mechanism — rather than a claim that we have reproduced it on an unmodified tree.
