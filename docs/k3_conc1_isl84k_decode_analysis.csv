@@ -1,0 +1,1369 @@
+tp_label,stage,rank,category,sub_kernel,total_time_us,call_count,avg_time_us
+k3_conc1_dcp8_isl84k,PREFILL,0,Activation,SiLU/SwiGLU,1512.0,375,4.0
+k3_conc1_dcp8_isl84k,PREFILL,0,Attention,aiter attn,677270.5,408,1660.0
+k3_conc1_dcp8_isl84k,PREFILL,0,Attention,MLA attn residual,489125.9,14212,34.4
+k3_conc1_dcp8_isl84k,PREFILL,0,Attention,MLA merge states,18063.1,240,75.3
+k3_conc1_dcp8_isl84k,PREFILL,0,Communication,NCCL/RCCL,1514817.2,3792,399.5
+k3_conc1_dcp8_isl84k,PREFILL,0,Communication,CustomAR 2-stage,274103.8,14378,19.1
+k3_conc1_dcp8_isl84k,PREFILL,0,Communication,CustomAR 1-stage,65661.2,6256,10.5
+k3_conc1_dcp8_isl84k,PREFILL,0,GEMM,hipBLASLt (Cijk),1321562.4,28256,46.8
+k3_conc1_dcp8_isl84k,PREFILL,0,GEMM,AITER hgemm bf16,252129.4,30874,8.2
+k3_conc1_dcp8_isl84k,PREFILL,0,GEMM,AITER flydsl MoE,158253.0,6256,25.3
+k3_conc1_dcp8_isl84k,PREFILL,0,GEMM,AITER wfp4 batched,15982.0,3264,4.9
+k3_conc1_dcp8_isl84k,PREFILL,0,GEMM,rocBLAS splitK,11713.7,532,22.0
+k3_conc1_dcp8_isl84k,PREFILL,0,KDA Linear Attn,KDA gated-delta,381057.5,6348,60.0
+k3_conc1_dcp8_isl84k,PREFILL,0,KDA Linear Attn,KDA conv1d,86393.7,6348,13.6
+k3_conc1_dcp8_isl84k,PREFILL,0,KDA Linear Attn,KDA gate/state,65621.0,2760,23.8
+k3_conc1_dcp8_isl84k,PREFILL,0,KDA Linear Attn,KDA GLA,31165.4,552,56.5
+k3_conc1_dcp8_isl84k,PREFILL,0,Memory,Fill,10166.4,1931,5.3
+k3_conc1_dcp8_isl84k,PREFILL,0,Memory,Memcpy,251.9,26,9.7
+k3_conc1_dcp8_isl84k,PREFILL,0,MoE Routing,MoE sort mxfp4,161866.3,22448,7.2
+k3_conc1_dcp8_isl84k,PREFILL,0,MoE Routing,AITER grouped_topk,110634.7,6992,15.8
+k3_conc1_dcp8_isl84k,PREFILL,0,Normalization,Add+RMSNorm+quant,50443.9,7967,6.3
+k3_conc1_dcp8_isl84k,PREFILL,0,Normalization,LayerNorm,36487.4,5244,7.0
+k3_conc1_dcp8_isl84k,PREFILL,0,Normalization,RMSNorm,10817.5,1824,5.9
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,void opus_moe::stage1_a8w4::pipeline_group_split::opus_moe_stage1_a8w4_kernel...,487565.1,736,662.5
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,void opus_moe_stage2_a8w4_decode_kernel_gfx950<OpusMoeStage2A8W4DecodeShape<o...,363597.3,736,494.0
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,313920.5,587,534.8
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,void gemm_a16w16_persistent_4g_safe_kernel<opus_gemm_a16w16_persistent_traits...,183445.5,580,316.3
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3584, 448, ...",91969.2,552,166.6
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,90614.7,6256,14.5
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,73113.4,2007,36.4
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",55891.6,6579,8.5
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void vllm::gather_and_maybe_dequant_cache_page<__hip_bfloat16, unsigned char, ",47537.8,240,198.1
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,47357.7,7068,6.7
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,__amd_rocclr_copyBuffer.kd,42617.7,6550,6.5
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",22073.9,1632,13.5
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,21707.6,1632,13.3
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,void at::native::,21434.2,1434,14.9
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void gqa_d192_v128_kernel<opus_gqa_d192_traits<32, 64, 8, true, true> >",21165.4,24,881.9
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",14992.8,211,71.1
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",13230.6,2199,6.0
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,_dcp_a2a_pack_send_kernel.kd,12046.3,2007,6.0
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",10278.2,1824,5.6
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",10031.8,1824,5.5
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",9328.1,443,21.1
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,_dcp_a2a_unpack_combine_kernel.kd,9041.3,2007,4.5
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,8037.3,750,10.7
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",7593.2,1477,5.1
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3072, 384, ...",6736.5,184,36.6
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",6646.6,905,7.3
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5850.3,375,15.6
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,mscclKernel_Sum_hip_bfloat16_LL_false,5753.5,375,15.3
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",5251.5,1123,4.7
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",3180.8,760,4.2
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,_prepare_dflash_inputs_kernel.kd,2677.2,75,35.7
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",2120.2,443,4.8
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1828.0,446,4.1
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,void ,1777.2,440,4.0
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1730.2,422,4.1
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,kernel.kd,1577.4,375,4.2
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1445.2,375,3.9
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,966.9,225,4.3
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void at::native::vectorized_gather_kernel<16, long>",920.7,151,6.1
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",916.8,228,4.0
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",908.8,228,4.0
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,_expand_page_indices_kernel.kd,877.2,211,4.2
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,_rejection_kernel.kd,643.4,68,9.5
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,_dcp_local_seq_lens_kernel.kd,641.9,151,4.3
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",618.5,150,4.1
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,__amd_rocclr_fillBufferAligned.kd,614.2,143,4.3
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,_bias_kernel.kd,566.2,75,7.5
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,_compute_slot_mappings_kernel.kd,552.7,76,7.3
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,536.3,228,2.4
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,precopy_mamba_align_fused_kernel.kd,534.8,76,7.0
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",490.2,75,6.5
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,_compute_local_logits_stats_kernel.kd,455.8,68,6.7
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,_scatter_num_accepted_kernel.kd,408.3,75,5.4
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",402.4,75,5.4
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,_post_update_kernel.kd,392.8,75,5.2
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",361.8,75,4.8
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,postprocess_mamba_fused_kernel.kd,357.9,75,4.8
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,_gather_block_tables_kernel.kd,347.0,76,4.6
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,preprocess_mamba_align_fused_kernel.kd,341.6,76,4.5
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,_prepare_pos_seq_lens_kernel.kd,330.2,76,4.3
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,_apply_write_kernel.kd,187.5,17,11.0
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,_expand_idx_mapping_kernel.kd,171.4,68,2.5
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,_prepare_prefill_inputs_kernel.kd,136.8,8,17.1
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,_chunk_metadata_kernel.kd,117.8,24,4.9
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_...",108.3,24,4.5
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add...",99.2,24,4.1
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,_zero_kv_blocks_kernel.kd,48.0,6,8.0
+k3_conc1_dcp8_isl84k,PREFILL,0,Other,__amd_rocclr_streamOpsWrite.kd,17.0,5,3.4
+k3_conc1_dcp8_isl84k,PREFILL,0,Quantization,dynamic per-group quant,15511.7,736,21.1
+k3_conc1_dcp8_isl84k,PREFILL,0,Sampling,Sampling,3396.8,819,4.1
+k3_conc1_dcp8_isl84k,PREFILL,0,Sampling,ArgMax/Reduce,2822.5,532,5.3
+k3_conc1_dcp8_isl84k,PREFILL,0,Triton Fused,Triton fused op,6481.1,1783,3.6
+k3_conc1_dcp8_isl84k,PREFILL,1,Activation,SiLU/SwiGLU,1508.5,375,4.0
+k3_conc1_dcp8_isl84k,PREFILL,1,Attention,aiter attn,642053.1,408,1573.7
+k3_conc1_dcp8_isl84k,PREFILL,1,Attention,MLA attn residual,474417.7,14212,33.4
+k3_conc1_dcp8_isl84k,PREFILL,1,Attention,MLA merge states,17743.4,240,73.9
+k3_conc1_dcp8_isl84k,PREFILL,1,Communication,NCCL/RCCL,1684070.3,3792,444.1
+k3_conc1_dcp8_isl84k,PREFILL,1,Communication,CustomAR 2-stage,281098.0,14378,19.6
+k3_conc1_dcp8_isl84k,PREFILL,1,Communication,CustomAR 1-stage,60992.1,6256,9.7
+k3_conc1_dcp8_isl84k,PREFILL,1,GEMM,hipBLASLt (Cijk),1230466.7,28256,43.5
+k3_conc1_dcp8_isl84k,PREFILL,1,GEMM,AITER hgemm bf16,253617.4,30874,8.2
+k3_conc1_dcp8_isl84k,PREFILL,1,GEMM,AITER flydsl MoE,159898.1,6256,25.6
+k3_conc1_dcp8_isl84k,PREFILL,1,GEMM,AITER wfp4 batched,16272.3,3264,5.0
+k3_conc1_dcp8_isl84k,PREFILL,1,GEMM,rocBLAS splitK,11498.3,532,21.6
+k3_conc1_dcp8_isl84k,PREFILL,1,KDA Linear Attn,KDA gated-delta,378623.2,6348,59.6
+k3_conc1_dcp8_isl84k,PREFILL,1,KDA Linear Attn,KDA conv1d,83899.3,6348,13.2
+k3_conc1_dcp8_isl84k,PREFILL,1,KDA Linear Attn,KDA gate/state,64170.0,2760,23.3
+k3_conc1_dcp8_isl84k,PREFILL,1,KDA Linear Attn,KDA GLA,31203.3,552,56.5
+k3_conc1_dcp8_isl84k,PREFILL,1,Memory,Fill,10218.1,1931,5.3
+k3_conc1_dcp8_isl84k,PREFILL,1,Memory,Memcpy,239.0,26,9.2
+k3_conc1_dcp8_isl84k,PREFILL,1,MoE Routing,MoE sort mxfp4,155002.1,22448,6.9
+k3_conc1_dcp8_isl84k,PREFILL,1,MoE Routing,AITER grouped_topk,110256.7,6992,15.8
+k3_conc1_dcp8_isl84k,PREFILL,1,Normalization,Add+RMSNorm+quant,50005.9,7967,6.3
+k3_conc1_dcp8_isl84k,PREFILL,1,Normalization,LayerNorm,36489.7,5244,7.0
+k3_conc1_dcp8_isl84k,PREFILL,1,Normalization,RMSNorm,10750.1,1824,5.9
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,void opus_moe::stage1_a8w4::pipeline_group_split::opus_moe_stage1_a8w4_kernel...,485631.6,736,659.8
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,void opus_moe_stage2_a8w4_decode_kernel_gfx950<OpusMoeStage2A8W4DecodeShape<o...,359538.2,736,488.5
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,308824.3,587,526.1
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,void gemm_a16w16_persistent_4g_safe_kernel<opus_gemm_a16w16_persistent_traits...,180294.1,580,310.9
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,91137.1,6256,14.6
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3584, 448, ...",87528.7,552,158.6
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,72347.6,2007,36.0
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",54703.0,6579,8.3
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,47530.2,7068,6.7
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void vllm::gather_and_maybe_dequant_cache_page<__hip_bfloat16, unsigned char, ",47514.4,240,198.0
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,__amd_rocclr_copyBuffer.kd,41518.5,6550,6.3
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,23140.7,1632,14.2
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",21658.5,1632,13.3
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void gqa_d192_v128_kernel<opus_gqa_d192_traits<32, 64, 8, true, true> >",20803.7,24,866.8
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,void at::native::,20680.0,1434,14.4
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",15026.7,211,71.2
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",13034.1,2199,5.9
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,_dcp_a2a_pack_send_kernel.kd,12211.2,2007,6.1
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",10467.5,1824,5.7
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",9973.5,1824,5.5
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",9405.4,443,21.2
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,_dcp_a2a_unpack_combine_kernel.kd,9146.7,2007,4.6
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,7970.1,750,10.6
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",6974.6,1477,4.7
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",6565.1,905,7.3
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,mscclKernel_Sum_hip_bfloat16_LL_false,6357.7,375,17.0
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3072, 384, ...",6291.2,184,34.2
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5679.4,375,15.1
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",5094.2,1123,4.5
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",3162.0,760,4.2
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,_prepare_dflash_inputs_kernel.kd,2658.8,75,35.5
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",2055.0,443,4.6
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1836.7,446,4.1
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,void ,1756.1,440,4.0
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1723.2,422,4.1
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,kernel.kd,1560.0,375,4.2
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1442.6,375,3.8
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,944.1,225,4.2
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void at::native::vectorized_gather_kernel<16, long>",923.0,151,6.1
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",898.3,228,3.9
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",887.7,228,3.9
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,_expand_page_indices_kernel.kd,876.2,211,4.2
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,_dcp_local_seq_lens_kernel.kd,648.0,151,4.3
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,_rejection_kernel.kd,621.9,68,9.1
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",618.3,150,4.1
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,__amd_rocclr_fillBufferAligned.kd,610.4,143,4.3
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,_bias_kernel.kd,595.1,75,7.9
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,precopy_mamba_align_fused_kernel.kd,529.7,76,7.0
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,_compute_slot_mappings_kernel.kd,526.7,76,6.9
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,520.6,228,2.3
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",493.6,75,6.6
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,_compute_local_logits_stats_kernel.kd,470.1,68,6.9
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",407.4,75,5.4
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,_scatter_num_accepted_kernel.kd,407.1,75,5.4
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,_post_update_kernel.kd,392.8,75,5.2
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",368.8,75,4.9
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,_gather_block_tables_kernel.kd,368.0,76,4.8
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,postprocess_mamba_fused_kernel.kd,351.9,75,4.7
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,_prepare_pos_seq_lens_kernel.kd,332.6,76,4.4
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,preprocess_mamba_align_fused_kernel.kd,327.0,76,4.3
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,_apply_write_kernel.kd,189.5,17,11.1
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,_expand_idx_mapping_kernel.kd,172.0,68,2.5
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,_prepare_prefill_inputs_kernel.kd,138.4,8,17.3
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,_chunk_metadata_kernel.kd,102.4,24,4.3
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_...",94.9,24,4.0
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add...",87.3,24,3.6
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,_zero_kv_blocks_kernel.kd,48.0,6,8.0
+k3_conc1_dcp8_isl84k,PREFILL,1,Other,__amd_rocclr_streamOpsWrite.kd,17.1,5,3.4
+k3_conc1_dcp8_isl84k,PREFILL,1,Quantization,dynamic per-group quant,15467.8,736,21.0
+k3_conc1_dcp8_isl84k,PREFILL,1,Sampling,Sampling,3396.8,819,4.1
+k3_conc1_dcp8_isl84k,PREFILL,1,Sampling,ArgMax/Reduce,2862.5,532,5.4
+k3_conc1_dcp8_isl84k,PREFILL,1,Triton Fused,Triton fused op,10150.5,1783,5.7
+k3_conc1_dcp8_isl84k,PREFILL,2,Activation,SiLU/SwiGLU,1542.6,375,4.1
+k3_conc1_dcp8_isl84k,PREFILL,2,Attention,aiter attn,682564.6,408,1673.0
+k3_conc1_dcp8_isl84k,PREFILL,2,Attention,MLA attn residual,482081.5,14212,33.9
+k3_conc1_dcp8_isl84k,PREFILL,2,Attention,MLA merge states,18134.4,240,75.6
+k3_conc1_dcp8_isl84k,PREFILL,2,Communication,NCCL/RCCL,1409051.6,3792,371.6
+k3_conc1_dcp8_isl84k,PREFILL,2,Communication,CustomAR 2-stage,271381.0,14378,18.9
+k3_conc1_dcp8_isl84k,PREFILL,2,Communication,CustomAR 1-stage,63932.9,6256,10.2
+k3_conc1_dcp8_isl84k,PREFILL,2,GEMM,hipBLASLt (Cijk),1433186.3,28256,50.7
+k3_conc1_dcp8_isl84k,PREFILL,2,GEMM,AITER hgemm bf16,254232.7,30874,8.2
+k3_conc1_dcp8_isl84k,PREFILL,2,GEMM,AITER flydsl MoE,159146.3,6256,25.4
+k3_conc1_dcp8_isl84k,PREFILL,2,GEMM,AITER wfp4 batched,16146.5,3264,4.9
+k3_conc1_dcp8_isl84k,PREFILL,2,GEMM,rocBLAS splitK,11777.6,532,22.1
+k3_conc1_dcp8_isl84k,PREFILL,2,KDA Linear Attn,KDA gated-delta,384262.3,6348,60.5
+k3_conc1_dcp8_isl84k,PREFILL,2,KDA Linear Attn,KDA conv1d,89287.4,6348,14.1
+k3_conc1_dcp8_isl84k,PREFILL,2,KDA Linear Attn,KDA gate/state,64740.1,2760,23.5
+k3_conc1_dcp8_isl84k,PREFILL,2,KDA Linear Attn,KDA GLA,31105.9,552,56.4
+k3_conc1_dcp8_isl84k,PREFILL,2,Memory,Fill,9900.2,1931,5.1
+k3_conc1_dcp8_isl84k,PREFILL,2,Memory,Memcpy,261.0,26,10.0
+k3_conc1_dcp8_isl84k,PREFILL,2,MoE Routing,MoE sort mxfp4,169089.4,22448,7.5
+k3_conc1_dcp8_isl84k,PREFILL,2,MoE Routing,AITER grouped_topk,110352.5,6992,15.8
+k3_conc1_dcp8_isl84k,PREFILL,2,Normalization,Add+RMSNorm+quant,50507.3,7967,6.3
+k3_conc1_dcp8_isl84k,PREFILL,2,Normalization,LayerNorm,35535.5,5244,6.8
+k3_conc1_dcp8_isl84k,PREFILL,2,Normalization,RMSNorm,10811.4,1824,5.9
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,void opus_moe::stage1_a8w4::pipeline_group_split::opus_moe_stage1_a8w4_kernel...,478627.1,736,650.3
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,void opus_moe_stage2_a8w4_decode_kernel_gfx950<OpusMoeStage2A8W4DecodeShape<o...,356779.2,736,484.8
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,310137.2,587,528.3
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,void gemm_a16w16_persistent_4g_safe_kernel<opus_gemm_a16w16_persistent_traits...,183701.7,580,316.7
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,90843.1,6256,14.5
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3584, 448, ...",89761.4,552,162.6
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,71798.0,2007,35.8
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",55144.7,6579,8.4
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void vllm::gather_and_maybe_dequant_cache_page<__hip_bfloat16, unsigned char, ",48035.0,240,200.1
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,46914.9,7068,6.6
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,__amd_rocclr_copyBuffer.kd,44017.9,6550,6.7
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,23242.6,1632,14.2
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",22020.2,1632,13.5
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,void at::native::,21997.0,1434,15.3
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void gqa_d192_v128_kernel<opus_gqa_d192_traits<32, 64, 8, true, true> >",20782.6,24,865.9
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",14975.0,211,71.0
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",12662.1,2199,5.8
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,_dcp_a2a_pack_send_kernel.kd,12196.1,2007,6.1
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",10274.1,1824,5.6
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",9694.5,1824,5.3
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,_dcp_a2a_unpack_combine_kernel.kd,9414.4,2007,4.7
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8619.9,443,19.5
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",8244.3,1477,5.6
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,8014.0,750,10.7
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3072, 384, ...",6703.9,184,36.4
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",6579.4,905,7.3
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",6234.2,375,16.6
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,mscclKernel_Sum_hip_bfloat16_LL_false,5685.2,375,15.2
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",5339.2,1123,4.8
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",3220.5,760,4.2
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,_prepare_dflash_inputs_kernel.kd,2691.0,75,35.9
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",2098.4,443,4.7
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1848.0,446,4.1
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,void ,1794.9,440,4.1
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1721.7,422,4.1
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,kernel.kd,1561.3,375,4.2
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1442.6,375,3.8
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,982.3,225,4.4
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",929.7,228,4.1
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",923.1,228,4.0
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void at::native::vectorized_gather_kernel<16, long>",888.1,151,5.9
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,_expand_page_indices_kernel.kd,875.6,211,4.1
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,_rejection_kernel.kd,658.0,68,9.7
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,_dcp_local_seq_lens_kernel.kd,642.3,151,4.3
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",630.9,150,4.2
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,__amd_rocclr_fillBufferAligned.kd,615.6,143,4.3
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,_bias_kernel.kd,613.2,75,8.2
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,565.1,228,2.5
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,_compute_slot_mappings_kernel.kd,559.6,76,7.4
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,precopy_mamba_align_fused_kernel.kd,534.6,76,7.0
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",481.8,75,6.4
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,_compute_local_logits_stats_kernel.kd,459.3,68,6.8
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,_scatter_num_accepted_kernel.kd,408.2,75,5.4
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",395.9,75,5.3
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,_post_update_kernel.kd,387.5,75,5.2
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",367.3,75,4.9
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,_gather_block_tables_kernel.kd,364.6,76,4.8
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,postprocess_mamba_fused_kernel.kd,352.8,75,4.7
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,_prepare_pos_seq_lens_kernel.kd,337.3,76,4.4
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,preprocess_mamba_align_fused_kernel.kd,335.9,76,4.4
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,_apply_write_kernel.kd,194.7,17,11.5
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,_expand_idx_mapping_kernel.kd,174.9,68,2.6
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,_prepare_prefill_inputs_kernel.kd,145.3,8,18.2
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,_chunk_metadata_kernel.kd,138.1,24,5.8
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_...",129.3,24,5.4
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add...",119.2,24,5.0
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,_zero_kv_blocks_kernel.kd,53.6,6,8.9
+k3_conc1_dcp8_isl84k,PREFILL,2,Other,__amd_rocclr_streamOpsWrite.kd,17.0,5,3.4
+k3_conc1_dcp8_isl84k,PREFILL,2,Quantization,dynamic per-group quant,15460.2,736,21.0
+k3_conc1_dcp8_isl84k,PREFILL,2,Sampling,Sampling,3386.3,819,4.1
+k3_conc1_dcp8_isl84k,PREFILL,2,Sampling,ArgMax/Reduce,2761.0,532,5.2
+k3_conc1_dcp8_isl84k,PREFILL,2,Triton Fused,Triton fused op,10180.4,1783,5.7
+k3_conc1_dcp8_isl84k,PREFILL,3,Activation,SiLU/SwiGLU,2873.2,375,7.7
+k3_conc1_dcp8_isl84k,PREFILL,3,Attention,aiter attn,650607.3,408,1594.6
+k3_conc1_dcp8_isl84k,PREFILL,3,Attention,MLA attn residual,488382.8,14212,34.4
+k3_conc1_dcp8_isl84k,PREFILL,3,Attention,MLA merge states,17726.1,240,73.9
+k3_conc1_dcp8_isl84k,PREFILL,3,Communication,NCCL/RCCL,1646968.5,3792,434.3
+k3_conc1_dcp8_isl84k,PREFILL,3,Communication,CustomAR 2-stage,277057.8,14378,19.3
+k3_conc1_dcp8_isl84k,PREFILL,3,Communication,CustomAR 1-stage,57767.0,6256,9.2
+k3_conc1_dcp8_isl84k,PREFILL,3,GEMM,hipBLASLt (Cijk),1237524.6,28256,43.8
+k3_conc1_dcp8_isl84k,PREFILL,3,GEMM,AITER hgemm bf16,256244.3,30874,8.3
+k3_conc1_dcp8_isl84k,PREFILL,3,GEMM,AITER flydsl MoE,159794.5,6256,25.5
+k3_conc1_dcp8_isl84k,PREFILL,3,GEMM,AITER wfp4 batched,16340.4,3264,5.0
+k3_conc1_dcp8_isl84k,PREFILL,3,GEMM,rocBLAS splitK,11540.5,532,21.7
+k3_conc1_dcp8_isl84k,PREFILL,3,KDA Linear Attn,KDA gated-delta,380366.5,6348,59.9
+k3_conc1_dcp8_isl84k,PREFILL,3,KDA Linear Attn,KDA conv1d,84436.1,6348,13.3
+k3_conc1_dcp8_isl84k,PREFILL,3,KDA Linear Attn,KDA gate/state,64878.1,2760,23.5
+k3_conc1_dcp8_isl84k,PREFILL,3,KDA Linear Attn,KDA GLA,31179.8,552,56.5
+k3_conc1_dcp8_isl84k,PREFILL,3,Memory,Fill,9975.7,1931,5.2
+k3_conc1_dcp8_isl84k,PREFILL,3,Memory,Memcpy,235.9,26,9.1
+k3_conc1_dcp8_isl84k,PREFILL,3,MoE Routing,MoE sort mxfp4,156002.9,22448,6.9
+k3_conc1_dcp8_isl84k,PREFILL,3,MoE Routing,AITER grouped_topk,110094.3,6992,15.7
+k3_conc1_dcp8_isl84k,PREFILL,3,Normalization,Add+RMSNorm+quant,50126.1,7967,6.3
+k3_conc1_dcp8_isl84k,PREFILL,3,Normalization,LayerNorm,36495.5,5244,7.0
+k3_conc1_dcp8_isl84k,PREFILL,3,Normalization,RMSNorm,10742.1,1824,5.9
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,void opus_moe::stage1_a8w4::pipeline_group_split::opus_moe_stage1_a8w4_kernel...,484968.0,736,658.9
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,void opus_moe_stage2_a8w4_decode_kernel_gfx950<OpusMoeStage2A8W4DecodeShape<o...,362155.3,736,492.1
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,309802.8,587,527.8
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,void gemm_a16w16_persistent_4g_safe_kernel<opus_gemm_a16w16_persistent_traits...,183577.3,580,316.5
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3584, 448, ...",91935.2,552,166.5
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,91348.5,6256,14.6
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,72170.1,2007,36.0
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",54800.1,6579,8.3
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void vllm::gather_and_maybe_dequant_cache_page<__hip_bfloat16, unsigned char, ",47547.4,240,198.1
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,47444.8,7068,6.7
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,__amd_rocclr_copyBuffer.kd,41470.5,6550,6.3
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,23297.7,1632,14.3
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",21911.1,1632,13.4
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,void at::native::,20981.1,1434,14.6
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void gqa_d192_v128_kernel<opus_gqa_d192_traits<32, 64, 8, true, true> >",20910.0,24,871.2
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",15048.0,211,71.3
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",12819.4,2199,5.8
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,_dcp_a2a_pack_send_kernel.kd,12279.5,2007,6.1
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",10272.2,1824,5.6
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",9986.0,1824,5.5
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",9050.3,443,20.4
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,_dcp_a2a_unpack_combine_kernel.kd,8963.1,2007,4.5
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,7955.6,750,10.6
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",7021.0,1476,4.8
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3072, 384, ...",6710.7,184,36.5
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",6662.9,905,7.4
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,mscclKernel_Sum_hip_bfloat16_LL_false,6148.3,375,16.4
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5686.5,375,15.2
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",5121.2,1123,4.6
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",3156.5,760,4.2
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,_prepare_dflash_inputs_kernel.kd,2668.8,75,35.6
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",2033.6,443,4.6
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1802.1,446,4.0
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,void ,1756.1,440,4.0
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1742.1,422,4.1
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,kernel.kd,1581.7,375,4.2
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1440.2,375,3.8
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,977.2,225,4.3
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",891.9,228,3.9
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",890.9,228,3.9
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,_expand_page_indices_kernel.kd,877.2,211,4.2
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void at::native::vectorized_gather_kernel<16, long>",871.6,151,5.8
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,_dcp_local_seq_lens_kernel.kd,637.6,151,4.2
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,_rejection_kernel.kd,618.0,68,9.1
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",616.9,150,4.1
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,__amd_rocclr_fillBufferAligned.kd,611.5,143,4.3
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,_bias_kernel.kd,583.6,75,7.8
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,_compute_slot_mappings_kernel.kd,549.3,76,7.2
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,precopy_mamba_align_fused_kernel.kd,524.0,76,6.9
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,521.8,228,2.3
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",485.4,75,6.5
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,_compute_local_logits_stats_kernel.kd,469.9,68,6.9
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",412.4,75,5.5
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,_scatter_num_accepted_kernel.kd,412.1,75,5.5
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,_post_update_kernel.kd,396.1,75,5.3
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",377.4,75,5.0
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,_gather_block_tables_kernel.kd,356.4,76,4.7
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,postprocess_mamba_fused_kernel.kd,351.5,75,4.7
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,_prepare_pos_seq_lens_kernel.kd,334.4,76,4.4
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,preprocess_mamba_align_fused_kernel.kd,333.3,76,4.4
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,_apply_write_kernel.kd,189.5,17,11.1
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,_expand_idx_mapping_kernel.kd,177.3,68,2.6
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,_prepare_prefill_inputs_kernel.kd,134.8,8,16.9
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,_chunk_metadata_kernel.kd,95.4,24,4.0
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_...",92.9,24,3.9
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add...",84.8,24,3.5
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,_zero_kv_blocks_kernel.kd,47.8,6,8.0
+k3_conc1_dcp8_isl84k,PREFILL,3,Other,__amd_rocclr_streamOpsWrite.kd,17.1,5,3.4
+k3_conc1_dcp8_isl84k,PREFILL,3,Quantization,dynamic per-group quant,15512.1,736,21.1
+k3_conc1_dcp8_isl84k,PREFILL,3,Sampling,Sampling,3433.6,819,4.2
+k3_conc1_dcp8_isl84k,PREFILL,3,Sampling,ArgMax/Reduce,2709.7,532,5.1
+k3_conc1_dcp8_isl84k,PREFILL,3,Triton Fused,Triton fused op,6504.7,1783,3.6
+k3_conc1_dcp8_isl84k,PREFILL,4,Activation,SiLU/SwiGLU,2904.5,375,7.7
+k3_conc1_dcp8_isl84k,PREFILL,4,Attention,aiter attn,691200.4,408,1694.1
+k3_conc1_dcp8_isl84k,PREFILL,4,Attention,MLA attn residual,480189.5,14212,33.8
+k3_conc1_dcp8_isl84k,PREFILL,4,Attention,MLA merge states,18095.3,240,75.4
+k3_conc1_dcp8_isl84k,PREFILL,4,Communication,NCCL/RCCL,1394703.8,3792,367.8
+k3_conc1_dcp8_isl84k,PREFILL,4,Communication,CustomAR 2-stage,273135.1,14378,19.0
+k3_conc1_dcp8_isl84k,PREFILL,4,Communication,CustomAR 1-stage,60541.6,6256,9.7
+k3_conc1_dcp8_isl84k,PREFILL,4,GEMM,hipBLASLt (Cijk),1443793.5,28256,51.1
+k3_conc1_dcp8_isl84k,PREFILL,4,GEMM,AITER hgemm bf16,253890.0,30874,8.2
+k3_conc1_dcp8_isl84k,PREFILL,4,GEMM,AITER flydsl MoE,160245.0,6256,25.6
+k3_conc1_dcp8_isl84k,PREFILL,4,GEMM,AITER wfp4 batched,16259.7,3264,5.0
+k3_conc1_dcp8_isl84k,PREFILL,4,GEMM,rocBLAS splitK,11846.1,532,22.3
+k3_conc1_dcp8_isl84k,PREFILL,4,KDA Linear Attn,KDA gated-delta,379778.0,6348,59.8
+k3_conc1_dcp8_isl84k,PREFILL,4,KDA Linear Attn,KDA conv1d,89240.5,6348,14.1
+k3_conc1_dcp8_isl84k,PREFILL,4,KDA Linear Attn,KDA gate/state,63360.6,2760,23.0
+k3_conc1_dcp8_isl84k,PREFILL,4,KDA Linear Attn,KDA GLA,30446.2,552,55.2
+k3_conc1_dcp8_isl84k,PREFILL,4,Memory,Fill,9899.1,1931,5.1
+k3_conc1_dcp8_isl84k,PREFILL,4,Memory,Memcpy,263.5,26,10.1
+k3_conc1_dcp8_isl84k,PREFILL,4,MoE Routing,MoE sort mxfp4,170302.0,22448,7.6
+k3_conc1_dcp8_isl84k,PREFILL,4,MoE Routing,AITER grouped_topk,110106.6,6992,15.7
+k3_conc1_dcp8_isl84k,PREFILL,4,Normalization,Add+RMSNorm+quant,50319.7,7967,6.3
+k3_conc1_dcp8_isl84k,PREFILL,4,Normalization,LayerNorm,35657.5,5244,6.8
+k3_conc1_dcp8_isl84k,PREFILL,4,Normalization,RMSNorm,10917.8,1824,6.0
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,void opus_moe::stage1_a8w4::pipeline_group_split::opus_moe_stage1_a8w4_kernel...,484771.4,736,658.7
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,void opus_moe_stage2_a8w4_decode_kernel_gfx950<OpusMoeStage2A8W4DecodeShape<o...,359318.3,736,488.2
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,315709.6,587,537.8
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,void gemm_a16w16_persistent_4g_safe_kernel<opus_gemm_a16w16_persistent_traits...,182016.9,580,313.8
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,91599.4,6256,14.6
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3584, 448, ...",90226.5,552,163.5
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,72409.9,2007,36.1
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",55017.4,6579,8.4
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void vllm::gather_and_maybe_dequant_cache_page<__hip_bfloat16, unsigned char, ",47725.5,240,198.9
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,46909.5,7068,6.6
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,__amd_rocclr_copyBuffer.kd,44231.5,6550,6.8
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,23559.4,1632,14.4
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",21641.3,1632,13.3
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,void at::native::,21441.0,1434,15.0
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void gqa_d192_v128_kernel<opus_gqa_d192_traits<32, 64, 8, true, true> >",21249.8,24,885.4
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",14999.0,211,71.1
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",12813.0,2199,5.8
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,_dcp_a2a_pack_send_kernel.kd,12238.9,2007,6.1
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",10256.2,1824,5.6
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",9765.6,1824,5.4
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,_dcp_a2a_unpack_combine_kernel.kd,9192.5,2007,4.6
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8621.7,443,19.5
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",8133.8,1477,5.5
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,7984.6,750,10.6
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",6618.9,905,7.3
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3072, 384, ...",6375.3,184,34.6
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",6118.5,375,16.3
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,mscclKernel_Sum_hip_bfloat16_LL_false,5440.9,375,14.5
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",5280.2,1123,4.7
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",3220.8,760,4.2
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,_prepare_dflash_inputs_kernel.kd,2679.1,75,35.7
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",2133.7,443,4.8
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1853.4,446,4.2
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,void ,1813.3,440,4.1
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1736.9,422,4.1
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,kernel.kd,1549.8,375,4.1
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1448.9,375,3.9
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,945.7,225,4.2
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",942.5,228,4.1
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",936.3,228,4.1
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,_expand_page_indices_kernel.kd,875.8,211,4.2
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void at::native::vectorized_gather_kernel<16, long>",866.3,151,5.7
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,_dcp_local_seq_lens_kernel.kd,682.2,151,4.5
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,_rejection_kernel.kd,640.7,68,9.4
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,_bias_kernel.kd,632.9,75,8.4
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",617.9,150,4.1
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,__amd_rocclr_fillBufferAligned.kd,610.7,143,4.3
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,_compute_slot_mappings_kernel.kd,564.3,76,7.4
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,552.8,228,2.4
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,precopy_mamba_align_fused_kernel.kd,531.1,76,7.0
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",482.3,75,6.4
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,_compute_local_logits_stats_kernel.kd,462.6,68,6.8
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",407.5,75,5.4
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,_scatter_num_accepted_kernel.kd,396.4,75,5.3
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,postprocess_mamba_fused_kernel.kd,376.9,75,5.0
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",368.8,75,4.9
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,_post_update_kernel.kd,358.7,75,4.8
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,_gather_block_tables_kernel.kd,353.8,76,4.7
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,preprocess_mamba_align_fused_kernel.kd,344.2,76,4.5
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,_prepare_pos_seq_lens_kernel.kd,329.3,76,4.3
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,_apply_write_kernel.kd,196.4,17,11.6
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,_expand_idx_mapping_kernel.kd,176.0,68,2.6
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_...",147.6,24,6.1
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,_prepare_prefill_inputs_kernel.kd,145.8,8,18.2
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,_chunk_metadata_kernel.kd,144.5,24,6.0
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add...",135.8,24,5.7
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,_zero_kv_blocks_kernel.kd,51.2,6,8.5
+k3_conc1_dcp8_isl84k,PREFILL,4,Other,__amd_rocclr_streamOpsWrite.kd,16.8,5,3.4
+k3_conc1_dcp8_isl84k,PREFILL,4,Quantization,dynamic per-group quant,15414.7,736,20.9
+k3_conc1_dcp8_isl84k,PREFILL,4,Sampling,Sampling,3451.4,819,4.2
+k3_conc1_dcp8_isl84k,PREFILL,4,Sampling,ArgMax/Reduce,2732.0,532,5.1
+k3_conc1_dcp8_isl84k,PREFILL,4,Triton Fused,Triton fused op,6770.3,1783,3.8
+k3_conc1_dcp8_isl84k,PREFILL,5,Activation,SiLU/SwiGLU,1662.9,375,4.4
+k3_conc1_dcp8_isl84k,PREFILL,5,Attention,aiter attn,667802.6,408,1636.8
+k3_conc1_dcp8_isl84k,PREFILL,5,Attention,MLA attn residual,478834.1,14212,33.7
+k3_conc1_dcp8_isl84k,PREFILL,5,Attention,MLA merge states,17728.5,240,73.9
+k3_conc1_dcp8_isl84k,PREFILL,5,Communication,NCCL/RCCL,1556694.9,3792,410.5
+k3_conc1_dcp8_isl84k,PREFILL,5,Communication,CustomAR 2-stage,272811.2,14378,19.0
+k3_conc1_dcp8_isl84k,PREFILL,5,Communication,CustomAR 1-stage,59622.3,6256,9.5
+k3_conc1_dcp8_isl84k,PREFILL,5,GEMM,hipBLASLt (Cijk),1309683.8,28256,46.4
+k3_conc1_dcp8_isl84k,PREFILL,5,GEMM,AITER hgemm bf16,253405.6,30874,8.2
+k3_conc1_dcp8_isl84k,PREFILL,5,GEMM,AITER flydsl MoE,159502.8,6256,25.5
+k3_conc1_dcp8_isl84k,PREFILL,5,GEMM,AITER wfp4 batched,16554.8,3264,5.1
+k3_conc1_dcp8_isl84k,PREFILL,5,GEMM,rocBLAS splitK,11691.1,532,22.0
+k3_conc1_dcp8_isl84k,PREFILL,5,KDA Linear Attn,KDA gated-delta,379603.8,6348,59.8
+k3_conc1_dcp8_isl84k,PREFILL,5,KDA Linear Attn,KDA conv1d,85554.1,6348,13.5
+k3_conc1_dcp8_isl84k,PREFILL,5,KDA Linear Attn,KDA gate/state,64583.9,2760,23.4
+k3_conc1_dcp8_isl84k,PREFILL,5,KDA Linear Attn,KDA GLA,31162.5,552,56.5
+k3_conc1_dcp8_isl84k,PREFILL,5,Memory,Fill,10074.1,1931,5.2
+k3_conc1_dcp8_isl84k,PREFILL,5,Memory,Memcpy,241.9,26,9.3
+k3_conc1_dcp8_isl84k,PREFILL,5,MoE Routing,MoE sort mxfp4,160209.3,22448,7.1
+k3_conc1_dcp8_isl84k,PREFILL,5,MoE Routing,AITER grouped_topk,110534.1,6992,15.8
+k3_conc1_dcp8_isl84k,PREFILL,5,Normalization,Add+RMSNorm+quant,51965.2,7967,6.5
+k3_conc1_dcp8_isl84k,PREFILL,5,Normalization,LayerNorm,36979.1,5244,7.1
+k3_conc1_dcp8_isl84k,PREFILL,5,Normalization,RMSNorm,11208.1,1824,6.1
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,void opus_moe::stage1_a8w4::pipeline_group_split::opus_moe_stage1_a8w4_kernel...,485681.9,736,659.9
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,void opus_moe_stage2_a8w4_decode_kernel_gfx950<OpusMoeStage2A8W4DecodeShape<o...,361963.6,736,491.8
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,316561.5,587,539.3
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,void gemm_a16w16_persistent_4g_safe_kernel<opus_gemm_a16w16_persistent_traits...,180959.4,580,312.0
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,90034.6,6256,14.4
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3584, 448, ...",89350.7,552,161.9
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,72444.2,2007,36.1
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",55442.8,6579,8.4
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,48215.9,7068,6.8
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void vllm::gather_and_maybe_dequant_cache_page<__hip_bfloat16, unsigned char, ",47819.4,240,199.2
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,__amd_rocclr_copyBuffer.kd,43348.9,6550,6.6
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,22698.6,1632,13.9
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",21546.1,1632,13.2
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void gqa_d192_v128_kernel<opus_gqa_d192_traits<32, 64, 8, true, true> >",21209.8,24,883.7
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,void at::native::,21109.6,1434,14.7
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",15092.4,211,71.5
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",13468.7,2199,6.1
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,_dcp_a2a_pack_send_kernel.kd,12164.6,2007,6.1
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",10690.3,1824,5.9
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",10175.8,1824,5.6
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,_dcp_a2a_unpack_combine_kernel.kd,9490.6,2007,4.7
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8909.2,443,20.1
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,8112.3,750,10.8
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",7378.6,1476,5.0
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",6743.4,905,7.5
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3072, 384, ...",6715.3,184,36.5
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,mscclKernel_Sum_hip_bfloat16_LL_false,6012.1,375,16.0
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5900.0,375,15.7
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",5196.0,1123,4.6
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",3324.8,760,4.4
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,_prepare_dflash_inputs_kernel.kd,2714.8,75,36.2
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",2159.7,443,4.9
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1868.0,446,4.2
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,void ,1835.2,440,4.2
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1817.4,422,4.3
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,kernel.kd,1654.5,375,4.4
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1534.6,375,4.1
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,994.3,225,4.4
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",942.8,228,4.1
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",933.3,228,4.1
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,_expand_page_indices_kernel.kd,913.5,211,4.3
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void at::native::vectorized_gather_kernel<16, long>",887.3,151,5.9
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,_dcp_local_seq_lens_kernel.kd,665.6,151,4.4
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",658.4,150,4.4
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,_rejection_kernel.kd,648.0,68,9.5
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,__amd_rocclr_fillBufferAligned.kd,642.8,143,4.5
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,_compute_slot_mappings_kernel.kd,553.0,76,7.3
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,precopy_mamba_align_fused_kernel.kd,548.2,76,7.2
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,_bias_kernel.kd,534.0,75,7.1
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,532.9,228,2.3
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",491.1,75,6.5
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,_compute_local_logits_stats_kernel.kd,473.3,68,7.0
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,_scatter_num_accepted_kernel.kd,430.2,75,5.7
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",411.3,75,5.5
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,_post_update_kernel.kd,393.0,75,5.2
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,postprocess_mamba_fused_kernel.kd,377.2,75,5.0
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",373.6,75,5.0
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,_gather_block_tables_kernel.kd,357.2,76,4.7
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,_prepare_pos_seq_lens_kernel.kd,347.3,76,4.6
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,preprocess_mamba_align_fused_kernel.kd,342.3,76,4.5
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,_apply_write_kernel.kd,183.1,17,10.8
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,_expand_idx_mapping_kernel.kd,171.2,68,2.5
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,_prepare_prefill_inputs_kernel.kd,135.9,8,17.0
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,_chunk_metadata_kernel.kd,109.8,24,4.6
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_...",105.3,24,4.4
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add...",95.6,24,4.0
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,_zero_kv_blocks_kernel.kd,48.5,6,8.1
+k3_conc1_dcp8_isl84k,PREFILL,5,Other,__amd_rocclr_streamOpsWrite.kd,17.6,5,3.5
+k3_conc1_dcp8_isl84k,PREFILL,5,Quantization,dynamic per-group quant,15545.1,736,21.1
+k3_conc1_dcp8_isl84k,PREFILL,5,Sampling,Sampling,3574.4,819,4.4
+k3_conc1_dcp8_isl84k,PREFILL,5,Sampling,ArgMax/Reduce,2805.1,532,5.3
+k3_conc1_dcp8_isl84k,PREFILL,5,Triton Fused,Triton fused op,10426.4,1783,5.8
+k3_conc1_dcp8_isl84k,PREFILL,6,Activation,SiLU/SwiGLU,1584.6,375,4.2
+k3_conc1_dcp8_isl84k,PREFILL,6,Attention,aiter attn,659092.2,408,1615.4
+k3_conc1_dcp8_isl84k,PREFILL,6,Attention,MLA attn residual,479646.9,14212,33.7
+k3_conc1_dcp8_isl84k,PREFILL,6,Attention,MLA merge states,17831.2,240,74.3
+k3_conc1_dcp8_isl84k,PREFILL,6,Communication,NCCL/RCCL,1594500.6,3792,420.5
+k3_conc1_dcp8_isl84k,PREFILL,6,Communication,CustomAR 2-stage,270950.9,14378,18.8
+k3_conc1_dcp8_isl84k,PREFILL,6,Communication,CustomAR 1-stage,57717.7,6256,9.2
+k3_conc1_dcp8_isl84k,PREFILL,6,GEMM,hipBLASLt (Cijk),1271739.7,28256,45.0
+k3_conc1_dcp8_isl84k,PREFILL,6,GEMM,AITER hgemm bf16,255556.4,30874,8.3
+k3_conc1_dcp8_isl84k,PREFILL,6,GEMM,AITER flydsl MoE,160131.8,6256,25.6
+k3_conc1_dcp8_isl84k,PREFILL,6,GEMM,AITER wfp4 batched,16431.7,3264,5.0
+k3_conc1_dcp8_isl84k,PREFILL,6,GEMM,rocBLAS splitK,11552.9,532,21.7
+k3_conc1_dcp8_isl84k,PREFILL,6,KDA Linear Attn,KDA gated-delta,383432.5,6348,60.4
+k3_conc1_dcp8_isl84k,PREFILL,6,KDA Linear Attn,KDA conv1d,84681.5,6348,13.3
+k3_conc1_dcp8_isl84k,PREFILL,6,KDA Linear Attn,KDA gate/state,63705.9,2760,23.1
+k3_conc1_dcp8_isl84k,PREFILL,6,KDA Linear Attn,KDA GLA,30647.3,552,55.5
+k3_conc1_dcp8_isl84k,PREFILL,6,Memory,Fill,9958.1,1931,5.2
+k3_conc1_dcp8_isl84k,PREFILL,6,Memory,Memcpy,234.9,26,9.0
+k3_conc1_dcp8_isl84k,PREFILL,6,MoE Routing,MoE sort mxfp4,158684.8,22448,7.1
+k3_conc1_dcp8_isl84k,PREFILL,6,MoE Routing,AITER grouped_topk,110624.4,6992,15.8
+k3_conc1_dcp8_isl84k,PREFILL,6,Normalization,Add+RMSNorm+quant,51061.4,7967,6.4
+k3_conc1_dcp8_isl84k,PREFILL,6,Normalization,LayerNorm,36567.0,5244,7.0
+k3_conc1_dcp8_isl84k,PREFILL,6,Normalization,RMSNorm,11049.7,1824,6.1
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,void opus_moe::stage1_a8w4::pipeline_group_split::opus_moe_stage1_a8w4_kernel...,488801.3,736,664.1
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,void opus_moe_stage2_a8w4_decode_kernel_gfx950<OpusMoeStage2A8W4DecodeShape<o...,362536.0,736,492.6
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,318957.8,587,543.4
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,void gemm_a16w16_persistent_4g_safe_kernel<opus_gemm_a16w16_persistent_traits...,181866.1,580,313.6
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,91463.8,6256,14.6
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3584, 448, ...",89053.8,552,161.3
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,71780.3,2007,35.8
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",55197.2,6579,8.4
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,48304.0,7068,6.8
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void vllm::gather_and_maybe_dequant_cache_page<__hip_bfloat16, unsigned char, ",47893.6,240,199.6
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,__amd_rocclr_copyBuffer.kd,42163.0,6550,6.4
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,23064.7,1632,14.1
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",21886.9,1632,13.4
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void gqa_d192_v128_kernel<opus_gqa_d192_traits<32, 64, 8, true, true> >",21344.3,24,889.3
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,void at::native::,20960.1,1434,14.6
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",15071.3,211,71.4
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",13100.5,2199,6.0
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,_dcp_a2a_pack_send_kernel.kd,12049.0,2007,6.0
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",10433.6,1824,5.7
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",9961.6,1824,5.5
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,_dcp_a2a_unpack_combine_kernel.kd,9322.4,2007,4.6
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8635.5,443,19.5
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,7993.7,750,10.7
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",7173.9,1477,4.9
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",6687.6,905,7.4
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3072, 384, ...",6469.4,184,35.2
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,mscclKernel_Sum_hip_bfloat16_LL_false,6229.0,375,16.6
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5749.2,375,15.3
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",5028.5,1123,4.5
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",3260.3,760,4.3
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,_prepare_dflash_inputs_kernel.kd,2653.7,75,35.4
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",2085.2,443,4.7
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1845.5,446,4.1
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,void ,1789.5,440,4.1
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1761.6,422,4.2
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,kernel.kd,1654.0,375,4.4
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1477.4,375,3.9
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,1004.9,225,4.5
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",910.0,228,4.0
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",908.4,228,4.0
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,_expand_page_indices_kernel.kd,896.0,211,4.2
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void at::native::vectorized_gather_kernel<16, long>",895.0,151,5.9
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,_dcp_local_seq_lens_kernel.kd,664.2,151,4.4
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",631.9,150,4.2
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,__amd_rocclr_fillBufferAligned.kd,626.9,143,4.4
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,_rejection_kernel.kd,603.8,68,8.9
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,_compute_slot_mappings_kernel.kd,571.8,76,7.5
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,_bias_kernel.kd,543.8,75,7.3
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,precopy_mamba_align_fused_kernel.kd,538.6,76,7.1
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,522.4,228,2.3
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",495.6,75,6.6
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,_compute_local_logits_stats_kernel.kd,452.7,68,6.7
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,_scatter_num_accepted_kernel.kd,419.7,75,5.6
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",408.4,75,5.4
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",402.1,75,5.4
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,_post_update_kernel.kd,391.4,75,5.2
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,postprocess_mamba_fused_kernel.kd,364.4,75,4.9
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,_gather_block_tables_kernel.kd,354.0,76,4.7
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,preprocess_mamba_align_fused_kernel.kd,337.7,76,4.4
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,_prepare_pos_seq_lens_kernel.kd,330.6,76,4.3
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,_apply_write_kernel.kd,184.6,17,10.9
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,_expand_idx_mapping_kernel.kd,176.3,68,2.6
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,_prepare_prefill_inputs_kernel.kd,137.4,8,17.2
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,_chunk_metadata_kernel.kd,96.4,24,4.0
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_...",93.9,24,3.9
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add...",86.0,24,3.6
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,_zero_kv_blocks_kernel.kd,47.6,6,7.9
+k3_conc1_dcp8_isl84k,PREFILL,6,Other,__amd_rocclr_streamOpsWrite.kd,17.2,5,3.4
+k3_conc1_dcp8_isl84k,PREFILL,6,Quantization,dynamic per-group quant,15428.5,736,21.0
+k3_conc1_dcp8_isl84k,PREFILL,6,Sampling,Sampling,3471.7,819,4.2
+k3_conc1_dcp8_isl84k,PREFILL,6,Sampling,ArgMax/Reduce,2719.0,532,5.1
+k3_conc1_dcp8_isl84k,PREFILL,6,Triton Fused,Triton fused op,10360.1,1783,5.8
+k3_conc1_dcp8_isl84k,PREFILL,7,Activation,SiLU/SwiGLU,1555.9,375,4.1
+k3_conc1_dcp8_isl84k,PREFILL,7,Attention,aiter attn,664592.7,408,1628.9
+k3_conc1_dcp8_isl84k,PREFILL,7,Attention,MLA attn residual,478677.2,14212,33.7
+k3_conc1_dcp8_isl84k,PREFILL,7,Attention,MLA merge states,17780.3,240,74.1
+k3_conc1_dcp8_isl84k,PREFILL,7,Communication,NCCL/RCCL,1594655.7,3792,420.5
+k3_conc1_dcp8_isl84k,PREFILL,7,Communication,CustomAR 2-stage,278046.7,14378,19.3
+k3_conc1_dcp8_isl84k,PREFILL,7,Communication,CustomAR 1-stage,59125.9,6256,9.5
+k3_conc1_dcp8_isl84k,PREFILL,7,GEMM,hipBLASLt (Cijk),1274913.6,28256,45.1
+k3_conc1_dcp8_isl84k,PREFILL,7,GEMM,AITER hgemm bf16,255225.1,30874,8.3
+k3_conc1_dcp8_isl84k,PREFILL,7,GEMM,AITER flydsl MoE,160024.4,6256,25.6
+k3_conc1_dcp8_isl84k,PREFILL,7,GEMM,AITER wfp4 batched,16159.2,3264,5.0
+k3_conc1_dcp8_isl84k,PREFILL,7,GEMM,rocBLAS splitK,11586.1,532,21.8
+k3_conc1_dcp8_isl84k,PREFILL,7,KDA Linear Attn,KDA gated-delta,381626.0,6348,60.1
+k3_conc1_dcp8_isl84k,PREFILL,7,KDA Linear Attn,KDA conv1d,85154.0,6348,13.4
+k3_conc1_dcp8_isl84k,PREFILL,7,KDA Linear Attn,KDA gate/state,63252.4,2760,22.9
+k3_conc1_dcp8_isl84k,PREFILL,7,KDA Linear Attn,KDA GLA,30482.4,552,55.2
+k3_conc1_dcp8_isl84k,PREFILL,7,Memory,Fill,9731.2,1931,5.0
+k3_conc1_dcp8_isl84k,PREFILL,7,Memory,Memcpy,232.6,26,8.9
+k3_conc1_dcp8_isl84k,PREFILL,7,MoE Routing,MoE sort mxfp4,157332.1,22448,7.0
+k3_conc1_dcp8_isl84k,PREFILL,7,MoE Routing,AITER grouped_topk,110339.9,6992,15.8
+k3_conc1_dcp8_isl84k,PREFILL,7,Normalization,Add+RMSNorm+quant,49679.4,7967,6.2
+k3_conc1_dcp8_isl84k,PREFILL,7,Normalization,LayerNorm,36141.1,5244,6.9
+k3_conc1_dcp8_isl84k,PREFILL,7,Normalization,RMSNorm,10864.0,1824,6.0
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,void opus_moe::stage1_a8w4::pipeline_group_split::opus_moe_stage1_a8w4_kernel...,484622.0,736,658.5
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,void opus_moe_stage2_a8w4_decode_kernel_gfx950<OpusMoeStage2A8W4DecodeShape<o...,365217.9,736,496.2
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,317179.7,587,540.3
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,void gemm_a16w16_persistent_4g_safe_kernel<opus_gemm_a16w16_persistent_traits...,183912.7,580,317.1
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,90964.6,6256,14.5
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3584, 448, ...",88975.0,552,161.2
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,72164.8,2007,36.0
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",54644.1,6579,8.3
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void vllm::gather_and_maybe_dequant_cache_page<__hip_bfloat16, unsigned char, ",47488.5,240,197.9
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,47464.7,7068,6.7
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,__amd_rocclr_copyBuffer.kd,41935.2,6550,6.4
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,23818.2,1632,14.6
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",21640.2,1632,13.3
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void gqa_d192_v128_kernel<opus_gqa_d192_traits<32, 64, 8, true, true> >",21266.8,24,886.1
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,void at::native::,20913.1,1434,14.6
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",14921.4,211,70.7
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",13002.0,2199,5.9
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,_dcp_a2a_pack_send_kernel.kd,12172.8,2007,6.1
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",10264.5,1824,5.6
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",9774.0,1824,5.4
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,_dcp_a2a_unpack_combine_kernel.kd,9190.9,2007,4.6
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",9002.5,443,20.3
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,7992.1,750,10.7
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",7062.3,1477,4.8
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",6571.2,905,7.3
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void opus_moe_stage2_reduce_token_slot_route_output_kernel_gfx950<3072, 384, ...",6444.4,184,35.0
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,mscclKernel_Sum_hip_bfloat16_LL_false,6253.1,375,16.7
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5741.1,375,15.3
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",4941.3,1123,4.4
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",3172.1,760,4.2
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,_prepare_dflash_inputs_kernel.kd,2680.4,75,35.7
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",2086.0,443,4.7
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1819.8,446,4.1
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,void ,1756.4,440,4.0
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1727.4,422,4.1
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,kernel.kd,1548.2,375,4.1
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1450.6,375,3.9
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,974.5,225,4.3
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",897.0,228,3.9
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",888.0,228,3.9
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void at::native::vectorized_gather_kernel<16, long>",885.9,151,5.9
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,_expand_page_indices_kernel.kd,878.7,211,4.2
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,_dcp_local_seq_lens_kernel.kd,673.3,151,4.5
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,_rejection_kernel.kd,630.9,68,9.3
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",618.7,150,4.1
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,__amd_rocclr_fillBufferAligned.kd,615.2,143,4.3
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,_bias_kernel.kd,584.9,75,7.8
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,_compute_slot_mappings_kernel.kd,547.6,76,7.2
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,precopy_mamba_align_fused_kernel.kd,547.1,76,7.2
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,516.3,228,2.3
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",488.2,75,6.5
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,_compute_local_logits_stats_kernel.kd,461.9,68,6.8
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,_scatter_num_accepted_kernel.kd,411.0,75,5.5
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",404.2,75,5.4
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,_post_update_kernel.kd,389.4,75,5.2
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",376.3,75,5.0
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,postprocess_mamba_fused_kernel.kd,358.2,75,4.8
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,_gather_block_tables_kernel.kd,358.2,76,4.7
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,preprocess_mamba_align_fused_kernel.kd,334.0,76,4.4
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,_prepare_pos_seq_lens_kernel.kd,325.1,76,4.3
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,_apply_write_kernel.kd,196.2,17,11.5
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,_expand_idx_mapping_kernel.kd,181.2,68,2.7
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,_prepare_prefill_inputs_kernel.kd,135.0,8,16.9
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,_chunk_metadata_kernel.kd,96.2,24,4.0
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::compare_scalar_...",95.5,24,4.0
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add...",87.9,24,3.7
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,_zero_kv_blocks_kernel.kd,47.7,6,7.9
+k3_conc1_dcp8_isl84k,PREFILL,7,Other,__amd_rocclr_streamOpsWrite.kd,16.9,5,3.4
+k3_conc1_dcp8_isl84k,PREFILL,7,Quantization,dynamic per-group quant,15317.1,736,20.8
+k3_conc1_dcp8_isl84k,PREFILL,7,Sampling,Sampling,3413.7,819,4.2
+k3_conc1_dcp8_isl84k,PREFILL,7,Sampling,ArgMax/Reduce,2710.9,532,5.1
+k3_conc1_dcp8_isl84k,PREFILL,7,Triton Fused,Triton fused op,6376.2,1783,3.6
+k3_conc1_dcp8_isl84k,DECODE,0,Activation,SiLU/SwiGLU,1367.5,340,4.0
+k3_conc1_dcp8_isl84k,DECODE,0,Attention,MLA attn residual,101477.0,12529,8.1
+k3_conc1_dcp8_isl84k,DECODE,0,Communication,CustomAR 2-stage,108176.0,13277,8.1
+k3_conc1_dcp8_isl84k,DECODE,0,Communication,CustomAR 1-stage,65835.2,6164,10.7
+k3_conc1_dcp8_isl84k,DECODE,0,Communication,NCCL/RCCL,38611.7,2084,18.5
+k3_conc1_dcp8_isl84k,DECODE,0,GEMM,hipBLASLt (Cijk),259324.9,22457,11.5
+k3_conc1_dcp8_isl84k,DECODE,0,GEMM,AITER hgemm bf16,247477.8,30361,8.2
+k3_conc1_dcp8_isl84k,DECODE,0,GEMM,AITER flydsl MoE,154873.9,6164,25.1
+k3_conc1_dcp8_isl84k,DECODE,0,GEMM,AITER wfp4 batched,15765.7,3216,4.9
+k3_conc1_dcp8_isl84k,DECODE,0,GEMM,rocBLAS splitK,10277.9,477,21.5
+k3_conc1_dcp8_isl84k,DECODE,0,KDA Linear Attn,KDA gated-delta,91261.8,4623,19.7
+k3_conc1_dcp8_isl84k,DECODE,0,KDA Linear Attn,KDA conv1d,26192.6,4623,5.7
+k3_conc1_dcp8_isl84k,DECODE,0,Memory,Fill,2432.9,539,4.5
+k3_conc1_dcp8_isl84k,DECODE,0,MoE Routing,MoE sort mxfp4,106417.1,18492,5.8
+k3_conc1_dcp8_isl84k,DECODE,0,MoE Routing,AITER grouped_topk,72414.8,6164,11.7
+k3_conc1_dcp8_isl84k,DECODE,0,Normalization,Add+RMSNorm+quant,31461.0,7048,4.5
+k3_conc1_dcp8_isl84k,DECODE,0,Normalization,LayerNorm,19686.2,4623,4.3
+k3_conc1_dcp8_isl84k,DECODE,0,Normalization,RMSNorm,6646.4,1608,4.1
+k3_conc1_dcp8_isl84k,DECODE,0,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,86019.2,6164,14.0
+k3_conc1_dcp8_isl84k,DECODE,0,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,71317.2,1948,36.6
+k3_conc1_dcp8_isl84k,DECODE,0,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",26443.6,5570,4.7
+k3_conc1_dcp8_isl84k,DECODE,0,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,25615.3,6231,4.1
+k3_conc1_dcp8_isl84k,DECODE,0,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",21741.6,1608,13.5
+k3_conc1_dcp8_isl84k,DECODE,0,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,21394.1,1608,13.3
+k3_conc1_dcp8_isl84k,DECODE,0,Other,__amd_rocclr_copyBuffer.kd,18488.8,4643,4.0
+k3_conc1_dcp8_isl84k,DECODE,0,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",14283.4,202,70.7
+k3_conc1_dcp8_isl84k,DECODE,0,Other,_dcp_a2a_pack_send_kernel.kd,11665.7,1948,6.0
+k3_conc1_dcp8_isl84k,DECODE,0,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",9044.8,407,22.2
+k3_conc1_dcp8_isl84k,DECODE,0,Other,_dcp_a2a_unpack_combine_kernel.kd,8777.1,1948,4.5
+k3_conc1_dcp8_isl84k,DECODE,0,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",8687.6,1948,4.5
+k3_conc1_dcp8_isl84k,DECODE,0,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,7260.1,680,10.7
+k3_conc1_dcp8_isl84k,DECODE,0,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",6772.5,1608,4.2
+k3_conc1_dcp8_isl84k,DECODE,0,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",6674.2,1608,4.2
+k3_conc1_dcp8_isl84k,DECODE,0,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5181.5,340,15.2
+k3_conc1_dcp8_isl84k,DECODE,0,Other,mscclKernel_Sum_hip_bfloat16_LL_false,4649.5,340,13.7
+k3_conc1_dcp8_isl84k,DECODE,0,Other,void at::native::,4127.6,881,4.7
+k3_conc1_dcp8_isl84k,DECODE,0,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",3489.0,811,4.3
+k3_conc1_dcp8_isl84k,DECODE,0,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",2831.0,678,4.2
+k3_conc1_dcp8_isl84k,DECODE,0,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",2694.0,809,3.3
+k3_conc1_dcp8_isl84k,DECODE,0,Other,_prepare_dflash_inputs_kernel.kd,2568.0,68,37.8
+k3_conc1_dcp8_isl84k,DECODE,0,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",1944.5,407,4.8
+k3_conc1_dcp8_isl84k,DECODE,0,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",1920.6,470,4.1
+k3_conc1_dcp8_isl84k,DECODE,0,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1655.3,404,4.1
+k3_conc1_dcp8_isl84k,DECODE,0,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1648.3,404,4.1
+k3_conc1_dcp8_isl84k,DECODE,0,Other,void ,1639.4,402,4.1
+k3_conc1_dcp8_isl84k,DECODE,0,Other,kernel.kd,1427.1,340,4.2
+k3_conc1_dcp8_isl84k,DECODE,0,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,1310.0,1,1310.0
+k3_conc1_dcp8_isl84k,DECODE,0,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1308.0,340,3.8
+k3_conc1_dcp8_isl84k,DECODE,0,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,876.6,204,4.3
+k3_conc1_dcp8_isl84k,DECODE,0,Other,_expand_page_indices_kernel.kd,835.6,202,4.1
+k3_conc1_dcp8_isl84k,DECODE,0,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",804.1,201,4.0
+k3_conc1_dcp8_isl84k,DECODE,0,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",795.5,201,4.0
+k3_conc1_dcp8_isl84k,DECODE,0,Other,_rejection_kernel.kd,617.7,67,9.2
+k3_conc1_dcp8_isl84k,DECODE,0,Other,"void at::native::vectorized_gather_kernel<16, long>",613.1,135,4.5
+k3_conc1_dcp8_isl84k,DECODE,0,Other,__amd_rocclr_fillBufferAligned.kd,578.3,135,4.3
+k3_conc1_dcp8_isl84k,DECODE,0,Other,_dcp_local_seq_lens_kernel.kd,571.5,135,4.2
+k3_conc1_dcp8_isl84k,DECODE,0,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",559.3,136,4.1
+k3_conc1_dcp8_isl84k,DECODE,0,Other,_bias_kernel.kd,503.8,68,7.4
+k3_conc1_dcp8_isl84k,DECODE,0,Other,_compute_local_logits_stats_kernel.kd,449.2,67,6.7
+k3_conc1_dcp8_isl84k,DECODE,0,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,419.1,201,2.1
+k3_conc1_dcp8_isl84k,DECODE,0,Other,_scatter_num_accepted_kernel.kd,378.6,68,5.6
+k3_conc1_dcp8_isl84k,DECODE,0,Other,_compute_slot_mappings_kernel.kd,375.0,67,5.6
+k3_conc1_dcp8_isl84k,DECODE,0,Other,_post_update_kernel.kd,369.5,68,5.4
+k3_conc1_dcp8_isl84k,DECODE,0,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",328.9,68,4.8
+k3_conc1_dcp8_isl84k,DECODE,0,Other,postprocess_mamba_fused_kernel.kd,322.9,68,4.7
+k3_conc1_dcp8_isl84k,DECODE,0,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",298.8,68,4.4
+k3_conc1_dcp8_isl84k,DECODE,0,Other,precopy_mamba_align_fused_kernel.kd,295.9,67,4.4
+k3_conc1_dcp8_isl84k,DECODE,0,Other,preprocess_mamba_align_fused_kernel.kd,294.1,67,4.4
+k3_conc1_dcp8_isl84k,DECODE,0,Other,_gather_block_tables_kernel.kd,292.9,67,4.4
+k3_conc1_dcp8_isl84k,DECODE,0,Other,_prepare_pos_seq_lens_kernel.kd,290.2,67,4.3
+k3_conc1_dcp8_isl84k,DECODE,0,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",276.7,68,4.1
+k3_conc1_dcp8_isl84k,DECODE,0,Other,_expand_idx_mapping_kernel.kd,167.5,67,2.5
+k3_conc1_dcp8_isl84k,DECODE,0,Other,_apply_write_kernel.kd,5.0,1,5.0
+k3_conc1_dcp8_isl84k,DECODE,0,Sampling,Sampling,3063.7,746,4.1
+k3_conc1_dcp8_isl84k,DECODE,0,Sampling,ArgMax/Reduce,2517.6,477,5.3
+k3_conc1_dcp8_isl84k,DECODE,0,Triton Fused,Triton fused op,6325.7,1743,3.6
+k3_conc1_dcp8_isl84k,DECODE,1,Activation,SiLU/SwiGLU,1368.7,340,4.0
+k3_conc1_dcp8_isl84k,DECODE,1,Attention,MLA attn residual,102117.6,12529,8.2
+k3_conc1_dcp8_isl84k,DECODE,1,Communication,CustomAR 2-stage,108272.5,13277,8.2
+k3_conc1_dcp8_isl84k,DECODE,1,Communication,CustomAR 1-stage,60545.7,6164,9.8
+k3_conc1_dcp8_isl84k,DECODE,1,Communication,NCCL/RCCL,33829.0,2084,16.2
+k3_conc1_dcp8_isl84k,DECODE,1,GEMM,hipBLASLt (Cijk),259966.9,22457,11.6
+k3_conc1_dcp8_isl84k,DECODE,1,GEMM,AITER hgemm bf16,249009.4,30361,8.2
+k3_conc1_dcp8_isl84k,DECODE,1,GEMM,AITER flydsl MoE,156529.7,6164,25.4
+k3_conc1_dcp8_isl84k,DECODE,1,GEMM,AITER wfp4 batched,16016.8,3216,5.0
+k3_conc1_dcp8_isl84k,DECODE,1,GEMM,rocBLAS splitK,10186.9,477,21.4
+k3_conc1_dcp8_isl84k,DECODE,1,KDA Linear Attn,KDA gated-delta,91136.9,4623,19.7
+k3_conc1_dcp8_isl84k,DECODE,1,KDA Linear Attn,KDA conv1d,26334.5,4623,5.7
+k3_conc1_dcp8_isl84k,DECODE,1,Memory,Fill,2421.2,539,4.5
+k3_conc1_dcp8_isl84k,DECODE,1,MoE Routing,MoE sort mxfp4,106260.0,18492,5.7
+k3_conc1_dcp8_isl84k,DECODE,1,MoE Routing,AITER grouped_topk,72529.6,6164,11.8
+k3_conc1_dcp8_isl84k,DECODE,1,Normalization,Add+RMSNorm+quant,31099.1,7048,4.4
+k3_conc1_dcp8_isl84k,DECODE,1,Normalization,LayerNorm,19811.9,4623,4.3
+k3_conc1_dcp8_isl84k,DECODE,1,Normalization,RMSNorm,6753.0,1608,4.2
+k3_conc1_dcp8_isl84k,DECODE,1,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,86437.0,6164,14.0
+k3_conc1_dcp8_isl84k,DECODE,1,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,70708.5,1948,36.3
+k3_conc1_dcp8_isl84k,DECODE,1,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",26625.2,5570,4.8
+k3_conc1_dcp8_isl84k,DECODE,1,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,26158.6,6231,4.2
+k3_conc1_dcp8_isl84k,DECODE,1,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,22749.8,1608,14.1
+k3_conc1_dcp8_isl84k,DECODE,1,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",21340.3,1608,13.3
+k3_conc1_dcp8_isl84k,DECODE,1,Other,__amd_rocclr_copyBuffer.kd,18344.9,4643,4.0
+k3_conc1_dcp8_isl84k,DECODE,1,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",14333.1,202,71.0
+k3_conc1_dcp8_isl84k,DECODE,1,Other,_dcp_a2a_pack_send_kernel.kd,11875.2,1948,6.1
+k3_conc1_dcp8_isl84k,DECODE,1,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",9113.2,407,22.4
+k3_conc1_dcp8_isl84k,DECODE,1,Other,_dcp_a2a_unpack_combine_kernel.kd,8887.1,1948,4.6
+k3_conc1_dcp8_isl84k,DECODE,1,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",8405.8,1948,4.3
+k3_conc1_dcp8_isl84k,DECODE,1,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,7187.5,680,10.6
+k3_conc1_dcp8_isl84k,DECODE,1,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",6771.3,1608,4.2
+k3_conc1_dcp8_isl84k,DECODE,1,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",6706.4,1608,4.2
+k3_conc1_dcp8_isl84k,DECODE,1,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5171.5,340,15.2
+k3_conc1_dcp8_isl84k,DECODE,1,Other,mscclKernel_Sum_hip_bfloat16_LL_false,5019.3,340,14.8
+k3_conc1_dcp8_isl84k,DECODE,1,Other,void at::native::,3977.7,881,4.5
+k3_conc1_dcp8_isl84k,DECODE,1,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",3453.0,811,4.3
+k3_conc1_dcp8_isl84k,DECODE,1,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",2821.9,678,4.2
+k3_conc1_dcp8_isl84k,DECODE,1,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",2676.8,809,3.3
+k3_conc1_dcp8_isl84k,DECODE,1,Other,_prepare_dflash_inputs_kernel.kd,2554.9,68,37.6
+k3_conc1_dcp8_isl84k,DECODE,1,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",1912.9,407,4.7
+k3_conc1_dcp8_isl84k,DECODE,1,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",1896.2,470,4.0
+k3_conc1_dcp8_isl84k,DECODE,1,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1671.4,404,4.1
+k3_conc1_dcp8_isl84k,DECODE,1,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1647.0,404,4.1
+k3_conc1_dcp8_isl84k,DECODE,1,Other,void ,1629.8,402,4.1
+k3_conc1_dcp8_isl84k,DECODE,1,Other,kernel.kd,1414.6,340,4.2
+k3_conc1_dcp8_isl84k,DECODE,1,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1293.3,340,3.8
+k3_conc1_dcp8_isl84k,DECODE,1,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,1283.8,1,1283.8
+k3_conc1_dcp8_isl84k,DECODE,1,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,854.7,204,4.2
+k3_conc1_dcp8_isl84k,DECODE,1,Other,_expand_page_indices_kernel.kd,835.2,202,4.1
+k3_conc1_dcp8_isl84k,DECODE,1,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",795.0,201,4.0
+k3_conc1_dcp8_isl84k,DECODE,1,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",792.0,201,3.9
+k3_conc1_dcp8_isl84k,DECODE,1,Other,"void at::native::vectorized_gather_kernel<16, long>",629.7,135,4.7
+k3_conc1_dcp8_isl84k,DECODE,1,Other,_rejection_kernel.kd,607.7,67,9.1
+k3_conc1_dcp8_isl84k,DECODE,1,Other,_dcp_local_seq_lens_kernel.kd,578.9,135,4.3
+k3_conc1_dcp8_isl84k,DECODE,1,Other,__amd_rocclr_fillBufferAligned.kd,574.7,135,4.3
+k3_conc1_dcp8_isl84k,DECODE,1,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",559.1,136,4.1
+k3_conc1_dcp8_isl84k,DECODE,1,Other,_bias_kernel.kd,529.0,68,7.8
+k3_conc1_dcp8_isl84k,DECODE,1,Other,_compute_local_logits_stats_kernel.kd,463.9,67,6.9
+k3_conc1_dcp8_isl84k,DECODE,1,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,416.0,201,2.1
+k3_conc1_dcp8_isl84k,DECODE,1,Other,_scatter_num_accepted_kernel.kd,377.5,68,5.6
+k3_conc1_dcp8_isl84k,DECODE,1,Other,_post_update_kernel.kd,368.8,68,5.4
+k3_conc1_dcp8_isl84k,DECODE,1,Other,_compute_slot_mappings_kernel.kd,350.9,67,5.2
+k3_conc1_dcp8_isl84k,DECODE,1,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",333.5,68,4.9
+k3_conc1_dcp8_isl84k,DECODE,1,Other,postprocess_mamba_fused_kernel.kd,314.5,68,4.6
+k3_conc1_dcp8_isl84k,DECODE,1,Other,_gather_block_tables_kernel.kd,313.7,67,4.7
+k3_conc1_dcp8_isl84k,DECODE,1,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",300.5,68,4.4
+k3_conc1_dcp8_isl84k,DECODE,1,Other,precopy_mamba_align_fused_kernel.kd,296.1,67,4.4
+k3_conc1_dcp8_isl84k,DECODE,1,Other,_prepare_pos_seq_lens_kernel.kd,293.7,67,4.4
+k3_conc1_dcp8_isl84k,DECODE,1,Other,preprocess_mamba_align_fused_kernel.kd,285.8,67,4.3
+k3_conc1_dcp8_isl84k,DECODE,1,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",277.6,68,4.1
+k3_conc1_dcp8_isl84k,DECODE,1,Other,_expand_idx_mapping_kernel.kd,170.9,67,2.6
+k3_conc1_dcp8_isl84k,DECODE,1,Other,_apply_write_kernel.kd,4.0,1,4.0
+k3_conc1_dcp8_isl84k,DECODE,1,Sampling,Sampling,3075.6,746,4.1
+k3_conc1_dcp8_isl84k,DECODE,1,Sampling,ArgMax/Reduce,2550.1,477,5.3
+k3_conc1_dcp8_isl84k,DECODE,1,Triton Fused,Triton fused op,9982.8,1743,5.7
+k3_conc1_dcp8_isl84k,DECODE,2,Activation,SiLU/SwiGLU,1399.5,340,4.1
+k3_conc1_dcp8_isl84k,DECODE,2,Attention,MLA attn residual,102040.3,12529,8.1
+k3_conc1_dcp8_isl84k,DECODE,2,Communication,CustomAR 2-stage,106376.8,13277,8.0
+k3_conc1_dcp8_isl84k,DECODE,2,Communication,CustomAR 1-stage,62981.5,6164,10.2
+k3_conc1_dcp8_isl84k,DECODE,2,Communication,NCCL/RCCL,33929.7,2084,16.3
+k3_conc1_dcp8_isl84k,DECODE,2,GEMM,hipBLASLt (Cijk),260021.3,22457,11.6
+k3_conc1_dcp8_isl84k,DECODE,2,GEMM,AITER hgemm bf16,249548.9,30361,8.2
+k3_conc1_dcp8_isl84k,DECODE,2,GEMM,AITER flydsl MoE,155650.8,6164,25.3
+k3_conc1_dcp8_isl84k,DECODE,2,GEMM,AITER wfp4 batched,15910.3,3216,4.9
+k3_conc1_dcp8_isl84k,DECODE,2,GEMM,rocBLAS splitK,10228.9,477,21.4
+k3_conc1_dcp8_isl84k,DECODE,2,KDA Linear Attn,KDA gated-delta,92438.0,4623,20.0
+k3_conc1_dcp8_isl84k,DECODE,2,KDA Linear Attn,KDA conv1d,26533.5,4623,5.7
+k3_conc1_dcp8_isl84k,DECODE,2,Memory,Fill,2422.6,539,4.5
+k3_conc1_dcp8_isl84k,DECODE,2,MoE Routing,MoE sort mxfp4,106552.5,18492,5.8
+k3_conc1_dcp8_isl84k,DECODE,2,MoE Routing,AITER grouped_topk,72313.9,6164,11.7
+k3_conc1_dcp8_isl84k,DECODE,2,Normalization,Add+RMSNorm+quant,31518.3,7048,4.5
+k3_conc1_dcp8_isl84k,DECODE,2,Normalization,LayerNorm,19364.4,4623,4.2
+k3_conc1_dcp8_isl84k,DECODE,2,Normalization,RMSNorm,6726.1,1608,4.2
+k3_conc1_dcp8_isl84k,DECODE,2,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,86305.0,6164,14.0
+k3_conc1_dcp8_isl84k,DECODE,2,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,69921.5,1948,35.9
+k3_conc1_dcp8_isl84k,DECODE,2,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",26874.6,5570,4.8
+k3_conc1_dcp8_isl84k,DECODE,2,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,25272.1,6231,4.1
+k3_conc1_dcp8_isl84k,DECODE,2,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,22892.9,1608,14.2
+k3_conc1_dcp8_isl84k,DECODE,2,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",21708.2,1608,13.5
+k3_conc1_dcp8_isl84k,DECODE,2,Other,__amd_rocclr_copyBuffer.kd,18431.0,4643,4.0
+k3_conc1_dcp8_isl84k,DECODE,2,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",14354.8,202,71.1
+k3_conc1_dcp8_isl84k,DECODE,2,Other,_dcp_a2a_pack_send_kernel.kd,11778.0,1948,6.0
+k3_conc1_dcp8_isl84k,DECODE,2,Other,_dcp_a2a_unpack_combine_kernel.kd,9135.9,1948,4.7
+k3_conc1_dcp8_isl84k,DECODE,2,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8324.7,407,20.5
+k3_conc1_dcp8_isl84k,DECODE,2,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",8243.5,1948,4.2
+k3_conc1_dcp8_isl84k,DECODE,2,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,7242.4,680,10.7
+k3_conc1_dcp8_isl84k,DECODE,2,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",6770.2,1608,4.2
+k3_conc1_dcp8_isl84k,DECODE,2,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",6522.1,1608,4.1
+k3_conc1_dcp8_isl84k,DECODE,2,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5236.7,340,15.4
+k3_conc1_dcp8_isl84k,DECODE,2,Other,mscclKernel_Sum_hip_bfloat16_LL_false,5074.4,340,14.9
+k3_conc1_dcp8_isl84k,DECODE,2,Other,void at::native::,3997.5,881,4.5
+k3_conc1_dcp8_isl84k,DECODE,2,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",3481.6,811,4.3
+k3_conc1_dcp8_isl84k,DECODE,2,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",2836.8,678,4.2
+k3_conc1_dcp8_isl84k,DECODE,2,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",2710.1,809,3.3
+k3_conc1_dcp8_isl84k,DECODE,2,Other,_prepare_dflash_inputs_kernel.kd,2597.5,68,38.2
+k3_conc1_dcp8_isl84k,DECODE,2,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",1919.6,407,4.7
+k3_conc1_dcp8_isl84k,DECODE,2,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",1905.8,470,4.1
+k3_conc1_dcp8_isl84k,DECODE,2,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1645.0,404,4.1
+k3_conc1_dcp8_isl84k,DECODE,2,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1635.9,404,4.0
+k3_conc1_dcp8_isl84k,DECODE,2,Other,void ,1635.0,402,4.1
+k3_conc1_dcp8_isl84k,DECODE,2,Other,kernel.kd,1412.8,340,4.2
+k3_conc1_dcp8_isl84k,DECODE,2,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1328.3,340,3.9
+k3_conc1_dcp8_isl84k,DECODE,2,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,1287.9,1,1287.9
+k3_conc1_dcp8_isl84k,DECODE,2,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,892.8,204,4.4
+k3_conc1_dcp8_isl84k,DECODE,2,Other,_expand_page_indices_kernel.kd,836.1,202,4.1
+k3_conc1_dcp8_isl84k,DECODE,2,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",793.2,201,3.9
+k3_conc1_dcp8_isl84k,DECODE,2,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",789.3,201,3.9
+k3_conc1_dcp8_isl84k,DECODE,2,Other,_rejection_kernel.kd,643.2,67,9.6
+k3_conc1_dcp8_isl84k,DECODE,2,Other,"void at::native::vectorized_gather_kernel<16, long>",611.0,135,4.5
+k3_conc1_dcp8_isl84k,DECODE,2,Other,__amd_rocclr_fillBufferAligned.kd,582.8,135,4.3
+k3_conc1_dcp8_isl84k,DECODE,2,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",572.2,136,4.2
+k3_conc1_dcp8_isl84k,DECODE,2,Other,_dcp_local_seq_lens_kernel.kd,570.0,135,4.2
+k3_conc1_dcp8_isl84k,DECODE,2,Other,_bias_kernel.kd,551.4,68,8.1
+k3_conc1_dcp8_isl84k,DECODE,2,Other,_compute_local_logits_stats_kernel.kd,461.5,67,6.9
+k3_conc1_dcp8_isl84k,DECODE,2,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,419.4,201,2.1
+k3_conc1_dcp8_isl84k,DECODE,2,Other,_scatter_num_accepted_kernel.kd,377.1,68,5.5
+k3_conc1_dcp8_isl84k,DECODE,2,Other,_compute_slot_mappings_kernel.kd,375.9,67,5.6
+k3_conc1_dcp8_isl84k,DECODE,2,Other,_post_update_kernel.kd,366.5,68,5.4
+k3_conc1_dcp8_isl84k,DECODE,2,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",334.1,68,4.9
+k3_conc1_dcp8_isl84k,DECODE,2,Other,postprocess_mamba_fused_kernel.kd,320.1,68,4.7
+k3_conc1_dcp8_isl84k,DECODE,2,Other,_gather_block_tables_kernel.kd,312.0,67,4.7
+k3_conc1_dcp8_isl84k,DECODE,2,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",302.6,68,4.4
+k3_conc1_dcp8_isl84k,DECODE,2,Other,precopy_mamba_align_fused_kernel.kd,296.8,67,4.4
+k3_conc1_dcp8_isl84k,DECODE,2,Other,_prepare_pos_seq_lens_kernel.kd,295.9,67,4.4
+k3_conc1_dcp8_isl84k,DECODE,2,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",287.9,68,4.2
+k3_conc1_dcp8_isl84k,DECODE,2,Other,preprocess_mamba_align_fused_kernel.kd,284.5,67,4.2
+k3_conc1_dcp8_isl84k,DECODE,2,Other,_expand_idx_mapping_kernel.kd,167.2,67,2.5
+k3_conc1_dcp8_isl84k,DECODE,2,Other,_apply_write_kernel.kd,5.3,1,5.3
+k3_conc1_dcp8_isl84k,DECODE,2,Sampling,Sampling,3061.9,746,4.1
+k3_conc1_dcp8_isl84k,DECODE,2,Sampling,ArgMax/Reduce,2471.1,477,5.2
+k3_conc1_dcp8_isl84k,DECODE,2,Triton Fused,Triton fused op,9979.4,1743,5.7
+k3_conc1_dcp8_isl84k,DECODE,3,Activation,SiLU/SwiGLU,2596.4,340,7.6
+k3_conc1_dcp8_isl84k,DECODE,3,Attention,MLA attn residual,102523.3,12529,8.2
+k3_conc1_dcp8_isl84k,DECODE,3,Communication,CustomAR 2-stage,105870.1,13277,8.0
+k3_conc1_dcp8_isl84k,DECODE,3,Communication,CustomAR 1-stage,56434.5,6164,9.2
+k3_conc1_dcp8_isl84k,DECODE,3,Communication,NCCL/RCCL,37560.4,2084,18.0
+k3_conc1_dcp8_isl84k,DECODE,3,GEMM,hipBLASLt (Cijk),261015.8,22457,11.6
+k3_conc1_dcp8_isl84k,DECODE,3,GEMM,AITER hgemm bf16,251888.4,30361,8.3
+k3_conc1_dcp8_isl84k,DECODE,3,GEMM,AITER flydsl MoE,156562.3,6164,25.4
+k3_conc1_dcp8_isl84k,DECODE,3,GEMM,AITER wfp4 batched,16111.5,3216,5.0
+k3_conc1_dcp8_isl84k,DECODE,3,GEMM,rocBLAS splitK,10216.3,477,21.4
+k3_conc1_dcp8_isl84k,DECODE,3,KDA Linear Attn,KDA gated-delta,91104.7,4623,19.7
+k3_conc1_dcp8_isl84k,DECODE,3,KDA Linear Attn,KDA conv1d,26262.9,4623,5.7
+k3_conc1_dcp8_isl84k,DECODE,3,Memory,Fill,2446.2,539,4.5
+k3_conc1_dcp8_isl84k,DECODE,3,MoE Routing,MoE sort mxfp4,107416.6,18492,5.8
+k3_conc1_dcp8_isl84k,DECODE,3,MoE Routing,AITER grouped_topk,72319.5,6164,11.7
+k3_conc1_dcp8_isl84k,DECODE,3,Normalization,Add+RMSNorm+quant,31402.1,7048,4.5
+k3_conc1_dcp8_isl84k,DECODE,3,Normalization,LayerNorm,19858.8,4623,4.3
+k3_conc1_dcp8_isl84k,DECODE,3,Normalization,RMSNorm,6714.7,1608,4.2
+k3_conc1_dcp8_isl84k,DECODE,3,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,86677.8,6164,14.1
+k3_conc1_dcp8_isl84k,DECODE,3,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,70359.2,1948,36.1
+k3_conc1_dcp8_isl84k,DECODE,3,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",26531.5,5570,4.8
+k3_conc1_dcp8_isl84k,DECODE,3,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,26035.1,6231,4.2
+k3_conc1_dcp8_isl84k,DECODE,3,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,22869.9,1608,14.2
+k3_conc1_dcp8_isl84k,DECODE,3,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",21584.6,1608,13.4
+k3_conc1_dcp8_isl84k,DECODE,3,Other,__amd_rocclr_copyBuffer.kd,18425.0,4643,4.0
+k3_conc1_dcp8_isl84k,DECODE,3,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",14357.2,202,71.1
+k3_conc1_dcp8_isl84k,DECODE,3,Other,_dcp_a2a_pack_send_kernel.kd,11899.2,1948,6.1
+k3_conc1_dcp8_isl84k,DECODE,3,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8744.6,407,21.5
+k3_conc1_dcp8_isl84k,DECODE,3,Other,_dcp_a2a_unpack_combine_kernel.kd,8695.9,1948,4.5
+k3_conc1_dcp8_isl84k,DECODE,3,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",8193.5,1948,4.2
+k3_conc1_dcp8_isl84k,DECODE,3,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,7195.5,680,10.6
+k3_conc1_dcp8_isl84k,DECODE,3,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",6754.1,1608,4.2
+k3_conc1_dcp8_isl84k,DECODE,3,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",6602.9,1608,4.1
+k3_conc1_dcp8_isl84k,DECODE,3,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5179.9,340,15.2
+k3_conc1_dcp8_isl84k,DECODE,3,Other,mscclKernel_Sum_hip_bfloat16_LL_false,4855.4,340,14.3
+k3_conc1_dcp8_isl84k,DECODE,3,Other,void at::native::,4029.2,881,4.6
+k3_conc1_dcp8_isl84k,DECODE,3,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",3504.0,811,4.3
+k3_conc1_dcp8_isl84k,DECODE,3,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",2828.0,678,4.2
+k3_conc1_dcp8_isl84k,DECODE,3,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",2710.2,810,3.3
+k3_conc1_dcp8_isl84k,DECODE,3,Other,_prepare_dflash_inputs_kernel.kd,2567.8,68,37.8
+k3_conc1_dcp8_isl84k,DECODE,3,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",1912.0,470,4.1
+k3_conc1_dcp8_isl84k,DECODE,3,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",1864.3,407,4.6
+k3_conc1_dcp8_isl84k,DECODE,3,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1666.3,404,4.1
+k3_conc1_dcp8_isl84k,DECODE,3,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1644.4,404,4.1
+k3_conc1_dcp8_isl84k,DECODE,3,Other,void ,1640.4,402,4.1
+k3_conc1_dcp8_isl84k,DECODE,3,Other,kernel.kd,1430.1,340,4.2
+k3_conc1_dcp8_isl84k,DECODE,3,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1303.5,340,3.8
+k3_conc1_dcp8_isl84k,DECODE,3,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,1300.5,1,1300.5
+k3_conc1_dcp8_isl84k,DECODE,3,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,888.3,204,4.4
+k3_conc1_dcp8_isl84k,DECODE,3,Other,_expand_page_indices_kernel.kd,838.5,202,4.2
+k3_conc1_dcp8_isl84k,DECODE,3,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",797.4,201,4.0
+k3_conc1_dcp8_isl84k,DECODE,3,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",796.4,201,4.0
+k3_conc1_dcp8_isl84k,DECODE,3,Other,"void at::native::vectorized_gather_kernel<16, long>",614.9,135,4.6
+k3_conc1_dcp8_isl84k,DECODE,3,Other,_rejection_kernel.kd,592.1,67,8.8
+k3_conc1_dcp8_isl84k,DECODE,3,Other,__amd_rocclr_fillBufferAligned.kd,576.8,135,4.3
+k3_conc1_dcp8_isl84k,DECODE,3,Other,_dcp_local_seq_lens_kernel.kd,568.2,135,4.2
+k3_conc1_dcp8_isl84k,DECODE,3,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",563.1,136,4.1
+k3_conc1_dcp8_isl84k,DECODE,3,Other,_bias_kernel.kd,528.8,68,7.8
+k3_conc1_dcp8_isl84k,DECODE,3,Other,_compute_local_logits_stats_kernel.kd,467.5,67,7.0
+k3_conc1_dcp8_isl84k,DECODE,3,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,421.6,201,2.1
+k3_conc1_dcp8_isl84k,DECODE,3,Other,_compute_slot_mappings_kernel.kd,374.3,67,5.6
+k3_conc1_dcp8_isl84k,DECODE,3,Other,_post_update_kernel.kd,374.2,68,5.5
+k3_conc1_dcp8_isl84k,DECODE,3,Other,_scatter_num_accepted_kernel.kd,371.9,68,5.5
+k3_conc1_dcp8_isl84k,DECODE,3,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",343.2,68,5.0
+k3_conc1_dcp8_isl84k,DECODE,3,Other,postprocess_mamba_fused_kernel.kd,317.2,68,4.7
+k3_conc1_dcp8_isl84k,DECODE,3,Other,precopy_mamba_align_fused_kernel.kd,304.2,67,4.5
+k3_conc1_dcp8_isl84k,DECODE,3,Other,_gather_block_tables_kernel.kd,301.7,67,4.5
+k3_conc1_dcp8_isl84k,DECODE,3,Other,_prepare_pos_seq_lens_kernel.kd,300.1,67,4.5
+k3_conc1_dcp8_isl84k,DECODE,3,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",297.4,68,4.4
+k3_conc1_dcp8_isl84k,DECODE,3,Other,preprocess_mamba_align_fused_kernel.kd,295.5,67,4.4
+k3_conc1_dcp8_isl84k,DECODE,3,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",284.6,68,4.2
+k3_conc1_dcp8_isl84k,DECODE,3,Other,_expand_idx_mapping_kernel.kd,174.6,67,2.6
+k3_conc1_dcp8_isl84k,DECODE,3,Other,_apply_write_kernel.kd,4.4,1,4.4
+k3_conc1_dcp8_isl84k,DECODE,3,Sampling,Sampling,3108.0,746,4.2
+k3_conc1_dcp8_isl84k,DECODE,3,Sampling,ArgMax/Reduce,2409.8,477,5.1
+k3_conc1_dcp8_isl84k,DECODE,3,Triton Fused,Triton fused op,6356.7,1743,3.6
+k3_conc1_dcp8_isl84k,DECODE,4,Activation,SiLU/SwiGLU,2627.7,340,7.7
+k3_conc1_dcp8_isl84k,DECODE,4,Attention,MLA attn residual,101921.7,12529,8.1
+k3_conc1_dcp8_isl84k,DECODE,4,Communication,CustomAR 2-stage,107431.4,13277,8.1
+k3_conc1_dcp8_isl84k,DECODE,4,Communication,CustomAR 1-stage,60044.7,6164,9.7
+k3_conc1_dcp8_isl84k,DECODE,4,Communication,NCCL/RCCL,37659.9,2084,18.1
+k3_conc1_dcp8_isl84k,DECODE,4,GEMM,hipBLASLt (Cijk),260516.8,22457,11.6
+k3_conc1_dcp8_isl84k,DECODE,4,GEMM,AITER hgemm bf16,249344.7,30361,8.2
+k3_conc1_dcp8_isl84k,DECODE,4,GEMM,AITER flydsl MoE,156979.3,6164,25.5
+k3_conc1_dcp8_isl84k,DECODE,4,GEMM,AITER wfp4 batched,16032.6,3216,5.0
+k3_conc1_dcp8_isl84k,DECODE,4,GEMM,rocBLAS splitK,10255.7,477,21.5
+k3_conc1_dcp8_isl84k,DECODE,4,KDA Linear Attn,KDA gated-delta,91355.3,4623,19.8
+k3_conc1_dcp8_isl84k,DECODE,4,KDA Linear Attn,KDA conv1d,26137.4,4623,5.7
+k3_conc1_dcp8_isl84k,DECODE,4,Memory,Fill,2427.0,539,4.5
+k3_conc1_dcp8_isl84k,DECODE,4,MoE Routing,MoE sort mxfp4,106854.3,18492,5.8
+k3_conc1_dcp8_isl84k,DECODE,4,MoE Routing,AITER grouped_topk,72063.6,6164,11.7
+k3_conc1_dcp8_isl84k,DECODE,4,Normalization,Add+RMSNorm+quant,31492.4,7048,4.5
+k3_conc1_dcp8_isl84k,DECODE,4,Normalization,LayerNorm,19388.5,4623,4.2
+k3_conc1_dcp8_isl84k,DECODE,4,Normalization,RMSNorm,6911.7,1608,4.3
+k3_conc1_dcp8_isl84k,DECODE,4,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,86739.1,6164,14.1
+k3_conc1_dcp8_isl84k,DECODE,4,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,70577.6,1948,36.2
+k3_conc1_dcp8_isl84k,DECODE,4,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",26614.8,5570,4.8
+k3_conc1_dcp8_isl84k,DECODE,4,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,25236.9,6231,4.1
+k3_conc1_dcp8_isl84k,DECODE,4,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,23081.5,1608,14.4
+k3_conc1_dcp8_isl84k,DECODE,4,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",21313.8,1608,13.3
+k3_conc1_dcp8_isl84k,DECODE,4,Other,__amd_rocclr_copyBuffer.kd,18455.4,4643,4.0
+k3_conc1_dcp8_isl84k,DECODE,4,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",14367.5,202,71.1
+k3_conc1_dcp8_isl84k,DECODE,4,Other,_dcp_a2a_pack_send_kernel.kd,11845.7,1948,6.1
+k3_conc1_dcp8_isl84k,DECODE,4,Other,_dcp_a2a_unpack_combine_kernel.kd,8911.1,1948,4.6
+k3_conc1_dcp8_isl84k,DECODE,4,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",8371.0,1948,4.3
+k3_conc1_dcp8_isl84k,DECODE,4,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8333.3,407,20.5
+k3_conc1_dcp8_isl84k,DECODE,4,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,7222.8,680,10.6
+k3_conc1_dcp8_isl84k,DECODE,4,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",6652.9,1608,4.1
+k3_conc1_dcp8_isl84k,DECODE,4,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",6541.9,1608,4.1
+k3_conc1_dcp8_isl84k,DECODE,4,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5162.0,340,15.2
+k3_conc1_dcp8_isl84k,DECODE,4,Other,mscclKernel_Sum_hip_bfloat16_LL_false,4684.0,340,13.8
+k3_conc1_dcp8_isl84k,DECODE,4,Other,void at::native::,3980.7,881,4.5
+k3_conc1_dcp8_isl84k,DECODE,4,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",3504.8,811,4.3
+k3_conc1_dcp8_isl84k,DECODE,4,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",2844.2,678,4.2
+k3_conc1_dcp8_isl84k,DECODE,4,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",2699.3,809,3.3
+k3_conc1_dcp8_isl84k,DECODE,4,Other,_prepare_dflash_inputs_kernel.kd,2585.2,68,38.0
+k3_conc1_dcp8_isl84k,DECODE,4,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",1968.9,407,4.8
+k3_conc1_dcp8_isl84k,DECODE,4,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",1915.5,470,4.1
+k3_conc1_dcp8_isl84k,DECODE,4,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1666.4,404,4.1
+k3_conc1_dcp8_isl84k,DECODE,4,Other,void ,1644.2,402,4.1
+k3_conc1_dcp8_isl84k,DECODE,4,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1643.9,404,4.1
+k3_conc1_dcp8_isl84k,DECODE,4,Other,kernel.kd,1397.6,340,4.1
+k3_conc1_dcp8_isl84k,DECODE,4,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,1328.7,1,1328.7
+k3_conc1_dcp8_isl84k,DECODE,4,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1308.4,340,3.8
+k3_conc1_dcp8_isl84k,DECODE,4,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,853.3,204,4.2
+k3_conc1_dcp8_isl84k,DECODE,4,Other,_expand_page_indices_kernel.kd,837.0,202,4.1
+k3_conc1_dcp8_isl84k,DECODE,4,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",792.7,201,3.9
+k3_conc1_dcp8_isl84k,DECODE,4,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",791.7,201,3.9
+k3_conc1_dcp8_isl84k,DECODE,4,Other,_rejection_kernel.kd,624.0,67,9.3
+k3_conc1_dcp8_isl84k,DECODE,4,Other,"void at::native::vectorized_gather_kernel<16, long>",610.7,135,4.5
+k3_conc1_dcp8_isl84k,DECODE,4,Other,_dcp_local_seq_lens_kernel.kd,610.3,135,4.5
+k3_conc1_dcp8_isl84k,DECODE,4,Other,__amd_rocclr_fillBufferAligned.kd,580.9,135,4.3
+k3_conc1_dcp8_isl84k,DECODE,4,Other,_bias_kernel.kd,578.2,68,8.5
+k3_conc1_dcp8_isl84k,DECODE,4,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",560.7,136,4.1
+k3_conc1_dcp8_isl84k,DECODE,4,Other,_compute_local_logits_stats_kernel.kd,444.8,67,6.6
+k3_conc1_dcp8_isl84k,DECODE,4,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,417.1,201,2.1
+k3_conc1_dcp8_isl84k,DECODE,4,Other,_compute_slot_mappings_kernel.kd,382.6,67,5.7
+k3_conc1_dcp8_isl84k,DECODE,4,Other,_scatter_num_accepted_kernel.kd,368.5,68,5.4
+k3_conc1_dcp8_isl84k,DECODE,4,Other,_post_update_kernel.kd,345.6,68,5.1
+k3_conc1_dcp8_isl84k,DECODE,4,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",335.2,68,4.9
+k3_conc1_dcp8_isl84k,DECODE,4,Other,postprocess_mamba_fused_kernel.kd,331.1,68,4.9
+k3_conc1_dcp8_isl84k,DECODE,4,Other,precopy_mamba_align_fused_kernel.kd,303.3,67,4.5
+k3_conc1_dcp8_isl84k,DECODE,4,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",298.5,68,4.4
+k3_conc1_dcp8_isl84k,DECODE,4,Other,_gather_block_tables_kernel.kd,295.9,67,4.4
+k3_conc1_dcp8_isl84k,DECODE,4,Other,preprocess_mamba_align_fused_kernel.kd,292.9,67,4.4
+k3_conc1_dcp8_isl84k,DECODE,4,Other,_prepare_pos_seq_lens_kernel.kd,287.9,67,4.3
+k3_conc1_dcp8_isl84k,DECODE,4,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",285.1,68,4.2
+k3_conc1_dcp8_isl84k,DECODE,4,Other,_expand_idx_mapping_kernel.kd,176.3,67,2.6
+k3_conc1_dcp8_isl84k,DECODE,4,Other,_apply_write_kernel.kd,4.3,1,4.3
+k3_conc1_dcp8_isl84k,DECODE,4,Sampling,Sampling,3132.7,746,4.2
+k3_conc1_dcp8_isl84k,DECODE,4,Sampling,ArgMax/Reduce,2433.7,477,5.1
+k3_conc1_dcp8_isl84k,DECODE,4,Triton Fused,Triton fused op,6607.2,1743,3.8
+k3_conc1_dcp8_isl84k,DECODE,5,Activation,SiLU/SwiGLU,1504.6,340,4.4
+k3_conc1_dcp8_isl84k,DECODE,5,Attention,MLA attn residual,101826.8,12529,8.1
+k3_conc1_dcp8_isl84k,DECODE,5,Communication,CustomAR 2-stage,100819.8,13277,7.6
+k3_conc1_dcp8_isl84k,DECODE,5,Communication,CustomAR 1-stage,58910.6,6164,9.6
+k3_conc1_dcp8_isl84k,DECODE,5,Communication,NCCL/RCCL,31361.7,2084,15.0
+k3_conc1_dcp8_isl84k,DECODE,5,GEMM,hipBLASLt (Cijk),262230.6,22457,11.7
+k3_conc1_dcp8_isl84k,DECODE,5,GEMM,AITER hgemm bf16,248863.3,30361,8.2
+k3_conc1_dcp8_isl84k,DECODE,5,GEMM,AITER flydsl MoE,156118.3,6164,25.3
+k3_conc1_dcp8_isl84k,DECODE,5,GEMM,AITER wfp4 batched,16315.3,3216,5.1
+k3_conc1_dcp8_isl84k,DECODE,5,GEMM,rocBLAS splitK,10263.9,477,21.5
+k3_conc1_dcp8_isl84k,DECODE,5,KDA Linear Attn,KDA gated-delta,91546.6,4623,19.8
+k3_conc1_dcp8_isl84k,DECODE,5,KDA Linear Attn,KDA conv1d,26322.4,4623,5.7
+k3_conc1_dcp8_isl84k,DECODE,5,Memory,Fill,2516.7,539,4.7
+k3_conc1_dcp8_isl84k,DECODE,5,MoE Routing,MoE sort mxfp4,107692.8,18492,5.8
+k3_conc1_dcp8_isl84k,DECODE,5,MoE Routing,AITER grouped_topk,72781.8,6164,11.8
+k3_conc1_dcp8_isl84k,DECODE,5,Normalization,Add+RMSNorm+quant,33136.4,7048,4.7
+k3_conc1_dcp8_isl84k,DECODE,5,Normalization,LayerNorm,20428.1,4623,4.4
+k3_conc1_dcp8_isl84k,DECODE,5,Normalization,RMSNorm,7161.1,1608,4.5
+k3_conc1_dcp8_isl84k,DECODE,5,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,85275.6,6164,13.8
+k3_conc1_dcp8_isl84k,DECODE,5,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,70643.3,1948,36.3
+k3_conc1_dcp8_isl84k,DECODE,5,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",27176.8,5570,4.9
+k3_conc1_dcp8_isl84k,DECODE,5,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,26691.2,6231,4.3
+k3_conc1_dcp8_isl84k,DECODE,5,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,22291.9,1608,13.9
+k3_conc1_dcp8_isl84k,DECODE,5,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",21229.7,1608,13.2
+k3_conc1_dcp8_isl84k,DECODE,5,Other,__amd_rocclr_copyBuffer.kd,19274.7,4643,4.2
+k3_conc1_dcp8_isl84k,DECODE,5,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",14413.0,202,71.4
+k3_conc1_dcp8_isl84k,DECODE,5,Other,_dcp_a2a_pack_send_kernel.kd,11802.5,1948,6.1
+k3_conc1_dcp8_isl84k,DECODE,5,Other,_dcp_a2a_unpack_combine_kernel.kd,9201.2,1948,4.7
+k3_conc1_dcp8_isl84k,DECODE,5,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",8792.8,1948,4.5
+k3_conc1_dcp8_isl84k,DECODE,5,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8600.3,407,21.1
+k3_conc1_dcp8_isl84k,DECODE,5,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,7325.2,680,10.8
+k3_conc1_dcp8_isl84k,DECODE,5,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",7137.6,1608,4.4
+k3_conc1_dcp8_isl84k,DECODE,5,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",6906.2,1608,4.3
+k3_conc1_dcp8_isl84k,DECODE,5,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5226.7,340,15.4
+k3_conc1_dcp8_isl84k,DECODE,5,Other,mscclKernel_Sum_hip_bfloat16_LL_false,4872.5,340,14.3
+k3_conc1_dcp8_isl84k,DECODE,5,Other,void at::native::,4156.6,881,4.7
+k3_conc1_dcp8_isl84k,DECODE,5,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",3622.5,811,4.5
+k3_conc1_dcp8_isl84k,DECODE,5,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",2971.7,678,4.4
+k3_conc1_dcp8_isl84k,DECODE,5,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",2810.2,810,3.5
+k3_conc1_dcp8_isl84k,DECODE,5,Other,_prepare_dflash_inputs_kernel.kd,2608.8,68,38.4
+k3_conc1_dcp8_isl84k,DECODE,5,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",1986.9,470,4.2
+k3_conc1_dcp8_isl84k,DECODE,5,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",1979.0,407,4.9
+k3_conc1_dcp8_isl84k,DECODE,5,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1742.2,404,4.3
+k3_conc1_dcp8_isl84k,DECODE,5,Other,void ,1704.4,402,4.2
+k3_conc1_dcp8_isl84k,DECODE,5,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1697.2,404,4.2
+k3_conc1_dcp8_isl84k,DECODE,5,Other,kernel.kd,1496.2,340,4.4
+k3_conc1_dcp8_isl84k,DECODE,5,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1375.5,340,4.0
+k3_conc1_dcp8_isl84k,DECODE,5,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,1308.0,1,1308.0
+k3_conc1_dcp8_isl84k,DECODE,5,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,896.6,204,4.4
+k3_conc1_dcp8_isl84k,DECODE,5,Other,_expand_page_indices_kernel.kd,871.7,202,4.3
+k3_conc1_dcp8_isl84k,DECODE,5,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",833.7,201,4.1
+k3_conc1_dcp8_isl84k,DECODE,5,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",826.4,201,4.1
+k3_conc1_dcp8_isl84k,DECODE,5,Other,_rejection_kernel.kd,639.4,67,9.5
+k3_conc1_dcp8_isl84k,DECODE,5,Other,"void at::native::vectorized_gather_kernel<16, long>",630.4,135,4.7
+k3_conc1_dcp8_isl84k,DECODE,5,Other,__amd_rocclr_fillBufferAligned.kd,605.2,135,4.5
+k3_conc1_dcp8_isl84k,DECODE,5,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",597.3,136,4.4
+k3_conc1_dcp8_isl84k,DECODE,5,Other,_dcp_local_seq_lens_kernel.kd,594.6,135,4.4
+k3_conc1_dcp8_isl84k,DECODE,5,Other,_bias_kernel.kd,469.9,68,6.9
+k3_conc1_dcp8_isl84k,DECODE,5,Other,_compute_local_logits_stats_kernel.kd,468.9,67,7.0
+k3_conc1_dcp8_isl84k,DECODE,5,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,417.3,201,2.1
+k3_conc1_dcp8_isl84k,DECODE,5,Other,_scatter_num_accepted_kernel.kd,401.7,68,5.9
+k3_conc1_dcp8_isl84k,DECODE,5,Other,_post_update_kernel.kd,372.9,68,5.5
+k3_conc1_dcp8_isl84k,DECODE,5,Other,_compute_slot_mappings_kernel.kd,365.8,67,5.5
+k3_conc1_dcp8_isl84k,DECODE,5,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",339.1,68,5.0
+k3_conc1_dcp8_isl84k,DECODE,5,Other,postprocess_mamba_fused_kernel.kd,336.8,68,5.0
+k3_conc1_dcp8_isl84k,DECODE,5,Other,precopy_mamba_align_fused_kernel.kd,316.3,67,4.7
+k3_conc1_dcp8_isl84k,DECODE,5,Other,_gather_block_tables_kernel.kd,310.0,67,4.6
+k3_conc1_dcp8_isl84k,DECODE,5,Other,_prepare_pos_seq_lens_kernel.kd,309.6,67,4.6
+k3_conc1_dcp8_isl84k,DECODE,5,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",303.9,68,4.5
+k3_conc1_dcp8_isl84k,DECODE,5,Other,preprocess_mamba_align_fused_kernel.kd,298.9,67,4.5
+k3_conc1_dcp8_isl84k,DECODE,5,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",295.6,68,4.3
+k3_conc1_dcp8_isl84k,DECODE,5,Other,_expand_idx_mapping_kernel.kd,166.8,67,2.5
+k3_conc1_dcp8_isl84k,DECODE,5,Other,_apply_write_kernel.kd,4.4,1,4.4
+k3_conc1_dcp8_isl84k,DECODE,5,Sampling,Sampling,3250.7,746,4.4
+k3_conc1_dcp8_isl84k,DECODE,5,Sampling,ArgMax/Reduce,2503.1,477,5.2
+k3_conc1_dcp8_isl84k,DECODE,5,Triton Fused,Triton fused op,10209.4,1743,5.9
+k3_conc1_dcp8_isl84k,DECODE,6,Activation,SiLU/SwiGLU,1435.9,340,4.2
+k3_conc1_dcp8_isl84k,DECODE,6,Attention,MLA attn residual,101964.0,12529,8.1
+k3_conc1_dcp8_isl84k,DECODE,6,Communication,CustomAR 2-stage,103882.3,13277,7.8
+k3_conc1_dcp8_isl84k,DECODE,6,Communication,CustomAR 1-stage,56941.3,6164,9.2
+k3_conc1_dcp8_isl84k,DECODE,6,Communication,NCCL/RCCL,31871.6,2084,15.3
+k3_conc1_dcp8_isl84k,DECODE,6,GEMM,hipBLASLt (Cijk),259675.2,22457,11.6
+k3_conc1_dcp8_isl84k,DECODE,6,GEMM,AITER hgemm bf16,250990.7,30361,8.3
+k3_conc1_dcp8_isl84k,DECODE,6,GEMM,AITER flydsl MoE,156774.7,6164,25.4
+k3_conc1_dcp8_isl84k,DECODE,6,GEMM,AITER wfp4 batched,16183.6,3216,5.0
+k3_conc1_dcp8_isl84k,DECODE,6,GEMM,rocBLAS splitK,10206.9,477,21.4
+k3_conc1_dcp8_isl84k,DECODE,6,KDA Linear Attn,KDA gated-delta,91814.3,4623,19.9
+k3_conc1_dcp8_isl84k,DECODE,6,KDA Linear Attn,KDA conv1d,26044.9,4623,5.6
+k3_conc1_dcp8_isl84k,DECODE,6,Memory,Fill,2524.7,539,4.7
+k3_conc1_dcp8_isl84k,DECODE,6,MoE Routing,MoE sort mxfp4,107983.6,18492,5.8
+k3_conc1_dcp8_isl84k,DECODE,6,MoE Routing,AITER grouped_topk,72670.2,6164,11.8
+k3_conc1_dcp8_isl84k,DECODE,6,Normalization,Add+RMSNorm+quant,32403.8,7048,4.6
+k3_conc1_dcp8_isl84k,DECODE,6,Normalization,LayerNorm,19966.2,4623,4.3
+k3_conc1_dcp8_isl84k,DECODE,6,Normalization,RMSNorm,7081.4,1608,4.4
+k3_conc1_dcp8_isl84k,DECODE,6,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,86786.7,6164,14.1
+k3_conc1_dcp8_isl84k,DECODE,6,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,70038.7,1948,36.0
+k3_conc1_dcp8_isl84k,DECODE,6,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,26929.7,6231,4.3
+k3_conc1_dcp8_isl84k,DECODE,6,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",26913.9,5570,4.8
+k3_conc1_dcp8_isl84k,DECODE,6,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,22648.7,1608,14.1
+k3_conc1_dcp8_isl84k,DECODE,6,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",21586.1,1608,13.4
+k3_conc1_dcp8_isl84k,DECODE,6,Other,__amd_rocclr_copyBuffer.kd,18879.8,4643,4.1
+k3_conc1_dcp8_isl84k,DECODE,6,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",14409.3,202,71.3
+k3_conc1_dcp8_isl84k,DECODE,6,Other,_dcp_a2a_pack_send_kernel.kd,11684.1,1948,6.0
+k3_conc1_dcp8_isl84k,DECODE,6,Other,_dcp_a2a_unpack_combine_kernel.kd,9042.4,1948,4.6
+k3_conc1_dcp8_isl84k,DECODE,6,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",8625.0,1948,4.4
+k3_conc1_dcp8_isl84k,DECODE,6,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8362.3,407,20.5
+k3_conc1_dcp8_isl84k,DECODE,6,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,7219.6,680,10.6
+k3_conc1_dcp8_isl84k,DECODE,6,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",6780.6,1608,4.2
+k3_conc1_dcp8_isl84k,DECODE,6,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",6779.6,1608,4.2
+k3_conc1_dcp8_isl84k,DECODE,6,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5183.5,340,15.2
+k3_conc1_dcp8_isl84k,DECODE,6,Other,mscclKernel_Sum_hip_bfloat16_LL_false,4995.9,340,14.7
+k3_conc1_dcp8_isl84k,DECODE,6,Other,void at::native::,4024.7,881,4.6
+k3_conc1_dcp8_isl84k,DECODE,6,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",3580.5,811,4.4
+k3_conc1_dcp8_isl84k,DECODE,6,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",2908.3,678,4.3
+k3_conc1_dcp8_isl84k,DECODE,6,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",2778.3,809,3.4
+k3_conc1_dcp8_isl84k,DECODE,6,Other,_prepare_dflash_inputs_kernel.kd,2566.4,68,37.7
+k3_conc1_dcp8_isl84k,DECODE,6,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",1950.1,470,4.1
+k3_conc1_dcp8_isl84k,DECODE,6,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",1932.0,407,4.7
+k3_conc1_dcp8_isl84k,DECODE,6,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1683.0,404,4.2
+k3_conc1_dcp8_isl84k,DECODE,6,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1680.2,404,4.2
+k3_conc1_dcp8_isl84k,DECODE,6,Other,void ,1672.7,402,4.2
+k3_conc1_dcp8_isl84k,DECODE,6,Other,kernel.kd,1496.7,340,4.4
+k3_conc1_dcp8_isl84k,DECODE,6,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1345.6,340,4.0
+k3_conc1_dcp8_isl84k,DECODE,6,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,1322.3,1,1322.3
+k3_conc1_dcp8_isl84k,DECODE,6,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,914.4,204,4.5
+k3_conc1_dcp8_isl84k,DECODE,6,Other,_expand_page_indices_kernel.kd,855.8,202,4.2
+k3_conc1_dcp8_isl84k,DECODE,6,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",810.6,201,4.0
+k3_conc1_dcp8_isl84k,DECODE,6,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",808.0,201,4.0
+k3_conc1_dcp8_isl84k,DECODE,6,Other,"void at::native::vectorized_gather_kernel<16, long>",633.5,135,4.7
+k3_conc1_dcp8_isl84k,DECODE,6,Other,_rejection_kernel.kd,628.9,67,9.4
+k3_conc1_dcp8_isl84k,DECODE,6,Other,_dcp_local_seq_lens_kernel.kd,592.4,135,4.4
+k3_conc1_dcp8_isl84k,DECODE,6,Other,__amd_rocclr_fillBufferAligned.kd,590.1,135,4.4
+k3_conc1_dcp8_isl84k,DECODE,6,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",572.2,136,4.2
+k3_conc1_dcp8_isl84k,DECODE,6,Other,_bias_kernel.kd,478.3,68,7.0
+k3_conc1_dcp8_isl84k,DECODE,6,Other,_compute_local_logits_stats_kernel.kd,437.8,67,6.5
+k3_conc1_dcp8_isl84k,DECODE,6,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,422.9,201,2.1
+k3_conc1_dcp8_isl84k,DECODE,6,Other,_compute_slot_mappings_kernel.kd,397.0,67,5.9
+k3_conc1_dcp8_isl84k,DECODE,6,Other,_scatter_num_accepted_kernel.kd,388.5,68,5.7
+k3_conc1_dcp8_isl84k,DECODE,6,Other,_post_update_kernel.kd,369.3,68,5.4
+k3_conc1_dcp8_isl84k,DECODE,6,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",368.0,68,5.4
+k3_conc1_dcp8_isl84k,DECODE,6,Other,postprocess_mamba_fused_kernel.kd,328.6,68,4.8
+k3_conc1_dcp8_isl84k,DECODE,6,Other,_gather_block_tables_kernel.kd,309.9,67,4.6
+k3_conc1_dcp8_isl84k,DECODE,6,Other,precopy_mamba_align_fused_kernel.kd,302.7,67,4.5
+k3_conc1_dcp8_isl84k,DECODE,6,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",301.7,68,4.4
+k3_conc1_dcp8_isl84k,DECODE,6,Other,preprocess_mamba_align_fused_kernel.kd,300.6,67,4.5
+k3_conc1_dcp8_isl84k,DECODE,6,Other,_prepare_pos_seq_lens_kernel.kd,296.3,67,4.4
+k3_conc1_dcp8_isl84k,DECODE,6,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",292.4,68,4.3
+k3_conc1_dcp8_isl84k,DECODE,6,Other,_expand_idx_mapping_kernel.kd,177.1,67,2.6
+k3_conc1_dcp8_isl84k,DECODE,6,Other,_apply_write_kernel.kd,3.8,1,3.8
+k3_conc1_dcp8_isl84k,DECODE,6,Sampling,Sampling,3144.6,746,4.2
+k3_conc1_dcp8_isl84k,DECODE,6,Sampling,ArgMax/Reduce,2424.5,477,5.1
+k3_conc1_dcp8_isl84k,DECODE,6,Triton Fused,Triton fused op,10155.2,1743,5.8
+k3_conc1_dcp8_isl84k,DECODE,7,Activation,SiLU/SwiGLU,1413.5,340,4.2
+k3_conc1_dcp8_isl84k,DECODE,7,Attention,MLA attn residual,102031.5,12529,8.1
+k3_conc1_dcp8_isl84k,DECODE,7,Communication,CustomAR 2-stage,106956.9,13277,8.1
+k3_conc1_dcp8_isl84k,DECODE,7,Communication,CustomAR 1-stage,58301.4,6164,9.5
+k3_conc1_dcp8_isl84k,DECODE,7,Communication,NCCL/RCCL,37464.4,2084,18.0
+k3_conc1_dcp8_isl84k,DECODE,7,GEMM,hipBLASLt (Cijk),260679.7,22457,11.6
+k3_conc1_dcp8_isl84k,DECODE,7,GEMM,AITER hgemm bf16,251062.7,30361,8.3
+k3_conc1_dcp8_isl84k,DECODE,7,GEMM,AITER flydsl MoE,156591.7,6164,25.4
+k3_conc1_dcp8_isl84k,DECODE,7,GEMM,AITER wfp4 batched,15937.6,3216,5.0
+k3_conc1_dcp8_isl84k,DECODE,7,GEMM,rocBLAS splitK,10206.7,477,21.4
+k3_conc1_dcp8_isl84k,DECODE,7,KDA Linear Attn,KDA gated-delta,91583.4,4623,19.8
+k3_conc1_dcp8_isl84k,DECODE,7,KDA Linear Attn,KDA conv1d,26731.3,4623,5.8
+k3_conc1_dcp8_isl84k,DECODE,7,Memory,Fill,2423.7,539,4.5
+k3_conc1_dcp8_isl84k,DECODE,7,MoE Routing,MoE sort mxfp4,107284.8,18492,5.8
+k3_conc1_dcp8_isl84k,DECODE,7,MoE Routing,AITER grouped_topk,72525.5,6164,11.8
+k3_conc1_dcp8_isl84k,DECODE,7,Normalization,Add+RMSNorm+quant,30884.3,7048,4.4
+k3_conc1_dcp8_isl84k,DECODE,7,Normalization,LayerNorm,19555.3,4623,4.2
+k3_conc1_dcp8_isl84k,DECODE,7,Normalization,RMSNorm,6880.6,1608,4.3
+k3_conc1_dcp8_isl84k,DECODE,7,Other,gemm2_a4w4_port_hmax8192_imax8192_bm32_bn128_bk128_atomic_a8_g2ks2_bhoist_apf...,86202.3,6164,14.0
+k3_conc1_dcp8_isl84k,DECODE,7,Other,_ZN5aiter45mla_a8w8_qh32_qseqlen4_gqaratio32_lse_cprr_psE.kd,70507.2,1948,36.2
+k3_conc1_dcp8_isl84k,DECODE,7,Other,"void at::native::elementwise_kernel_manual_unroll<128, 8, at::native::gpu_ker...",26474.7,5570,4.8
+k3_conc1_dcp8_isl84k,DECODE,7,Other,void vllm::situ_and_mul_kernel<c10::BFloat16>,26105.1,6231,4.2
+k3_conc1_dcp8_isl84k,DECODE,7,Other,mscclKernel_Sum_hip_bfloat16_Simple_false,23271.3,1608,14.5
+k3_conc1_dcp8_isl84k,DECODE,7,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 128, 1>, float, std::bfloa...",21306.5,1608,13.3
+k3_conc1_dcp8_isl84k,DECODE,7,Other,__amd_rocclr_copyBuffer.kd,18507.3,4643,4.0
+k3_conc1_dcp8_isl84k,DECODE,7,Other,"void kn_get_mla_metadata_v1_2<MlaMetadataV12Traits<128, true, 0, true, false> >",14279.2,202,70.7
+k3_conc1_dcp8_isl84k,DECODE,7,Other,_dcp_a2a_pack_send_kernel.kd,11781.1,1948,6.0
+k3_conc1_dcp8_isl84k,DECODE,7,Other,_dcp_a2a_unpack_combine_kernel.kd,8902.0,1948,4.6
+k3_conc1_dcp8_isl84k,DECODE,7,Other,"void gemm_a16w16_flatmm_splitk_kernel<opus_flatmm_splitk_traits_gfx950<256, o...",8720.9,407,21.4
+k3_conc1_dcp8_isl84k,DECODE,7,Other,"void vllm::concat_and_cache_mla_kernel<__hip_bfloat16, unsigned char, ",8426.2,1948,4.3
+k3_conc1_dcp8_isl84k,DECODE,7,Other,_ZN5aiter37bf16gemm_fp32bf16_tn_32x64_pf3_splitkE.kd,7224.6,680,10.6
+k3_conc1_dcp8_isl84k,DECODE,7,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::sigmoid_kernel_...",6641.8,1608,4.1
+k3_conc1_dcp8_isl84k,DECODE,7,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::BinaryFunctor<c...",6576.9,1608,4.1
+k3_conc1_dcp8_isl84k,DECODE,7,Other,"void kn_mla_reduce_v1<MlaReduceKernelV1Traits<512, 64, 4>, float, std::bfloat...",5176.3,340,15.2
+k3_conc1_dcp8_isl84k,DECODE,7,Other,mscclKernel_Sum_hip_bfloat16_LL_false,4978.8,340,14.6
+k3_conc1_dcp8_isl84k,DECODE,7,Other,void at::native::,4017.2,881,4.6
+k3_conc1_dcp8_isl84k,DECODE,7,Other,"void at::native::vectorized_elementwise_kernel<8, at::native::CUDAFunctor_add...",3450.3,811,4.3
+k3_conc1_dcp8_isl84k,DECODE,7,Other,"void at::native::_scatter_gather_elementwise_kernel<256, 4, at::native::_cuda...",2835.6,678,4.2
+k3_conc1_dcp8_isl84k,DECODE,7,Other,"void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kerne...",2694.4,809,3.3
+k3_conc1_dcp8_isl84k,DECODE,7,Other,_prepare_dflash_inputs_kernel.kd,2587.1,68,38.0
+k3_conc1_dcp8_isl84k,DECODE,7,Other,"void splitk_reduce_kernel<16, 64, std::bfloat16_t, false, std::bfloat16_t, true>",1908.0,407,4.7
+k3_conc1_dcp8_isl84k,DECODE,7,Other,"void at::native::elementwise_kernel_manual_unroll<128, 4, at::native::gpu_ker...",1905.5,470,4.1
+k3_conc1_dcp8_isl84k,DECODE,7,Other,void rocprim::ROCPRIM_400200_NS::detail::trampoline_kernel<rocprim::ROCPRIM_4...,1656.0,404,4.1
+k3_conc1_dcp8_isl84k,DECODE,7,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSe...",1652.5,404,4.1
+k3_conc1_dcp8_isl84k,DECODE,7,Other,void ,1636.5,402,4.1
+k3_conc1_dcp8_isl84k,DECODE,7,Other,kernel.kd,1400.3,340,4.1
+k3_conc1_dcp8_isl84k,DECODE,7,Other,_ZN5aiter24bf16gemm_bf16_tn_256x256E.kd,1327.0,1,1327.0
+k3_conc1_dcp8_isl84k,DECODE,7,Other,void vllm::kimi_k3_fused_ops::fusedKimiK3MLADecodeQConcatKVCacheKernel<c10::B...,1308.4,340,3.8
+k3_conc1_dcp8_isl84k,DECODE,7,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctorOnSelf_ad...,880.7,204,4.3
+k3_conc1_dcp8_isl84k,DECODE,7,Other,_expand_page_indices_kernel.kd,839.3,202,4.2
+k3_conc1_dcp8_isl84k,DECODE,7,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<i...",803.3,201,4.0
+k3_conc1_dcp8_isl84k,DECODE,7,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::",794.6,201,4.0
+k3_conc1_dcp8_isl84k,DECODE,7,Other,"void at::native::vectorized_gather_kernel<16, long>",625.6,135,4.6
+k3_conc1_dcp8_isl84k,DECODE,7,Other,_dcp_local_seq_lens_kernel.kd,607.2,135,4.5
+k3_conc1_dcp8_isl84k,DECODE,7,Other,_rejection_kernel.kd,601.7,67,9.0
+k3_conc1_dcp8_isl84k,DECODE,7,Other,__amd_rocclr_fillBufferAligned.kd,582.0,135,4.3
+k3_conc1_dcp8_isl84k,DECODE,7,Other,"void at::native::vectorized_elementwise_kernel<2, at::native::CUDAFunctorOnSe...",560.7,136,4.1
+k3_conc1_dcp8_isl84k,DECODE,7,Other,_bias_kernel.kd,519.6,68,7.6
+k3_conc1_dcp8_isl84k,DECODE,7,Other,_compute_local_logits_stats_kernel.kd,458.8,67,6.8
+k3_conc1_dcp8_isl84k,DECODE,7,Other,void at::native::unrolled_elementwise_kernel<at::native::CUDAFunctor_add<int>...,426.2,201,2.1
+k3_conc1_dcp8_isl84k,DECODE,7,Other,_scatter_num_accepted_kernel.kd,378.7,68,5.6
+k3_conc1_dcp8_isl84k,DECODE,7,Other,_compute_slot_mappings_kernel.kd,375.1,67,5.6
+k3_conc1_dcp8_isl84k,DECODE,7,Other,_post_update_kernel.kd,374.4,68,5.5
+k3_conc1_dcp8_isl84k,DECODE,7,Other,"void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16tofloat...",342.4,68,5.0
+k3_conc1_dcp8_isl84k,DECODE,7,Other,postprocess_mamba_fused_kernel.kd,321.0,68,4.7
+k3_conc1_dcp8_isl84k,DECODE,7,Other,precopy_mamba_align_fused_kernel.kd,306.4,67,4.6
+k3_conc1_dcp8_isl84k,DECODE,7,Other,_gather_block_tables_kernel.kd,299.1,67,4.5
+k3_conc1_dcp8_isl84k,DECODE,7,Other,"void vllm::rms_norm_kernel<c10::BFloat16, 8, 3, true>",297.5,68,4.4
+k3_conc1_dcp8_isl84k,DECODE,7,Other,preprocess_mamba_align_fused_kernel.kd,294.7,67,4.4
+k3_conc1_dcp8_isl84k,DECODE,7,Other,_prepare_pos_seq_lens_kernel.kd,289.6,67,4.3
+k3_conc1_dcp8_isl84k,DECODE,7,Other,"void vllm::rotary_embedding_kernel<c10::BFloat16, float, false>",277.8,68,4.1
+k3_conc1_dcp8_isl84k,DECODE,7,Other,_expand_idx_mapping_kernel.kd,174.3,67,2.6
+k3_conc1_dcp8_isl84k,DECODE,7,Other,_apply_write_kernel.kd,4.7,1,4.7
+k3_conc1_dcp8_isl84k,DECODE,7,Sampling,Sampling,3088.5,746,4.1
+k3_conc1_dcp8_isl84k,DECODE,7,Sampling,ArgMax/Reduce,2421.9,477,5.1
+k3_conc1_dcp8_isl84k,DECODE,7,Triton Fused,Triton fused op,6230.0,1743,3.6
