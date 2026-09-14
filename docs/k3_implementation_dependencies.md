@@ -45,11 +45,18 @@ present in the pinned image, so nothing here needs chasing.
 | `rocm_aiter_mla.patch` | 390 | **filed** — drop when our PR merges |
 | `scheduler.patch` | 16 | **filed** as #55118 |
 | `speculator.patch` | 10 | **still ours, unfiled.** Quiesce ranks before DCP speculator capture; boot blocker (GPU fault). No upstream equivalent — the pinned image's `capture()` has no barrier. Needs `torch.cuda` → `torch.accelerator` (RFC #30679) before filing |
-| `config.patch` | 27 | K3 DCP defaults. Convenience only — we pass `--dcp-comm-backend a2a` explicitly. Not audited for duplicates |
+| `config.patch` | 27 | **perf, measured** — default K3's DCP combine to `a2a`. Per combine call on MI355X: T=5 1.13x, T=48 1.15x, T=144 1.35x vs `ag_rs`, cos-similarity >= 0.999994. One `all_to_all_single` instead of `allgather(lse)` + `reduce_scatter(out)`, and combine runs per MLA layer per decode step |
+| `retention_alignment.patch` | 57 | **bug fix** — retention interval is validated against `scheduler_block_size` unconditionally, but the granularity a prefix-cache hit actually lands at is `hash_block_size` when fine-grained partial-hash hits are on, which under DCP is `scheduler_block_size // dcp_world_size`. Affects any DCP user, not just us |
+| `cp_common.patch` | 125 | **bug fix** — symm_mem teardown ordering; wedges the whole box (D-state ranks that cannot be killed). Not on our path (DCP dispatches PYNCCL) but real for any ROCm DCP user with symm_mem. File on its own merits |
 | `speculative_draft_dcp.patch` | 13 | **DEAD** — #55472 merged and is in our image, with a more robust fix. Delete |
 | `dcp_a2a_pack_mask.patch` | 69 | **probably dead** — upstream ships `tests/v1/attention/test_dcp_a2a_pack_mask.py`. Confirm, then delete |
-| `retention_alignment.patch` | 57 | not load-bearing — our values pass stock |
-| `cp_common.patch` | 125 | not load-bearing — DCP dispatches PYNCCL, no symm_mem mesh is built. Genuine kernel-lifecycle bug worth filing **on its own merits**, not as part of the K3 story |
+
+**Correction (2026-09-14):** the first version of this table called `config.patch`
+"convenience only" and `retention_alignment` "not load-bearing". Both were wrong.
+"Not load-bearing **for us**" is a statement about our configuration, not about
+whether the change is a real upstream bug — and `config.patch` was carrying a
+measured perf result the summary had simply dropped. Judge each patch on its own
+merits before deciding it is not worth filing.
 
 ## 4. Non-vLLM dependencies
 
@@ -102,3 +109,48 @@ is tmpfs; a reboot wipes 1.5 TB and resets the mount to 1.5 T — remount at
 longer true — one fixed upstream, one already filed by us. **Check every patch
 against current `origin/main` and the PR search before proposing work on it.**
 The check that caught #55472 took two minutes and saved a duplicate PR.
+
+---
+
+## 7. Decomposition review
+
+Each PR must clear three bars: **independent** (lands alone, no ordering
+constraint), **testable** (a test that fails if the change is reverted), and
+**one clear category** with evidence — enablement, bug fix, or measured perf.
+
+| PR | category | evidence it is real | independent | testable |
+|---|---|---|---|---|
+| **#56861** cprr route + split cap | **enablement** | ASM MLA path is unreachable under DCP + spec decode; every step has qlen>1 so all decode goes to Triton | yes | yes — 35 tests, mutation-checked |
+| **speculator barrier** (built) | **bug fix** | boot blocker; GPU fault at capture | yes | unit (ordering + skip-without-DCP), mutation-checked |
+| **#55118** offload eagle prefix | **bug fix** | drops a verified prompt chunk, vetoes <=1-chunk prefixes | yes | unit |
+| **`config.patch`** a2a default | **perf** | 1.13x–1.35x per combine call, cos-sim >= 0.999994 | yes | unit on default resolution |
+| **`retention_alignment`** | **bug fix** | validates against the wrong granularity under DCP | yes | unit — pure block-size arithmetic |
+| **`cp_common`** | **bug fix** | symm_mem teardown wedges the box | yes | **weak** — teardown race; needs an honest caveat, as the speculator PR does |
+| **LMCache IPC events** | **bug fix** | exported handle stops being openable -> `hipErrorInvalidValue` | yes (other repo) | unit on the retain ring |
+
+### Is #56861 correctly bundled?
+
+It carries two things — the cprr route (enablement) and `max_split_per_batch`
+(perf). They are **not** separable: `forward_mqa` has
+`assert decode.mla_num_kv_splits > 0` *inside* the `if asm_dcp_heads:` branch,
+and the cap is only set when `dcp_world_size > 1` and only consumed on the asm
+path. The cap does nothing without the route. One feature, one PR.
+
+### The one real decomposition defect
+
+`patches/k3-dcp8/aiter/0001-k3-dcp8-code.patch` bundles **three unrelated fixes**
+in one file, touching three subsystems:
+
+| | file | category |
+|---|---|---|
+| A1 | `aiter/ops/attention.py` — tighter split-tile bound | perf/memory (9.35 -> 2.38 GiB) |
+| A2 | `csrc/py_itfs_cu/asm_gemm_a16w16.cu` — no auto split-K under graph replay | bug fix (boot blocker, waves spin forever) |
+| A3 | `aiter/mla.py` — `get_block_n_fp8` fallback + 80/96/112 | bug fix (`KeyError`) |
+
+These share nothing but our repo. They should be **three separate aiter PRs**.
+A4 (tuned-GEMM CSV) is data and is probably not upstreamable as-is.
+
+### Not PRs
+
+`speculative_draft_dcp` (dead) and `dcp_a2a_pack_mask` (probably dead) are
+deletions, not submissions — about 82 lines we can stop carrying.
