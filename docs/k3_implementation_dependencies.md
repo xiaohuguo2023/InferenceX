@@ -102,6 +102,20 @@ is tmpfs; a reboot wipes 1.5 TB and resets the mount to 1.5 T — remount at
 |---|---|
 | **#56664** (open) | `@support_torch_compile` on `K3DSparkModel`. No `enable_if`, so at our `mode:3` it compiles the draft **by default**. On merge, every conc-1 number we hold becomes a pre-change measurement |
 | **#56723** (open, draft, maintainer-authored) | "Replicated DFlash/DSpark drafts were still treated as DCP-sharded under DCP > 1" — directly adjacent to our ATOM-sharded draft; may overlap what we carry |
+| **#54627** (open, fululi12) | "Apply `prefill_schedule_interval` outside data parallelism". `EngineCore._should_throttle_prefills()` returns `False` unconditionally, so the option is **silently a no-op for us today** — verified in our pinned image at `v1/engine/core.py:584`. Its stated motivating deployment is "a single engine using decode context parallelism (`--decode-context-parallel-size 8`)", i.e. exactly our shape. Directly targets prefill leaking into decode, which is our diagnosed conc-1 interactivity cause |
+| **#54625** (open, fululi12) | "Add cache-aware admission ordering". Admits requests whose prefix is already resident ahead of cold ones within a bounded look-ahead, so a cold admission cannot evict blocks a queued request still needs. Matches our TTFT-knee / prefix-cache-eviction finding. Flags `--cache-aware-admission-window` (0) and `--cache-aware-admission-threshold` (0.0), both off by default; requires `fcfs` + prefix caching |
+
+**All three of #56664, #54625 and #54627 are by the same author (fululi12)** — a
+coordinated K3 agentic effort. Engage with these rather than duplicating them.
+
+### Scheduler flags: where they are expected to pay
+
+At **conc-1** the client keeps one request in flight, so the waiting queue is
+near-empty (#54625 has little to reorder) and a request's decode cannot begin
+until its own prefill completes (#54627 has little to defer). Both should matter
+much more at **conc 8+**, where prefill and decode genuinely compete — which is
+where our sweep is weakest. Both are off by default, so trying them is a
+serve-flag experiment, not a code risk.
 
 ## 6. Standing lesson
 
