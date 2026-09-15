@@ -339,11 +339,29 @@ case "${KV_OFFLOAD_BACKEND:-}" in
     # 10.4% client error rate). Retain a bounded ring of exported events, and
     # do not let a stale handle be fatal. Idempotent, same as the vLLM applies.
     LMCACHE_PKG="$(python3 -c 'import lmcache, os; print(os.path.dirname(lmcache.__file__))')"
-    _lmp="$REPO_ROOT/patches/k3-lmcache/0001-retain-exported-ipc-events.patch"
-    if patch --dry-run -R -p1 -d "$LMCACHE_PKG" <"$_lmp" >/dev/null 2>&1; then
+    # LMCACHE_EVENT_FIX selects which fix for the exported-IPC-event lifetime bug:
+    #   retain (default) -- ours, patches/k3-lmcache/0001. A bounded ring of up
+    #     to 4096 exported events in the event backend.
+    #   upstream         -- LMCache PR #5116, patches/k3-lmcache/0002. One
+    #     long-lived completion_event per registered context, so nothing has to
+    #     be retained and the per-transfer event allocation goes away.
+    # They fix the same bug at different layers. Applying both is redundant and
+    # untested, so this picks exactly one.
+    case "${LMCACHE_EVENT_FIX:-retain}" in
+        retain)   _lmp="$REPO_ROOT/patches/k3-lmcache/0001-retain-exported-ipc-events.patch" ;;
+        upstream) _lmp="$REPO_ROOT/patches/k3-lmcache/0002-upstream-5116-completion-event.patch" ;;
+        *) echo "LMCACHE_EVENT_FIX must be 'retain' or 'upstream'" >&2; exit 1 ;;
+    esac
+    # 0002 carries paths as lmcache/... so it strips one level fewer than 0001.
+    if [ "${LMCACHE_EVENT_FIX:-retain}" = upstream ]; then
+        _lmd="$(dirname "$LMCACHE_PKG")"; _lmstrip=1
+    else
+        _lmd="$LMCACHE_PKG"; _lmstrip=1
+    fi
+    if patch --dry-run -R -p$_lmstrip -d "$_lmd" <"$_lmp" >/dev/null 2>&1; then
         echo "patch already applied: ${_lmp#"$REPO_ROOT"/}"
     else
-        patch -p1 -d "$LMCACHE_PKG" <"$_lmp"
+        patch -p$_lmstrip -d "$_lmd" <"$_lmp"
     fi
 
     # One MP server for the node, per the Kimi-K3 recipe
