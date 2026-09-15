@@ -77,11 +77,42 @@ the memory reclaim needs both.
 
 ### LMCache — `patches/k3-lmcache/`
 `0001-retain-exported-ipc-events.patch`. Callers export an event's IPC handle
-then drop their reference, so CPython destroys the event on return; HIP only
-defers the real destroy while recorded work is outstanding, so once the copy
+then drop their reference, so CPython destroys the event on return; the platform
+only defers the real destroy while recorded work is outstanding, so once the copy
 completes the handle stops being openable and the importer gets
-`hipErrorInvalidValue`. Fix is a bounded retain ring
-(`LMCACHE_EVENT_IPC_RETAIN`). **Unfiled — should be a PR to LMCache/LMCache.**
+`hipErrorInvalidValue`. Our fix is a bounded retain ring
+(`LMCACHE_EVENT_IPC_RETAIN`).
+
+**Do NOT file this — upstream LMCache PR #5116 supersedes it**
+(https://github.com/LMCache/LMCache/pull/5116, `[fix][mp] keep the server's
+exported completion event alive (ROCm 10.0)`, +110/-17, **OPEN** as of
+2026-09-15, author sammshen). Same root cause, better fix:
+
+| | ours | #5116 |
+|---|---|---|
+| interprocess event creations | **one per transfer** | one per registered context |
+| live ROCr signals | up to **4096** (the ring) | one per context |
+| tuning knob | `LMCACHE_EVENT_IPC_RETAIN` | none needed |
+
+It gives each registered context one long-lived `completion_event`, re-recorded
+and re-exported per transfer. Because a context's transfers share a stream, a
+late-imported handle is conservative rather than early. That removes the
+per-transfer allocation our patch keeps, so it should also be *faster* on the
+offload hot path — unmeasured, but mechanical. The tradeoff is slight
+over-synchronisation: a consumer may wait on later transfers than its own.
+
+**Status: not in anything we run.** #5116 is unmerged; the ROCm-10 image ships
+lmcache **0.5.3** with neither fix, and our pinned `0.5.6.dev3+rocm7.2` has only
+ours (applied by the recipe at `kimik3_fp4_mi355x_mtp.sh:342`).
+
+**Keep our patch until #5116 merges and reaches the AMD nightly**, then delete
+it — which also ends the re-pin tax below.
+
+**We should comment on #5116 with our data.** It states that "CUDA and ROCm 7.2
+tolerated violations". We measured otherwise on ROCm 7.2.3: 17 min of clean
+serving, then `EngineDeadError` and a 10.4% client error rate (see the recipe
+comment at :338). That is independent corroboration and strengthens the case for
+merging.
 
 Also: LMCache's `nightly-rocm` index is **not immutable**. dev89, dev105 and
 dev134 have all been withdrawn under us. Current pin `0.5.6.dev3+rocm7.2`.
