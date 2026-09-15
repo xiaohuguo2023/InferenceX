@@ -62,11 +62,27 @@ under DCP + spec decode.
 Ordered by (independence x ease of review x standalone value). Each is a separate
 PR; none depends on another landing first.
 
-### PR 1 — `speculator`: use the per-group cp_size (17 lines)
-Bug: passed the global `cp_size` instead of `cp_sizes[gid]`, so acceptance was
-computed against the wrong context-parallel size. Fixing it took AL to 2.5-2.8.
-**Tests:** pure-CPU unit. Build speculator state with two KV groups at different
-`cp_sizes`; assert the per-group value reaches the acceptance path. No GPU.
+### PR 1 — `speculator`: use the per-group cp_size (17 lines) — **OBSOLETE, do not file**
+Bug was: `dflash/speculator.py` passed the global `cp_size` instead of
+`cp_sizes[gid]`, so the replicated draft group's context was round-robin sharded
+and it attended over 87.5% zero pages. Fixing it took AL 1.14 -> 2.5-2.8.
+
+**It only existed under `K3-DCP-DRAFT-REPL`**, which we abandoned once vLLM
+**#53598** (merged 2026-08-31) fixed the DCP prefix-cache cliff with the draft
+left *sharded*. With no replicated group, every group has the same CP degree and
+the global value is the correct one.
+
+Verified 2026-09-15: `cp_sizes` exists **nowhere** — not upstream
+(`git grep cp_sizes origin/main -- vllm/v1/worker vllm/v1/core` is empty), not in
+our four PR branches, not in `patches/`. There is nothing left to file.
+
+Upstream carries a latent inconsistency at
+`vllm/v1/worker/gpu/spec_decode/dflash/speculator.py:399`, which passes the global
+`self.block_tables.cp_size` two lines below the per-group
+`input_block_tables[gid]` / `kernel_block_sizes[gid]`. It is harmless while
+`BlockTables` models a single uniform `cp_size`, and would only bite if per-group
+CP degrees were ever introduced. Noted, not filed — there is no way to write a
+failing test for it against upstream today.
 
 ### PR 2 — `speculative_draft_dcp`: draft inherits DCP config (20 lines)
 Bug: `create_draft_parallel_config` drops `decode_context_parallel_size`,

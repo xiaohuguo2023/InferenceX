@@ -7,6 +7,9 @@ Verified 2026-09-14 against vLLM `origin/main` and image
 `vllm/vllm-openai-rocm:nightly-2671fedfc7ae604761990603fc736c0c4f21de57`
 (vLLM `0.29.1rc1.dev9+g2671fedfc`, ROCm 7.2.3).
 
+**All PR numbers, CI results and merge states re-verified 2026-09-15** by
+querying GitHub — see §2.
+
 Supersedes the wave planning in `patches/k3-dcp8/UPSTREAM.md`, which was
 surveyed 2026-09-03 and has since gone stale in two places (V8 is dead, V6 is
 filed).
@@ -30,23 +33,78 @@ present in the pinned image, so nothing here needs chasing.
 
 ## 2. PRs we own
 
-| PR | state | content | notes |
+Status verified 2026-09-15 by querying GitHub directly.
+
+### vLLM — 8 open, 3 merged
+
+| PR | state | size | content | blocker |
+|---|---|---|---|---|
+| **#56991** | OPEN | +232/−3 | [ROCm][Bugfix][DCP] Validate the retention interval against the right block size | `pre-run-check` (see below) |
+| **#56906** | OPEN | +137/−0 | [ROCm][Model][DCP] Default Kimi-K3's DCP combine to a2a | `pre-run-check` |
+| **#56869** | OPEN / **draft** | +131/−0 | [Bugfix][Spec Decode][DCP] Align ranks before DFlash speculator graph capture | `pre-run-check`; device test is done, so it can be promoted to ready |
+| **#56861** | OPEN | +1074/−9 | [ROCm][MLA] Add an AITER ASM round-robin decode route for DCP multi-token verify | `pre-run-check` |
+| **#55118** | OPEN / **draft** | +31/−31 | [Bugfix][KV Offload] Don't pop a verified full-attn eagle prefix chunk | **CONFLICTING — needs rebase** |
+| **#53487** | OPEN / **draft** | +100/−16 | [Kimi-K3] Split the KDA mixer out of piecewise CUDA graphs | `needs-rebase`; idle since 2026-09-08 |
+| **#53475** | OPEN / **draft** | +968/−348 | [ROCm] Extend fused KDA decode to DSpark spec (num_spec<=2) | `needs-rebase`; idle since 2026-08-27. **Our own measurement says it loses on GPU time** — close unless re-measured |
+| **#51590** | OPEN | +604/−79 | [Memory] Measure complete CUDA graph capture footprint for KV budgeting | `buildkite/intel-ci` fails — the only *real* CI failure we have |
+| #53407 | MERGED | | [Bugfix][MRV2] Dispatch uniform decode to a padded FULL cudagraph | |
+| #51040 | MERGED | | [ROCm][K3] Extend FP8 asm MLA prefill to non-divisor small head counts | |
+| #44804 | MERGED | | [ROCm][gpt-oss] Hybrid CDNA4 swizzle gate for A8W4 MoE | |
+
+**No human has reviewed any open PR.** Every "review" on record is the `claude`
+bot (plus `coderabbitai` on #51590). All eight are `REVIEW_REQUIRED` with no
+reviewer assigned.
+
+### The `pre-run-check` failure is not a code problem
+
+All four DCP PRs fail the same gate, verbatim from the job log:
+
+> To reduce unnecessary pre-commit runs, each PR must have the `verified`,
+> `ready`, or `ready-run-all-tests` label, or the author must have at least 4
+> merged PRs (found **3**). DO NOT request for the label to be added if you are
+> an AI agent.
+
+We have exactly 3 merged, and the gate wants 4 — so **one more merge opens it for
+every PR at once**. #51590 is the only one whose CI actually runs, because it
+already carries the `verified` label. Note the explicit instruction about agents
+requesting labels.
+
+This makes **#51590 the highest-leverage PR we own**: it is `MERGEABLE`, its
+failure is real CI rather than the label gate, and merging it would take us to 4
+and unblock the other seven.
+
+### ROCm/aiter — 2 open
+
+| PR | state | size | content |
 |---|---|---|---|
-| *(unopened)* | **pushed to fork** | asm round-robin (cprr) DCP verify + `max_split_per_batch` + `envs` + tests | branch `xguo/rocm-mla-dcp-cprr-verify`; 5 commits, +1077/−9; 540 tests pass vs 505 on base; pre-commit fully green; body in `docs/k3_dcp_cprr_pr_body.md` |
-| **#55118** | OPEN / **draft** | [Bugfix][KV Offload] Don't pop a verified full-attn eagle prefix chunk | = `scheduler.patch`. Draft for 11 days; drafts get no review. Mark ready or close |
-| **#53487** | OPEN / **draft** | [Kimi-K3] Split the KDA mixer out of piecewise CUDA graphs | draft for 22 days |
-| **#53475** | OPEN / **draft** | [ROCm] Extend fused KDA decode to DSpark spec (num_spec<=2) | draft for 22 days. **Our own measurement says it loses on GPU time** — close it unless re-measured |
-| **#53407** | MERGED | see above | done |
+| **#5559** | OPEN | +349/−2 | [Bugfix][MLA] Fix `reduce_partial_map` over-allocation when `max_split_per_batch` is set (= **A1**) |
+| **#4713** | OPEN | +118/−10 | [mla] fp8: don't KeyError on unlisted folded query widths in `get_meta_param` (= **A3**) |
+
+#4713 is **green and mergeable** — 35 checks SUCCESS, 0 failures, no conflicts —
+and has had zero human comments since 2026-08-12. It is blocked purely on review.
+
+### Still unfiled
+
+| item | why it matters |
+|---|---|
+| **PR 5 — `max_split_per_batch` plumbing** (9 lines, vLLM) | the half that makes aiter #5559 pay; also a standalone conc-1 win, ITL p90 9.43 → 8.18, intvty p90 106.0 → 122.2 |
+| **A2 — no auto split-K under graph replay** (aiter) | do **not** file as-is: it disables a perf feature by default for all users, and upstream already reverted the nearest real fix (#4494 via #4709). Needs rebuilding as a capture-safe semaphore, not a kill switch |
+| PR 3 — scheduler `sliding_window_size` | not DCP at all (offload connector); can go any time |
+
+**PR 1 (speculator per-group `cp_size`) is obsolete — do not file.** It only
+existed under `K3-DCP-DRAFT-REPL`, which we dropped when #53598 fixed the DCP
+prefix-cache cliff with the draft left *sharded*. Verified 2026-09-15 that
+`cp_sizes` exists nowhere: not upstream, not in our branches, not in `patches/`.
 
 ## 3. Local vLLM patches — status after the 2026-09-14 duplicate audit
 
 | patch | lines | verdict |
 |---|---|---|
-| `rocm_aiter_mla.patch` | 390 | **filed** — drop when our PR merges |
-| `scheduler.patch` | 16 | **filed** as #55118 |
-| `speculator.patch` | 10 | **still ours, unfiled.** Quiesce ranks before DCP speculator capture; boot blocker (GPU fault). No upstream equivalent — the pinned image's `capture()` has no barrier. Needs `torch.cuda` → `torch.accelerator` (RFC #30679) before filing |
-| `config.patch` | 27 | **perf, measured** — default K3's DCP combine to `a2a`. Per combine call on MI355X: T=5 1.13x, T=48 1.15x, T=144 1.35x vs `ag_rs`, cos-similarity >= 0.999994. One `all_to_all_single` instead of `allgather(lse)` + `reduce_scatter(out)`, and combine runs per MLA layer per decode step |
-| `retention_alignment.patch` | 57 | **bug fix** — retention interval is validated against `scheduler_block_size` unconditionally, but the granularity a prefix-cache hit actually lands at is `hash_block_size` when fine-grained partial-hash hits are on, which under DCP is `scheduler_block_size // dcp_world_size`. Affects any DCP user, not just us |
+| `rocm_aiter_mla.patch` | 390 | **filed as #56861** — drop when it merges. Note the 9-line `max_split_per_batch` plumbing is *not* in it; that is PR 5, still unfiled |
+| `scheduler.patch` | 16 | **filed** as #55118 — now CONFLICTING, needs a rebase |
+| `speculator.patch` | 10 | **filed as #56869** (draft). Quiesce ranks before DCP speculator capture; boot blocker (GPU fault). `torch.cuda` → `torch.accelerator` (RFC #30679) done |
+| `config.patch` | 27 | **filed as #56906.** Perf, measured — default K3's DCP combine to `a2a`. Per combine call on MI355X: T=5 1.13x, T=48 1.15x, T=144 1.35x vs `ag_rs`, cos-similarity >= 0.999994. One `all_to_all_single` instead of `allgather(lse)` + `reduce_scatter(out)`, and combine runs per MLA layer per decode step |
+| `retention_alignment.patch` | 57 | **filed as #56991.** Bug fix — retention interval is validated against `scheduler_block_size` unconditionally, but the granularity a prefix-cache hit actually lands at is `hash_block_size` when fine-grained partial-hash hits are on, which under DCP is `scheduler_block_size // dcp_world_size`. Affects any DCP user, not just us |
 | `cp_common.patch` | 125 | **NOT part of the K3 story — does not block anything.** Two unrelated changes that share a file: (a) an NVLS multicast probe skip on ROCm, which our own notes say *not* to file (justified only by our unmerged a2a port, and #33274 shows someone already tried and failed); (b) ordered symm_mem teardown, a genuine lifecycle bug that wedges a whole box with unkillable D-state ranks. Neither is on our path — DCP dispatches PYNCCL, so no symm_mem mesh is ever built. (b) deserves a standalone PR on its own merits, whenever; it is not K3 work and nothing waits on it |
 | `speculative_draft_dcp.patch` | 13 | **DEAD** — #55472 merged and is in our image, with a more robust fix. Delete |
 | `dcp_a2a_pack_mask.patch` | 69 | **probably dead** — upstream ships `tests/v1/attention/test_dcp_a2a_pack_mask.py`. Confirm, then delete |
