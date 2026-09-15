@@ -12,17 +12,25 @@ Branch: `xguo/mla-tighter-split-tile-bound` (1 commit, +349/−2, 3 files)
 
 ## Purpose
 
-**`max_split_per_batch` currently has no effect on the metadata allocation.**
+**A caller that asks for fewer KV splits still pays for the unlimited case.**
 
-`get_mla_metadata_info_v1` sizes the reduce scratch from a `fast_mode` estimate that assumes an unbounded per-batch split budget. When a caller supplies `max_split_per_batch`, `tile_cnt + per_tile_cap` is the cap-aware bound — but the two are combined with `max()`:
+MLA decode splits the KV axis so that several compute units can work on one request at a time. Every split produces a partial result, and those partials are reduced afterwards, so the reduce scratch has to be large enough to hold all of them. More splits means more scratch.
+
+`max_split_per_batch` exists so a caller can say *"use at most N splits per batch"* — the whole point being a smaller buffer.
+
+It does not currently do that. `get_mla_metadata_info_v1` works out two estimates of how many partials can appear — one that ignores the cap, one that respects it — and keeps the **larger** of the two:
 
 ```python
 if max_split_per_batch > 0:
     per_tile_cap = min(max_splits, max_split_per_batch * batch_size)
-    max_split_tiles = max(max_split_tiles, tile_cnt + per_tile_cap)   # loose estimate always wins
+    max_split_tiles = max(max_split_tiles, tile_cnt + per_tile_cap)
+    #                 ^^^ the cap-aware estimate is the smaller one,
+    #                     so max() throws it away every time
 ```
 
-so the cap is inert. Taking the `min` is what makes it mean something. The change is one operator.
+The cap-aware estimate is, by construction, the smaller one — so `max()` discards it and the allocation comes out the same as if no cap had been passed. **Changing `max` to `min` is the entire fix.**
+
+For vLLM's DCP MLA path that is the difference between reserving **9.35 GiB** and **2.38 GiB** of fp32 scratch, which is what lets FULL cudagraphs fit under decode context parallelism.
 
 ### This finishes #3855
 
@@ -42,8 +50,6 @@ It left the outer `max()`, so a supplied cap is still ignored. This is the remai
 | 512 | 2040 | 2040 | 2040 |
 
 The `batch=512` row is unchanged by design: `per_tile_cap` is `min(max_splits, cap * batch_size)`, so once `cap * batch_size` exceeds `max_splits` no cap can constrain the schedule, and the sizing must not depend on whether a dummy cap was passed. The cap helps at low batch, which is where the allocation was most over-sized relative to what the kernel can reach.
-
-Downstream, this takes vLLM's DCP MLA reduce scratch from **9.35 GiB to 2.38 GiB**, which is what lets FULL cudagraphs fit under decode context parallelism.
 
 ### Why the smaller bound is safe
 
