@@ -32,13 +32,15 @@ That is the whole bug. It matters because step 1's answer is what gets reserved.
 
 ### What this buys
 
-For our decode shape the scratch goes from **9.35 GiB to 2.38 GiB**, freeing **6.97 GiB per GPU**.
+We hit this on Kimi-K3 MLA decode (TP8, DCP8, the fp8 asm path).
 
-Before the fix a batch-48 decode just died: `torch.OutOfMemoryError: Tried to allocate 9.35 GiB ... 6.24 GiB is free`, on all 8 ranks. So this is a crash fix, not a tidy-up.
+`reduce_partial_map` drops from 4785 tiles to 1216, so the fp32 `logits` scratch drops from **9.35 GiB to 2.38 GiB** — **6.97 GiB per GPU**.
 
-The saving does not depend on picking a good cap — 16, 32 and 256 all give the same result at batch 64.
+It was a crash, not just waste. At batch 48 every rank died with `torch.OutOfMemoryError: Tried to allocate 9.35 GiB ... 6.24 GiB is free`. The 6.97 GiB we get back is also more than the FULL-decode cudagraph pools need, so the shape went from not fitting to fitting with room left over.
 
-It is not a speedup. Nothing about the kernels or the maths changes, only the buffer size.
+You do not have to pick a good cap to get this. `per_tile_cap` is `min(max_splits, max_split_per_batch * batch_size)`, so at batch 64 a cap of 16, 32 or 256 all give the same 1216. Any cap that binds at all gives the full saving.
+
+It is not a speedup. No kernel changes and no maths changes — only the buffer size.
 
 ## Technical Details
 
