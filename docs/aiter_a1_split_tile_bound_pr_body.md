@@ -28,7 +28,17 @@ An inference framework — in our case vLLM's ROCm MLA attention backend — can
 
 It does not. **Step 1 returns the same size whether you pass `max_split_per_batch=1`, `=256`, or `=-1` (no limit).** The value is computed, then discarded by a `max()` that always prefers the no-limit estimate.
 
-That is the whole bug. It matters because step 1's answer is what gets reserved: for our MLA decode shape it is the difference between **9.35 GiB** and **2.38 GiB** of fp32 scratch, and reclaiming that ~7 GiB is what leaves room for FULL cudagraphs.
+That is the whole bug. It matters because step 1's answer is what gets reserved.
+
+### What this buys
+
+For our MLA decode shape, `reduce_partial_map` goes from 4785 tiles to 1216, and the fp32 `logits` scratch from **9.35 GiB to 2.38 GiB** — **6.97 GiB per GPU**.
+
+That is a crash, not an inefficiency: before the fix, a batch-48 decode died on every rank with `torch.OutOfMemoryError: Tried to allocate 9.35 GiB ... 6.24 GiB is free`. The reclaimed 6.97 GiB is also more than the FULL-decode cudagraph pools need, so the shape went from not fitting to fitting with room to spare.
+
+Note the saving does not depend on choosing a good cap. `per_tile_cap` is `min(max_splits, max_split_per_batch * batch_size)`, so at batch 64 the result is identical for a cap of 16, 32 or 256 — anything that binds at all gives the same 1216. This is not a tuning win available only to a caller who picks the right number.
+
+**No kernel changes and no arithmetic changes**; this is a sizing fix only. It does not make decode faster.
 
 ## Technical Details
 
