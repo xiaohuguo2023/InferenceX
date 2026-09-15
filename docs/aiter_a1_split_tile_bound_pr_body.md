@@ -1,11 +1,11 @@
-# PR body — aiter: tighter split-tile bound when a cap is supplied
+# PR body — aiter: make `max_split_per_batch` shrink the MLA decode scratch
 
-Branch: `xguo/mla-tighter-split-tile-bound` (1 commit, +349/−2, 3 files)
+Branch: `xguo/mla-cap-aware-scratch-sizing` (1 commit, +349/−2, 3 files)
 
 **Title:**
 
 ```
-[MLA] Take the tighter split-tile bound when a cap is supplied
+[Bugfix][MLA] Make max_split_per_batch shrink the decode scratch buffer
 ```
 
 ---
