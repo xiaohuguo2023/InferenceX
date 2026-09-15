@@ -71,12 +71,12 @@ It left the outer `max()`, so a supplied cap is still ignored. This is the remai
 
 | batch | uncapped | cap=1 | cap=256 |
 |---:|---:|---:|---:|
-| 1 | 1024 | **5** | **260** |
-| 8 | 1052 | 40 | 288 |
-| 64 | 1276 | 320 | 512 |
+| 1 | 1024 | **12** | **260** |
+| 8 | 1052 | 96 | 288 |
+| 64 | 1276 | 512 | 512 |
 | 512 | 2040 | 2040 | 2040 |
 
-The `batch=512` row is unchanged by design. `per_tile_cap` is `min(max_splits, cap * batch_size)`, so once `cap * batch_size` exceeds `max_splits` no cap can constrain the schedule — and the sizing must not depend on whether a dummy cap was passed. The cap helps at low batch, which is where the allocation was most over-sized relative to what the kernel can reach.
+The `batch=512` row is unchanged by design. `per_tile_cap` saturates at `max_splits`, so once the cap budget exceeds it no cap can constrain the schedule — and the sizing must not depend on whether a dummy cap was passed. The cap helps at low batch, which is where the allocation was most over-sized relative to what the kernel can reach.
 
 ### Why the smaller allocation is safe
 
@@ -84,17 +84,41 @@ Steps 1 and 3 must be given the **same** cap, so the schedule is built under the
 
 **Direction of risk.** Capping step 1 but not step 3 would under-size. The reverse is harmless: the sizing simply stays on the loose estimate. Code that passes no cap is unaffected — the branch is gated on `max_split_per_batch > 0`, which defaults to `-1`.
 
+### Applied from review
+
+**The reduction is gated on `fast_mode`.** `fast_mode=False` dispatches to
+`get_mla_metadata_v1_1` (`csrc/kernels/mla/metadata.cu:148`), whose device entry
+point takes no `max_split_per_batch` at all — compare `get_mla_metadata_v1_0_device`
+directly above it, which does. That planner is uncapped, so reducing its sizing
+undersized `reduce_partial_map` by up to 200x (batch 1, cap 1: 1024 → 5) on a path
+where an overflow faults the GPU rather than raising. An earlier revision listed
+`fast_mode=False` under "not addressed" as a *coverage* gap; it was a correctness
+hole, and `test_non_fast_mode_ignores_the_cap` now pins it.
+
+**`per_tile_cap` is fold-aware.** The planner folds head counts it does not natively
+serve down to 16 and scales `num_batches` up by the same ratio *before* applying the
+cap (`v1_2_device.cuh:924-928`, then `948-950`). Mirroring `natively_supported` in
+Python would duplicate a long arch/dtype gate and drift from it — which is how this
+diverged in the first place — so the fold is assumed whenever it could apply.
+`per_tile_cap` is `min`ed with `max_splits`, so over-estimating only moves it toward
+the uncapped bound and never below what the planner can emit. This raises the cap=1
+column above; every cap=256 row, including the one this PR exists for, is unchanged.
+
 ### Not addressed here
 
 - `max_work` / `work_info_set` are still sized from the uncapped estimate. They are int32 rather than the fp32 `logits` path, but the fill numbers below show `work_info_set` is the tighter of the two buffers (2301/3068 at batch 512), so it is the better follow-up target.
 - `intra_batch_mode` sizes `reduce_partial_map` as `tile_cnt * num_kv_splits` and ignores the cap entirely.
-- Coverage for `fast_mode=False` and `is_sparse=True`.
+- Coverage for `is_sparse=True`.
 
 ## Test Plan
 
 ```bash
 pytest op_tests/test_mla_metadata_split_cap.py       # sizing arithmetic, no GPU work
 pytest op_tests/test_mla_metadata_split_cap_fill.py  # runs the planner, checks it fits
+
+# both also run standalone, which is how aiter CI invokes op_tests files
+python3 op_tests/test_mla_metadata_split_cap.py
+python3 op_tests/test_mla_metadata_split_cap_fill.py
 ```
 
 Two files, because one cannot do the other's job.
@@ -113,7 +137,7 @@ Two shapes are **vacuous** and are excluded, with that asserted rather than assu
 ## Test Result
 
 ```
-op_tests/test_mla_metadata_split_cap.py        9 passed
+op_tests/test_mla_metadata_split_cap.py       12 passed
 op_tests/test_mla_metadata_split_cap_fill.py  19 passed
 ```
 
@@ -137,7 +161,7 @@ The **batch 512** rows are why the fast-mode estimate is kept there. An earlier 
 max() alone (current behaviour):          4 failed
 this bound minus 8:                       4 failed   <- caught only by the fill test
 the sum bound applied inside the branch:  1 failed   <- a dummy cap would change the size at 512
-correct:                                 28 passed
+correct:                                 31 passed
 ```
 
 The second is the case an arithmetic-only suite cannot see: eight entries is inside the four-entry headroom at `batch=1`, so a consistent-but-too-small formula would pass every sizing assertion and overflow on device.
