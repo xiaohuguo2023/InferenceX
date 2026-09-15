@@ -12,13 +12,21 @@ Branch: `xguo/mla-tighter-split-tile-bound` (1 commit, +349/−2, 3 files)
 
 ## Motivation
 
-**A caller that asks for fewer KV splits still pays for the unlimited case.**
+**`max_split_per_batch` has no effect on the buffer size it exists to reduce.**
 
-MLA decode splits the KV axis so that several compute units can work on one request at a time. Every split produces a partial result, and those partials are reduced afterwards, so the reduce scratch has to be large enough to hold all of them. More splits means more scratch.
+MLA decode splits the KV axis so several compute units can work on one request at once. Each split writes a partial result, and the partials are reduced afterwards, so the reduce scratch must hold every partial the schedule can produce. More splits, more scratch.
 
-`max_split_per_batch` exists so a caller can say *"use at most N splits per batch"* — the whole point being a smaller buffer. Today it changes nothing: the allocation comes out the same as if no cap had been passed.
+An inference framework — in our case vLLM's ROCm MLA attention backend — cannot allocate that scratch lazily, because the buffers have to exist before a cudagraph is captured. So it uses aiter's two-step interface:
 
-For vLLM's DCP MLA path that is the difference between reserving **9.35 GiB** and **2.38 GiB** of fp32 scratch, which is what lets FULL cudagraphs fit under decode context parallelism.
+1. `get_mla_metadata_info_v1(...)` returns the buffer sizes needed for a given shape;
+2. the framework allocates exactly those buffers;
+3. `get_mla_metadata_v1(...)` builds the schedule into them.
+
+`max_split_per_batch` is an argument to both, and it means *"no request may be given more than N splits"*. Fewer splits means fewer partials, so passing it should return a smaller size from step 1.
+
+It does not. **Step 1 returns the same size whether you pass `max_split_per_batch=1`, `=256`, or `=-1` (no limit).** The value is computed, then discarded by a `max()` that always prefers the no-limit estimate.
+
+That is the whole bug. It matters because step 1's answer is what gets reserved: for our MLA decode shape it is the difference between **9.35 GiB** and **2.38 GiB** of fp32 scratch, and reclaiming that 7 GiB is what leaves room for FULL cudagraphs under decode context parallelism.
 
 ## Technical Details
 
@@ -55,9 +63,9 @@ The `batch=512` row is unchanged by design. `per_tile_cap` is `min(max_splits, c
 
 ### Why the smaller allocation is safe
 
-Two different calls are involved: `get_mla_metadata_info_v1` **sizes** the buffer, and `get_mla_metadata_v1` **fills** it. Shrinking the buffer is only safe if both are given the same cap, so the schedule is built under the same limit the sizing assumed. Consistency between the two is the requirement, not any particular value — and the fill test drives both with one cap for exactly that reason.
+Steps 1 and 3 must be given the **same** cap, so the schedule is built under the limit the sizing assumed. Consistency between the two is the requirement, not any particular value — and the fill test drives both from one variable for exactly that reason.
 
-**Direction of risk.** Passing a cap to the sizing call but not to the fill call would under-size. The reverse is harmless: the sizing simply stays on the loose estimate. Callers that pass no cap are unaffected — the branch is gated on `max_split_per_batch > 0`, which defaults to `-1`.
+**Direction of risk.** Capping step 1 but not step 3 would under-size. The reverse is harmless: the sizing simply stays on the loose estimate. Code that passes no cap is unaffected — the branch is gated on `max_split_per_batch > 0`, which defaults to `-1`.
 
 ### Not addressed here
 
