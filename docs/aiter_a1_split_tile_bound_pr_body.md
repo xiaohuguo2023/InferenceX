@@ -1,12 +1,14 @@
-# PR body — aiter: honor `max_split_per_batch` when sizing `reduce_partial_map`
+# PR body — aiter: fix `reduce_partial_map` over-allocation
 
 Branch: `xguo/mla-cap-aware-scratch-sizing` (1 commit, +349/−2, 3 files)
 
 **Title:**
 
 ```
-[Bugfix][MLA] Honor max_split_per_batch when sizing reduce_partial_map
+[Bugfix][MLA] Fix reduce_partial_map over-allocation when max_split_per_batch is set
 ```
+
+Deliberately the same shape as **#3855** (`[Bugfix] Fix MLA metadata reduce_partial_map worst-case over-allocation OOM`), because this is the remaining half of that fix.
 
 ---
 
