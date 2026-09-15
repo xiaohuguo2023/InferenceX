@@ -38,8 +38,6 @@ We hit this on Kimi-K3 MLA decode (TP8, DCP8, the fp8 asm path).
 
 It was a crash, not just waste. At batch 48 every rank died with `torch.OutOfMemoryError: Tried to allocate 9.35 GiB ... 6.24 GiB is free`. The 6.97 GiB we get back is also more than the FULL-decode cudagraph pools need, so the shape went from not fitting to fitting with room left over.
 
-You do not have to pick a good cap to get this. `per_tile_cap` is `min(max_splits, max_split_per_batch * batch_size)`, so at batch 64 a cap of 16, 32 or 256 all give the same 1216. Any cap that binds at all gives the full saving.
-
 It is not a speedup. No kernel changes and no maths changes — only the buffer size.
 
 ## Technical Details
