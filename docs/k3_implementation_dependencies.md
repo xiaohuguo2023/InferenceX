@@ -119,8 +119,9 @@ merits before deciding it is not worth filing.
 ## 4. Non-vLLM dependencies
 
 ### ROCm/aiter — `patches/k3-dcp8/aiter/`
-Every row below is **live in the image** — verified 2026-09-15 by grepping
-`/opt/aiter-local` in `k3-2671`, not inferred from the patch files.
+A1-A4 are **live in the image** — verified 2026-09-15 by grepping
+`/opt/aiter-local` in `k3-2671`, not inferred from the patch files. A5 is
+conditional and is currently **not** applied (see its row).
 
 | id | patch | change | PR | load-bearing |
 |---|---|---|---|---|
@@ -128,10 +129,14 @@ Every row below is **live in the image** — verified 2026-09-15 by grepping
 | A2 | `0001` | `asm_gemm_a16w16.cu`: don't auto-select split-K under graph replay (`AITER_ALLOW_SPLITK`) | **UNFILED — do not file as-is** | **yes** — boot blocker, all waves spin forever at seqs=64 warmup |
 | A3 | `0001` | `mla.py`: fp8 MLA `get_block_n_fp8` fallback + 80/96/112 entries | **[#4713](https://github.com/ROCm/aiter/pull/4713)** OPEN | **yes** — `KeyError` on any unlisted `nhead * max_seqlen_q`. NOT on the cprr path (verified), so not a dependency of our vLLM PR |
 | A4 | `0002` | K3 bf16 tuned-GEMM rows (CSV) | **UNFILED** (data, probably not upstreamable as-is) | **yes** — 371 conc-1 tuned-config misses; absence HSA-faults the launcher |
-| A5 | `0003` | `flydsl/kernels/buffer_ops.py`: 0.3.2 aux attr | **UNFILED** | present in the image; no open PR of ours touches this file |
+| A5 | `0003` | `flydsl/kernels/buffer_ops.py`: 0.3.2 `aux` attr | **UNFILED**, and not upstreamable — it is a local compat shim | **conditional, NOT applied today.** Only needed on an image whose flydsl is >= 0.3.2 while the transplanted aiter was built against 0.3.0; both `k3-2671` and `k3-r72` ship flydsl **0.3.0**, so the shim is correctly absent. Applied by hand (`git apply`), never automatically — **re-check on every image bump**, because aiter is transplanted rather than rebuilt and a flydsl minor bump silently breaks it with `TypeError: RawPtrBufferStoreOp.__init__() takes 5 positional arguments but 6 were given` at KV-cache profiling, taking every worker with it |
 
 **So two of the five carried aiter changes have a PR: #5559 and #4713.** A2, A4
-and A5 have none.
+and A5 have none, and A5 is a version-compat shim that should never be filed.
+
+**Correction (2026-09-15):** an earlier revision of this row claimed A5 was live
+in the image. It is not — that was a grep for `aux` matching unrelated lines. The
+real marker is `aux=aux_attr`, absent from both containers.
 
 **A2 must not be filed in its current form.** It disables a perf feature by
 default for every aiter user via an env opt-in, and upstream already merged and
