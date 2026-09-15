@@ -63,7 +63,7 @@ merits before deciding it is not worth filing.
 ### ROCm/aiter — `patches/k3-dcp8/aiter/`
 | id | change | load-bearing |
 |---|---|---|
-| A1 | take the tighter split-tile bound when a cap is supplied (`max`→`min`) | **yes** — MLA reduce scratch 9.35 → 2.38 GiB; what let FULL cudagraphs fit under DCP |
+| A1 | fix `reduce_partial_map` over-allocation when `max_split_per_batch` is set (`max`→`min`) — **filed: [aiter #5559](https://github.com/ROCm/aiter/pull/5559)** | **yes** — MLA reduce scratch 9.35 → 2.38 GiB; what let FULL cudagraphs fit under DCP |
 | A2 | ASM a16w16: don't auto-select split-K under graph replay | **yes** — boot blocker, all waves spin forever at seqs=64 warmup |
 | A3 | fp8 MLA `get_block_n_fp8` fallback + 80/96/112 entries | **yes** — `KeyError` on any unlisted `nhead * max_seqlen_q`. NOT on the cprr path (verified), so it is not a dependency of our vLLM PR |
 | A4 | K3 bf16 tuned-GEMM rows (CSV) | **yes** — 371 conc-1 tuned-config misses; absence HSA-faults the launcher |
@@ -188,12 +188,15 @@ in one file, touching three subsystems:
 
 | | file | category |
 |---|---|---|
-| A1 | `aiter/ops/attention.py` — tighter split-tile bound | perf/memory (9.35 -> 2.38 GiB) |
+| A1 | `aiter/ops/attention.py` — `reduce_partial_map` over-allocation | perf/memory (9.35 -> 2.38 GiB) |
 | A2 | `csrc/py_itfs_cu/asm_gemm_a16w16.cu` — no auto split-K under graph replay | bug fix (boot blocker, waves spin forever) |
 | A3 | `aiter/mla.py` — `get_block_n_fp8` fallback + 80/96/112 | bug fix (`KeyError`) |
 
 These share nothing but our repo. They should be **three separate aiter PRs**.
 A4 (tuned-GEMM CSV) is data and is probably not upstreamable as-is.
+
+**A1 is now filed as [aiter #5559](https://github.com/ROCm/aiter/pull/5559)** (open,
++349/−2, 3 files). A2 and A3 are still to be split out, duplicate-checked first.
 
 ### Not PRs
 

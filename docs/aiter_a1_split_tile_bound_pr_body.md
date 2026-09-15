@@ -1,14 +1,17 @@
 # PR body — aiter: fix `reduce_partial_map` over-allocation
 
-Branch: `xguo/mla-cap-aware-scratch-sizing` (1 commit, +349/−2, 3 files)
+**FILED: [ROCm/aiter#5559](https://github.com/ROCm/aiter/pull/5559)** — open, +349/−2, 3 files.
+Branch `xguo/mla-tighter-split-tile-bound`.
 
-**Title:**
+**Title as filed:**
 
 ```
 [Bugfix][MLA] Fix reduce_partial_map over-allocation when max_split_per_batch is set
 ```
 
 Deliberately the same shape as **#3855** (`[Bugfix] Fix MLA metadata reduce_partial_map worst-case over-allocation OOM`), because this is the remaining half of that fix.
+
+Suggested reviewers, by blame on the two lines changed: **@ruanjm** (wrote both — #3391 added the `max_split_per_batch` branch, #3459 the `per_tile_cap` line) and **honglie** (wrote #3855). **minmengdie** owns the cp-round-robin path this runs through.
 
 ---
 
