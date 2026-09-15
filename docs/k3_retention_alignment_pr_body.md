@@ -1,6 +1,6 @@
 ## Purpose
 
-**Under decode context parallelism, a legal `prefix_cache_retention_interval` is rejected, and the user is forced to checkpoint 8x more coarsely than the cache can use.**
+**On ROCm under decode context parallelism, a legal `prefix_cache_retention_interval` is rejected, and the user is forced to checkpoint 8x more coarsely than the cache can use.**
 
 ### Background
 
@@ -73,13 +73,13 @@ Two other open PRs touch this file in unrelated regions: **#53479** (Mamba align
 
 ### Scope
 
-This is generic KV-cache code and the fix is deliberately **not** platform-gated.
+**Scoped to ROCm**, which is the only platform where this has been tested. DCP is not backend-specific — `flashmla`, `flashmla_sparse`, `flashinfer_mla_sparse` and `flashattn_mla` all carry DCP support — so other platforms may well have the same latent mismatch. We have no way to exercise them, so we are not changing their behaviour on an untested claim.
 
-`vllm/v1/core/kv_cache_coordinator.py` contains no platform checks, and DCP is not backend-specific — `flashmla`, `flashmla_sparse`, `flashinfer_mla_sparse` and `flashattn_mla` all carry DCP support. A CUDA user running DCP with a hybrid model that has partial hash hits enabled gets the identical rejection.
+**Off ROCm the original `scheduler_block_size` check is kept, not deferred.** This is the subtle part of gating: the alignment check now runs in a new place, so simply gating that new call would leave other platforms with *no* alignment validation at all — weaker than the status quo, not safer. Instead the base validator keeps its original check verbatim for them, and only ROCm takes the deferred, granularity-aware path. There is a test asserting the original rejection still fires off ROCm.
 
-The distinction matters because it is a **logic correction, not a performance tradeoff**. Comparing the interval against the LCM when hits land on the GCD is wrong on any fabric; there is no "it might be better elsewhere" to hedge against. Gating it would withhold the fix from the platforms that also have the bug.
+Within ROCm, the change only alters which value the interval is compared against; it does not change what a valid interval *does*.
 
-It changes only which value the interval is compared against; it does not change what a valid interval *does*.
+If maintainers would like this widened once someone can test it on CUDA, the gate is a single condition in each of the two validators.
 
 ## Test Plan
 
@@ -99,20 +99,26 @@ The new tests are CPU-only and call the validators directly. They pin:
 5. **the regression itself** — 1536 accepted against `hash_block_size`, rejected against the DCP-scaled `scheduler_block_size`, which is the before/after in one test;
 6. the base validator still rejects a negative interval;
 7. the base validator no longer checks alignment, so the DCP case can reach the deferred check at all;
-8. `_cache_hit_alignment_tokens` belongs to the hybrid coordinator and not the unitary one — the `AttributeError` guard described above.
+8. `_cache_hit_alignment_tokens` belongs to the hybrid coordinator and not the unitary one — the `AttributeError` guard described above;
+9. **off ROCm, the original `scheduler_block_size` rejection still fires**, a scheduler-aligned interval is still accepted, and the deferred check is inert — i.e. behaviour there is byte-for-byte what it is today.
 
 ## Test Result
 
 ```
-tests/v1/core/test_retention_interval_alignment.py   9 passed
+tests/v1/core/test_retention_interval_alignment.py   12 passed
 ```
 
-**The tests have power, they are not merely green.** Neutering the alignment comparison turns two of them red:
+The platform is patched rather than detected, so both branches are exercised on any runner.
+
+**The tests have power, they are not merely green.** Two independent mutations each turn the expected tests red:
 
 ```
-alignment check disabled:  2 failed, 6 passed
-alignment check present:   9 passed
+drop the off-ROCm fallback:     1 failed, 11 passed   (other platforms lose validation)
+drop the ROCm alignment check:  2 failed, 10 passed   (the fix itself)
+both present:                  12 passed
 ```
+
+The first mutation is the one worth noting: it catches the failure mode that gating naively would have introduced.
 
 No new failures in `tests/v1/core/test_kv_cache_utils.py`.
 
