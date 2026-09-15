@@ -119,12 +119,40 @@ merits before deciding it is not worth filing.
 ## 4. Non-vLLM dependencies
 
 ### ROCm/aiter — `patches/k3-dcp8/aiter/`
-| id | change | load-bearing |
+Every row below is **live in the image** — verified 2026-09-15 by grepping
+`/opt/aiter-local` in `k3-2671`, not inferred from the patch files.
+
+| id | patch | change | PR | load-bearing |
+|---|---|---|---|---|
+| A1 | `0001` | `attention.py`: fix `reduce_partial_map` over-allocation when `max_split_per_batch` is set (`max`→`min`) | **[#5559](https://github.com/ROCm/aiter/pull/5559)** OPEN | **yes** — MLA reduce scratch 9.35 → 2.38 GiB; what let FULL cudagraphs fit under DCP |
+| A2 | `0001` | `asm_gemm_a16w16.cu`: don't auto-select split-K under graph replay (`AITER_ALLOW_SPLITK`) | **UNFILED — do not file as-is** | **yes** — boot blocker, all waves spin forever at seqs=64 warmup |
+| A3 | `0001` | `mla.py`: fp8 MLA `get_block_n_fp8` fallback + 80/96/112 entries | **[#4713](https://github.com/ROCm/aiter/pull/4713)** OPEN | **yes** — `KeyError` on any unlisted `nhead * max_seqlen_q`. NOT on the cprr path (verified), so not a dependency of our vLLM PR |
+| A4 | `0002` | K3 bf16 tuned-GEMM rows (CSV) | **UNFILED** (data, probably not upstreamable as-is) | **yes** — 371 conc-1 tuned-config misses; absence HSA-faults the launcher |
+| A5 | `0003` | `flydsl/kernels/buffer_ops.py`: 0.3.2 aux attr | **UNFILED** | present in the image; no open PR of ours touches this file |
+
+**So two of the five carried aiter changes have a PR: #5559 and #4713.** A2, A4
+and A5 have none.
+
+**A2 must not be filed in its current form.** It disables a perf feature by
+default for every aiter user via an env opt-in, and upstream already merged and
+then **reverted** the nearest real fix (#4494, reverted by #4709). Rebuilding it
+as a capture-safe semaphore — the way #4715 does for FlyDSL — is the route, not a
+kill switch.
+
+### Our other aiter PRs — NOT K3 dependencies
+
+Listed so nobody re-derives whether they matter to the recipe. None is in
+`patches/`, and #4715's marker is absent from the image (checked).
+
+| PR | state | why it is not a dependency |
 |---|---|---|
-| A1 | fix `reduce_partial_map` over-allocation when `max_split_per_batch` is set (`max`→`min`) — **filed: [aiter #5559](https://github.com/ROCm/aiter/pull/5559)** | **yes** — MLA reduce scratch 9.35 → 2.38 GiB; what let FULL cudagraphs fit under DCP |
-| A2 | ASM a16w16: don't auto-select split-K under graph replay | **yes** — boot blocker, all waves spin forever at seqs=64 warmup |
-| A3 | fp8 MLA `get_block_n_fp8` fallback + 80/96/112 entries | **yes** — `KeyError` on any unlisted `nhead * max_seqlen_q`. NOT on the cprr path (verified), so it is not a dependency of our vLLM PR |
-| A4 | K3 bf16 tuned-GEMM rows (CSV) | **yes** — 371 conc-1 tuned-config misses; absence HSA-faults the launcher |
+| #5487 | DRAFT | K3 latent FHMoE **prototype**; not carried, not on the serving path |
+| #4715 | DRAFT | FlyDSL split-K capture-safe semaphore — **not applied in our image**; it is the model for rebuilding A2, not a dependency |
+| #4647 | OPEN | FlyDSL MoE stage-1 scratch reuse; not carried |
+| #4108 | OPEN, **CHANGES_REQUESTED since 2026-08-02** | A8W4 CDNA4 scale addressing; not carried. Blocked on us for 6 weeks |
+
+Merged and therefore already in the image: #3580, #3428, #3372 (gfx950 MoE A8W4
+tuned configs / dispatch), #1653, #1607, #1464, #725, #659.
 
 A1 and vLLM's `max_split_per_batch` are **order-independent** — the aiter change
 is gated on `max_split_per_batch > 0` with default `-1`, so it is inert for any
