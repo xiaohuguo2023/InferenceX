@@ -14,9 +14,9 @@ Branch: `xguo/mla-tighter-split-tile-bound` (1 commit, +349/−2, 3 files)
 
 **`max_split_per_batch` has no effect on the buffer size it exists to reduce.**
 
-MLA decode splits the KV axis so several compute units can work on one request at once. Each split writes a partial result, and the partials are reduced afterwards, so the reduce scratch must hold every partial the schedule can produce. More splits, more scratch.
+On one rank, MLA decode can cut that rank's local KV into chunks and run them on different CUs (the metadata kernel's `num_clusters` / `num_cu`). Each chunk writes a partial result, and the fp32 `reduce_partial_map` / `logits` buffer is the scratch used to merge those CU partials back. It has to hold every partial the schedule can produce, so more splits means more scratch. **`max_split_per_batch` caps how many of those extra KV fragments one batch is allowed** — that is the only thing it controls.
 
-An inference framework — in our case vLLM's ROCm MLA attention backend — cannot allocate that scratch lazily, because the buffers have to exist before a cudagraph is captured. So it uses aiter's two-step interface:
+An inference framework — in our case vLLM's ROCm MLA attention backend — cannot allocate that scratch lazily, because the buffers have to exist before a cudagraph is captured. So it uses aiter's ask-allocate-fill interface:
 
 1. `get_mla_metadata_info_v1(...)` returns the buffer sizes needed for a given shape;
 2. the framework allocates exactly those buffers;
@@ -26,7 +26,15 @@ An inference framework — in our case vLLM's ROCm MLA attention backend — can
 
 It does not. **Step 1 returns the same size whether you pass `max_split_per_batch=1`, `=256`, or `=-1` (no limit).** The value is computed, then discarded by a `max()` that always prefers the no-limit estimate.
 
-That is the whole bug. It matters because step 1's answer is what gets reserved: for our MLA decode shape it is the difference between **9.35 GiB** and **2.38 GiB** of fp32 scratch, and reclaiming that 7 GiB is what leaves room for FULL cudagraphs under decode context parallelism.
+That is the whole bug. It matters because step 1's answer is what gets reserved: for our MLA decode shape it is the difference between **9.35 GiB** and **2.38 GiB** of fp32 scratch, and reclaiming that ~7 GiB is what leaves room for FULL cudagraphs.
+
+### This split-K is not the DCP split
+
+Worth separating, because the two are easy to conflate and only one of them `max_split_per_batch` touches.
+
+Decode context parallelism shards the sequence across GPUs: each rank already holds only 1/`dcp_world_size` of it. Ranks do **not** share this buffer — it is per-rank scratch for merging that rank's own CU partials, and nothing here is collective.
+
+DCP simply makes the per-GPU allocation worse. That GPU's decode sees gathered query heads (`nheads × dcp_world_size`) and still split-Ks its local KV across its own CUs. So the fix is not DCP-specific — DCP is just the configuration where the over-allocation became large enough to stop fitting.
 
 ## Technical Details
 
