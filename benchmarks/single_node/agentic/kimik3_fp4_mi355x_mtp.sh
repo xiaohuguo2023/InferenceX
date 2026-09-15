@@ -139,8 +139,12 @@ for _p in envs utils kda linear wvsplitkq_strided fused_allreduce_rms_norm laten
           amd_mla_gate_multistream; do
     apply_vllm_patch "$REPO_ROOT/patches/k3-perf/vllm/$_p.patch"
 done
-for _p in scheduler config cp_common speculator rocm_aiter_mla speculative_draft_dcp \
-          retention_alignment dcp_a2a_pack_mask; do
+# speculative_draft_dcp and dcp_a2a_pack_mask were dropped 2026-09-15: both are
+# upstream now. #55472 rebuilds the draft's ParallelConfig from the target's
+# (preserving DCP) and is in the pinned image; dcp_a2a_pack_mask's code is
+# native in v1/attention/ops/dcp.py on current main.
+for _p in scheduler config cp_common speculator rocm_aiter_mla \
+          retention_alignment; do
     apply_vllm_patch "$REPO_ROOT/patches/k3-dcp8/vllm/$_p.patch"
 done
 
