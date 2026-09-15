@@ -73,7 +73,13 @@ Two other open PRs touch this file in unrelated regions: **#53479** (Mamba align
 
 ### Scope
 
-This is generic KV-cache code, not platform-specific: DCP is available on any backend and the fix is a logic correction rather than a performance tradeoff, so there is nothing to gate. It changes only which value the interval is compared against; it does not change what a valid interval *does*.
+This is generic KV-cache code and the fix is deliberately **not** platform-gated.
+
+`vllm/v1/core/kv_cache_coordinator.py` contains no platform checks, and DCP is not backend-specific — `flashmla`, `flashmla_sparse`, `flashinfer_mla_sparse` and `flashattn_mla` all carry DCP support. A CUDA user running DCP with a hybrid model that has partial hash hits enabled gets the identical rejection.
+
+The distinction matters because it is a **logic correction, not a performance tradeoff**. Comparing the interval against the LCM when hits land on the GCD is wrong on any fabric; there is no "it might be better elsewhere" to hedge against. Gating it would withhold the fix from the platforms that also have the bug.
+
+It changes only which value the interval is compared against; it does not change what a valid interval *does*.
 
 ## Test Plan
 
