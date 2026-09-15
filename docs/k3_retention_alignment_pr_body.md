@@ -42,6 +42,14 @@ hash_block_size      = gcd(1536, 12288) =  1536
 
 So hits land every **1536** tokens, while the validator demands a multiple of **12288**. A user asking to checkpoint exactly where hits land is refused, and has to go 8x coarser — quantising every hit to a span the cache never reports, which costs prefix-cache hit rate.
 
+### How it got this way
+
+The validator was correct when written. `_validate_prefix_cache_retention_interval` arrived in **#43447** (2026-06-04), when `scheduler_block_size` was the only hit granularity there was.
+
+**#46384** (2026-07-12) then added partial prefix-cache hits for hybrid models, introducing a *second*, finer granularity along with `enable_partial_hash_hits` and `_cache_hit_alignment_tokens` to express which one applies. The validator was not updated to ask.
+
+So this is not a wrong check; it is a check left behind by a later change, and it only becomes visible when something pulls the two granularities apart. DCP is that something.
+
 ### The fix
 
 `_cache_hit_alignment_tokens` is already the right answer, but it cannot simply be substituted into the base validator: it depends on `enable_partial_hash_hits`, which only the concrete coordinator resolves, after the base constructor has run.
@@ -54,6 +62,14 @@ So the check is split:
 `HybridKVCacheCoordinator` passes the alignment it just computed. `UnitaryKVCacheCoordinator` never enables partial hash hits, so it passes `scheduler_block_size`.
 
 The unitary path deliberately does **not** call `_cache_hit_alignment_tokens`: that property is defined on `HybridKVCacheCoordinator`, so reaching for it there raises `AttributeError` during construction — a boot failure for every single-group model. An earlier revision of this change did exactly that, so a test now pins which class owns the property.
+
+### Relationship to #52527
+
+**#52527** ("[Metrics] Report shared-prefix tokens lost to a missing sparse-retention checkpoint") is open and touches the same function, so whichever lands second will need a small rebase around `_validate_prefix_cache_retention_interval`.
+
+The two are complementary rather than competing: #52527 *measures* prefix tokens lost to a missing retention checkpoint, and this PR removes one cause of those misses — a validator that forces checkpoints 8x sparser than the cache can use. Landing both gives you the metric and one fewer reason for it to fire.
+
+Two other open PRs touch this file in unrelated regions: **#53479** (Mamba align) in the constructors, and **#50457** (all-sliding DFlash drafter) in `allocate_new_blocks`. Neither overlaps the lines changed here.
 
 ### Scope
 
