@@ -1,11 +1,11 @@
-# PR body — aiter: make `max_split_per_batch` shrink the MLA decode scratch
+# PR body — aiter: honor `max_split_per_batch` when sizing `reduce_partial_map`
 
 Branch: `xguo/mla-cap-aware-scratch-sizing` (1 commit, +349/−2, 3 files)
 
 **Title:**
 
 ```
-[Bugfix][MLA] Make max_split_per_batch shrink the decode scratch buffer
+[Bugfix][MLA] Honor max_split_per_batch when sizing reduce_partial_map
 ```
 
 ---
