@@ -29,19 +29,31 @@ Three things worth calling out:
 - **`GroupCoordinator.barrier()`, not `torch.distributed.barrier()`.** This is a correctness point, not style. The latter is an NCCL barrier, which — per its own docstring in `parallel_state.py` — "is internally a broadcast operation with secretly created GPU tensors. It is easy to mess up the current device." Doing that immediately before graph capture is exactly the wrong thing; `GroupCoordinator.barrier()` uses the CPU group instead. A test pins the choice so a later simplification cannot quietly undo it.
 - **Boot-time only**, once per speculator. No steady-state cost.
 
-### Scope: what this does and does not align
+### Scope and placement
 
-The barrier runs once at the top of `capture()`, not immediately before
-`torch.cuda.graph()` and not per capture size. It fixes the failure measured
-here — ranks arriving from target capture up to ~1s apart — and does not claim
-that every captured collective is entered aligned.
+One-shot alignment is sufficient: the **target's** `CudaGraphManager.capture`
+already loops many sizes with DCP collectives in the graph and no barrier at all,
+and that works. What fails is the draft, where ranks arrive from target capture
+up to ~1s apart. The barrier sits between the target's `graph_capture()` exiting
+and the draft's entering, so it runs outside any capture-stream context.
 
-`graph_capture()` in `parallel_state.py` wraps TP, PP and DP, but **not DCP**, so
-the DCP communicator is never put into capture mode. Adding a
-`get_dcp_group().graph_capture(context)` there is the more complete fix and is
-deliberately not attempted in this PR: it changes a path every DCP user takes,
-including non-spec-decode DCP which works today. Flagging it as the follow-up if
-maintainers prefer that shape.
+**Why the TP group.** `__init__` forces the draft to `prefill_context_parallel_size=1`,
+and at `pcp == 1` config validation requires `tp % dcp == 0`
+(`config/parallel.py:562`), so the draft's DCP group is a subset of its TP group.
+The captured draft graph carries the draft's TP all-reduces as well as the DCP
+collective, so at `dcp < tp` a DCP barrier would align only some participants —
+`tp=8/dcp=2` gives `[[0,1],[2,3],[4,5],[6,7]]` against a graph spanning all 8
+ranks. At `dcp == tp` they coincide, which is why the measurement below does not
+discriminate between the two. TP is the full set either way, at the same cost.
+
+**No PP deadlock.** The speculator is built only on the last PP rank
+(`model_runner.py:279`), and every DCP and TP group lies within a single PP
+stage, so either all members reach the barrier or none do.
+
+**It runs twice per boot**, not once: `profile_cudagraph_memory()` bootstraps a
+throwaway KV cache and runs `capture_model()` for the memory estimate, which
+reaches `speculator.capture()` too. Symmetric across ranks and harmless — and
+profiling is where ranks are most staggered.
 
 ### Reproduction on unmodified main
 
@@ -52,7 +64,7 @@ demonstrated on a vanilla boot. Stated plainly so a reviewer can weigh it.
 
 ### Relationship to #56723
 
-#56723 touches the same file — it adds `draft_parallel_config()` and rewires `__init__`. The two are **independent and compose**: it does not touch `capture()`, and it refines the draft's effective DCP, which is exactly the value this gate reads. Note the skip-under-PCP behaviour is **not** on this branch today: `__init__` currently forces `prefill_context_parallel_size=1` but leaves `decode_context_parallel_size` alone, so with PCP on the gate still fires. #56723 is what collapses the draft's DCP to 1 and makes this barrier correctly no-op there. With PCP off it returns the config unchanged and the barrier applies either way.
+#56723 touches the same file — it adds `draft_parallel_config()` and rewires `__init__`. The two are **independent and compose**: it does not touch `capture()`, and it refines the draft's effective DCP, which is exactly the value this gate reads. Note the skip-under-PCP behaviour is **not** on this branch today: `__init__` currently forces `prefill_context_parallel_size=1` but leaves `decode_context_parallel_size` alone, so with PCP on the gate still fires. **If** #56723 lands, it collapses the draft's DCP to 1 and this barrier then correctly no-ops under PCP; that PR is unmerged, so this is conditional on it. With PCP off it returns the config unchanged and the barrier applies either way.
 
 There is no logic overlap; whichever lands second needs a one-line rebase of the import block.
 
