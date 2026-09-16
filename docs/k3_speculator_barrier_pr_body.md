@@ -117,8 +117,25 @@ Every boot died at speculator capture. With the barrier the server reaches
 `Application startup complete` in 280 s with no serialization penalty, and a
 full concurrency sweep then ran 9/9 `rc=0`.
 
-Two limits on what this measures. The stack carries a local port that makes the
-DSpark draft DCP-sharded, so upstream reachability rests on the #55472 argument
-above rather than on a boot from an unmodified tree. And at DCP == TP the two
-groups are the same 8 ranks, so this run cannot tell a TP barrier from a DCP
-one; the choice of TP is argued from config validation, not measured.
+The stack carries a local port that makes the DSpark draft DCP-sharded, so
+upstream reachability rests on the #55472 argument above rather than on a boot
+from an unmodified tree.
+
+### Does the barrier group matter in practice?
+
+At DCP == TP both groups are the same 8 ranks, so the run above cannot tell a TP
+barrier from a DCP one. Tried to settle it at `dcp < tp`, where a DCP barrier
+aligns only some of the ranks the captured graph spans:
+
+| config | barrier | result |
+|---|---|---|
+| TP=8, DCP=2 | DCP group | not testable: fp8 asm MLA has no kernel for the draft's `gqa=16, qseqlen=2`, so the boot dies in `get_heuristic_kernel_mla` well before speculator capture |
+| TP=8, DCP=4 | DCP group | boots clean |
+| TP=8, DCP=4 | TP group | boots clean |
+
+So a DCP-only barrier did **not** fault at `dcp < tp` on this stack, and the
+change to TP is not measured-necessary. It is kept because it is a strict
+superset of the DCP group for the draft at the same cost, and because the
+participant set is the property that has to hold rather than the one
+configuration we can boot. One clean boot each is weaker evidence than the
+DCP == TP failure, which reproduced on every boot.
