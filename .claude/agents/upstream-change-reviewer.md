@@ -45,6 +45,11 @@ and found correct, especially anything a reviewer would reasonably doubt.
   there. Check `main()` drives everything that matters.
 - **State restoration.** Hand-rolled monkeypatch equivalents must restore on the
   exception path, not only on success.
+- **Nothing was deleted.** Compare the set of `def test_` names before and after
+  the change. A test that disappeared is a coverage regression unless the diff
+  says why. Watch for cases merged into a parametrize list where the merged
+  version covers fewer inputs than the originals did, which reads as a tidy-up
+  but is a loss.
 
 ## 3. Project conventions
 
