@@ -100,16 +100,6 @@ Check the pin has not moved since the last run before trusting a green result.
 **Gate on exit status, never on grepping output.** `cmd | grep Failed && commit`
 succeeds when grep matches, which has already let a lint failure through here.
 
-## 5. Scope and gating
-
-- Changes measured only on ROCm should be gated on `current_platform.is_rocm()`,
-  and the gate needs a test that patches the platform rather than detecting it,
-  so both branches run on any runner.
-- A gate that defers or skips validation must not leave some path with **less**
-  checking than before. Enumerate every caller of the thing being gated.
-- Check the claimed blast radius: if a branch is said to be unreachable for
-  existing callers, find those callers and confirm it.
-
 ## Keep this file current
 
 When a review finds a defect class not listed above, add it. This checklist is
