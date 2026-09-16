@@ -137,8 +137,8 @@ Two shapes are **vacuous** and are excluded, with that asserted rather than assu
 ## Test Result
 
 ```
-op_tests/test_mla_metadata_split_cap.py       17 passed
-op_tests/test_mla_metadata_split_cap_fill.py  20 passed
+op_tests/test_mla_metadata_split_cap.py       28 passed
+op_tests/test_mla_metadata_split_cap_fill.py  27 passed
 ```
 
 Measured fills against the bound, printed by the fill test so the numbers land in CI rather than in a comment:
@@ -165,15 +165,14 @@ this bound minus 8:                        4 failed   <- caught only by the fill
 the sum bound applied inside the branch:   1 failed   <- a dummy cap would resize at 512
 drop the fast_mode gate:                   3 failed
 native gate always returns True:           1 failed
-correct:                                  37 passed
-
-drop the qk_batch_ratio fold:             NOT caught
-invert the native gate at the call site:   NOT caught
+drop the qk_batch_ratio fold:              1 failed
+invert the native gate at the call site:   1 failed
+correct:                                  55 passed
 ```
 
 "This bound minus 8" is the case an arithmetic-only suite cannot see: eight entries sits inside the four-entry headroom at `batch=1`, so a consistent-but-too-small formula passes every sizing assertion and overflows on device.
 
-The two uncaught mutations are the fold. Sweeping batch × cap, **the planner never approaches its own budget** — at `nhead=48, batch=1, cap=85` it writes 88 partials against a folded budget of 255, and 88 still fits the unfolded bound of 97 — so removing the fold does not overflow any shape found. The fold is justified from the C++ budget expression (`v1_2_device.cuh:924-928`, then `948-950`), not from an observed failure. `test_the_native_gate_matches_the_kernel` and the gfx1250 cases pin the *classification*; the call site is not pinned.
+The fold is caught by a **non-saturating** cap, which is the only regime where it is observable. At `nhead=48` (not natively served on gfx950, so `qk_batch_ratio` = 3) the planner writes exactly `cap × ratio` partials at small caps — 24/48/98/192 for caps 8/16/32/64 — against unfolded bounds of 20/28/44/76, so an unfolded sizing overflows. At `cap=256` it saturates at `max_splits` and the fold becomes unobservable, which is why an earlier revision of this body wrongly reported it as unprovable by fill.
 
 `op_tests/test_metadata.py` fails identically before and after (a pytest signature mismatch — the file is an argparse CLI script), so it is pre-existing and unrelated.
 
