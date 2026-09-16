@@ -29,6 +29,14 @@ Three things worth calling out:
 - **`GroupCoordinator.barrier()`, not `torch.distributed.barrier()`.** This is a correctness point, not style. The latter is an NCCL barrier, which — per its own docstring in `parallel_state.py` — "is internally a broadcast operation with secretly created GPU tensors. It is easy to mess up the current device." Doing that immediately before graph capture is exactly the wrong thing; `GroupCoordinator.barrier()` uses the CPU group instead. A test pins the choice so a later simplification cannot quietly undo it.
 - **Boot-time only**, once per speculator. No steady-state cost.
 
+### Scope: ROCm only
+
+Gated on `current_platform.is_rocm()`. The fault was measured on gfx950 and the
+fix is untested on CUDA, so other platforms keep their current behaviour rather
+than take an unverified change to graph capture. DCP is not backend-specific, so
+the same staggered-entry fault may exist there; we have no way to exercise it.
+Widening it is one condition if a maintainer can test it.
+
 ### Scope and placement
 
 One-shot alignment is sufficient: the **target's** `CudaGraphManager.capture`
