@@ -52,7 +52,7 @@ tests/models/test_qwen3_5_mtp_config.py    10 passed
 
 The platform is patched rather than detected, so both branches are exercised on any runner — these tests are not silently vacuous on non-ROCm CI.
 
-**The tests have power, they are not merely green.** Three independent mutations each turn the expected tests red:
+Mutations that turn the tests red:
 
 ```
 remove the ROCm gate:                  1 failed, 6 passed   (off-ROCm default moved)

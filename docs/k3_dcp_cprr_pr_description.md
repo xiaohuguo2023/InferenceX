@@ -175,7 +175,7 @@ the backing buffer, so a DCP run on the *segmented* route hit an assert. That is
 fixed here (gated on the route), and `test_dcp_fp8_verify_build_uses_segmented`
 covers it.
 
-**The new tests have power, they are not merely green.** Forcing
+Forcing
 `VLLM_ROCM_AITER_MLA_DCP_VERIFY=segmented` turns all 4 GPU tests red, so they
 are genuinely pinned to the route under test:
 

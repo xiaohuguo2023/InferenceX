@@ -110,7 +110,7 @@ tests/v1/core/test_retention_interval_alignment.py   12 passed
 
 The platform is patched rather than detected, so both branches are exercised on any runner.
 
-**The tests have power, they are not merely green.** Two independent mutations each turn the expected tests red:
+Mutations that turn the tests red:
 
 ```
 drop the off-ROCm fallback:     1 failed, 11 passed   (other platforms lose validation)
@@ -118,7 +118,6 @@ drop the ROCm alignment check:  2 failed, 10 passed   (the fix itself)
 both present:                  12 passed
 ```
 
-The first mutation is the one worth noting: it catches the failure mode that gating naively would have introduced.
 
 No new failures in `tests/v1/core/test_kv_cache_utils.py`.
 

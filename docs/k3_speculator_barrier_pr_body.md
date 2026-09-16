@@ -61,7 +61,7 @@ tests/v1/spec_decode/test_dflash_prepare_inputs.py
 tests/v1/spec_decode/test_dflash_causality.py           16 passed
 ```
 
-**The tests have power, they are not merely green.** Removing the two barrier lines from the installed copy turns the ordering test red:
+Removing the two barrier lines turns the ordering test red:
 
 ```
 with the barrier removed:  1 failed, 2 passed

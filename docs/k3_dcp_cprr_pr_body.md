@@ -73,7 +73,7 @@ All on gfx950 (MI355X), ROCm 7.2.3.
 
 **No regressions.** Running the pre-existing suite against the branch is also what caught a real bug during development: `_build_decode` originally built `g_kv_indptr` whenever `dcp_world_size > 1`, but only the ASM route allocates the backing buffer, so a DCP run on the *segmented* route hit an assert. That is fixed here (gated on the route), and `test_dcp_fp8_verify_build_uses_segmented` covers it.
 
-**The new tests have power, they are not merely green.** Forcing `VLLM_ROCM_AITER_MLA_DCP_VERIFY=segmented` turns all 4 GPU tests red, so they are genuinely pinned to the route under test.
+Forcing `VLLM_ROCM_AITER_MLA_DCP_VERIFY=segmented` turns all 4 GPU tests red, so they are genuinely pinned to the route under test.
 
 **Numerics.** Per-shard maximum relative error against the exact torch reference, 8 DCP shards, fp8 KV:
 
