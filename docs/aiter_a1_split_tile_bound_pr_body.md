@@ -1,182 +1,87 @@
-# PR body — aiter: fix `reduce_partial_map` over-allocation
+# PR body — aiter #5559
 
-**FILED: [ROCm/aiter#5559](https://github.com/ROCm/aiter/pull/5559)** — open, +349/−2, 3 files.
-Branch `xguo/mla-tighter-split-tile-bound`.
-
-**Title as filed:**
+**FILED: [ROCm/aiter#5559](https://github.com/ROCm/aiter/pull/5559)**, branch
+`xguo/mla-tighter-split-tile-bound`. Title:
 
 ```
 [Bugfix][MLA] Fix reduce_partial_map over-allocation when max_split_per_batch is set
 ```
 
-Deliberately the same shape as **#3855** (`[Bugfix] Fix MLA metadata reduce_partial_map worst-case over-allocation OOM`), because this is the remaining half of that fix.
-
-Suggested reviewers, by blame on the two lines changed: **@ruanjm** (wrote both — #3391 added the `max_split_per_batch` branch, #3459 the `per_tile_cap` line) and **honglie** (wrote #3855). **minmengdie** owns the cp-round-robin path this runs through.
+Suggested reviewers by blame: **@ruanjm** (wrote both changed lines, #3391 and
+#3459) and **honglie** (wrote #3855).
 
 ---
 
 ## Motivation
 
-**`max_split_per_batch` has no effect on the buffer size it exists to reduce.**
+`max_split_per_batch` caps how many KV splits one batch may use, so passing it
+should reserve a smaller `reduce_partial_map`. It does not: sizing returns the
+same buffer whether you pass `1`, `256`, or `-1`.
 
-On one rank, MLA decode can cut that rank's local KV into chunks and run them on different CUs (the metadata kernel's `num_clusters` / `num_cu`). `max_split_per_batch` caps how many of those extra KV fragments one batch is allowed. The fp32 `reduce_partial_map` / `logits` buffer is the scratch to merge those CU partials back.
+`get_mla_metadata_info_v1` computes the cap-aware bound, then discards it with a
+`max()` against the uncapped estimate. This is the other half of #3855, which
+fixed the same expression but left the `max()`.
 
-DCP is separate: each GPU already holds only 1/`dcp_world_size` of the sequence. Ranks do not share this split-K buffer. DCP only makes the per-GPU allocation worse because that GPU's decode sees gathered query heads (`nheads × dcp_world_size`) and still split-Ks its local KV across its own CUs.
-
-An inference framework — in our case vLLM's ROCm MLA attention backend — cannot allocate that scratch lazily, because the buffers have to exist before a cudagraph is captured. So it uses aiter's ask-allocate-fill interface:
-
-1. `get_mla_metadata_info_v1(...)` returns the buffer sizes needed for a given shape;
-2. the framework allocates exactly those buffers;
-3. `get_mla_metadata_v1(...)` builds the schedule into them.
-
-`max_split_per_batch` is an argument to both, and it means *"no request may be given more than N splits"*. Fewer splits means fewer partials, so passing it should return a smaller size from step 1.
-
-It does not. **Step 1 returns the same size whether you pass `max_split_per_batch=1`, `=256`, or `=-1` (no limit).** The value is computed, then discarded by a `max()` that always prefers the no-limit estimate.
-
-That is the whole bug. It matters because step 1's answer is what gets reserved.
-
-### What this buys
-
-We hit this on Kimi-K3 MLA decode (TP8, DCP8, the fp8 asm path).
-
-`reduce_partial_map` drops from 4785 tiles to 1216, so the fp32 `logits` scratch drops from **9.35 GiB to 2.38 GiB** — **6.97 GiB per GPU**.
-
-It was a crash, not just waste. At batch 48 every rank died with `torch.OutOfMemoryError: Tried to allocate 9.35 GiB ... 6.24 GiB is free`. The 6.97 GiB we get back is also more than the FULL-decode cudagraph pools need, so the shape went from not fitting to fitting with room left over.
-
-It is not a speedup. No kernel changes and no maths changes — only the buffer size.
+For Kimi-K3 MLA decode (TP8, DCP8, fp8 asm) that is **9.35 GiB to 2.38 GiB** of
+fp32 scratch, 6.97 GiB per GPU. Before the fix a batch-48 decode died on every
+rank with `torch.OutOfMemoryError: Tried to allocate 9.35 GiB`.
 
 ## Technical Details
 
-`get_mla_metadata_info_v1` works out two estimates of how many partials can appear — one that ignores the cap, one that respects it — and keeps the **larger** of the two:
+`max()` becomes `min()`. Three constraints on where it applies:
 
-```python
-if max_split_per_batch > 0:
-    per_tile_cap = min(max_splits, max_split_per_batch * batch_size)
-    max_split_tiles = max(max_split_tiles, tile_cnt + per_tile_cap)
-    #                 ^^^ the cap-aware estimate is the smaller one,
-    #                     so max() throws it away every time
-```
+- **fast_mode only.** With `fast_mode=False` and `intra_batch_mode=False` the
+  planner is `get_mla_metadata_v1_1` (`metadata.cu:149`), which takes no cap.
+- **Raw KV batch count**, not the sparse-expanded one (`v1_2_device.cuh:860`).
+- **Scaled by `qk_batch_ratio`** when the head count is not natively served, via
+  the same gate the planner uses (`v1_2_device.cuh:910-928`).
 
-The cap-aware estimate is by construction the smaller one, so `max()` discards it. **Changing `max` to `min` is the entire fix.**
-
-### This finishes #3855
-
-https://github.com/ROCm/aiter/pull/3855 (merged 2026-06-22) corrected **the same expression for the same reason** — the split budget is *global*, not per-tile — changing `tile_cnt * per_tile_cap` to `tile_cnt + per_tile_cap`. That fixed a worst case where `batch_size >> cu_num` collapsed to `tile_cnt * cu_num` (512 × 256 = 131072) and `mla_decode_fwd` sized its fp32 `logits` from `reduce_partial_map.size(0)`, giving ~32 GiB and an OOM at cudagraph capture.
-
-It left the outer `max()`, so a supplied cap is still ignored. This is the remaining half.
-
-### Effect on the allocation
+Callers passing no cap are unaffected: the branch needs
+`max_split_per_batch > 0`, default `-1`.
 
 `reduce_partial_map` entries, gfx950, `nhead=128`, `qo_len=4`:
 
 | batch | uncapped | cap=1 | cap=256 |
 |---:|---:|---:|---:|
-| 1 | 1024 | **12** | **260** |
-| 8 | 1052 | 96 | 288 |
-| 64 | 1276 | 512 | 512 |
-| 512 | 2040 | 2040 | 2040 |
+| 1 | 1024 | 5 | 260 |
+| 64 | 1276 | 320 | 512 |
 
-The `batch=512` row is unchanged by design. `per_tile_cap` saturates at `max_splits`, so once the cap budget exceeds it no cap can constrain the schedule — and the sizing must not depend on whether a dummy cap was passed. The cap helps at low batch, which is where the allocation was most over-sized relative to what the kernel can reach.
-
-### Why the smaller allocation is safe
-
-Steps 1 and 3 must be given the **same** cap, so the schedule is built under the limit the sizing assumed. Consistency between the two is the requirement, not any particular value — and the fill test drives both from one variable for exactly that reason.
-
-**Direction of risk.** Capping step 1 but not step 3 would under-size. The reverse is harmless: the sizing simply stays on the loose estimate. Code that passes no cap is unaffected — the branch is gated on `max_split_per_batch > 0`, which defaults to `-1`.
-
-### Applied from review
-
-**The reduction is gated on `fast_mode`.** `fast_mode=False` dispatches to
-`get_mla_metadata_v1_1` (`csrc/kernels/mla/metadata.cu:148`), whose device entry
-point takes no `max_split_per_batch` at all — compare `get_mla_metadata_v1_0_device`
-directly above it, which does. That planner is uncapped, so reducing its sizing
-undersized `reduce_partial_map` by up to 200x (batch 1, cap 1: 1024 → 5) on a path
-where an overflow faults the GPU rather than raising. An earlier revision listed
-`fast_mode=False` under "not addressed" as a *coverage* gap; it was a correctness
-hole, and `test_non_fast_mode_ignores_the_cap` now pins it.
-
-**`per_tile_cap` is fold-aware.** The planner folds head counts it does not natively
-serve down to 16 and scales `num_batches` up by the same ratio *before* applying the
-cap (`v1_2_device.cuh:924-928`, then `948-950`). Mirroring `natively_supported` in
-Python would duplicate a long arch/dtype gate and drift from it — which is how this
-diverged in the first place — so the fold is assumed whenever it could apply.
-`per_tile_cap` is `min`ed with `max_splits`, so over-estimating only moves it toward
-the uncapped bound and never below what the planner can emit. This raises the cap=1
-column above; every cap=256 row, including the one this PR exists for, is unchanged.
-
-### Not addressed here
-
-- `max_work` / `work_info_set` are still sized from the uncapped estimate. They are int32 rather than the fp32 `logits` path, but the fill numbers below show `work_info_set` is the tighter of the two buffers (2301/3068 at batch 512), so it is the better follow-up target.
-- `intra_batch_mode` sizes `reduce_partial_map` as `tile_cnt * num_kv_splits` and ignores the cap entirely.
-- Coverage for `is_sparse=True`.
+Not addressed: `max_work` / `work_info_set` are still sized from the uncapped
+estimate, and `intra_batch_mode` ignores the cap entirely.
 
 ## Test Plan
 
 ```bash
-pytest op_tests/test_mla_metadata_split_cap.py       # sizing arithmetic, no GPU work
-pytest op_tests/test_mla_metadata_split_cap_fill.py  # runs the planner, checks it fits
+pytest op_tests/test_mla_metadata_split_cap.py op_tests/test_mla_metadata_split_cap_fill.py
 
-# both also run standalone, which is how aiter CI invokes op_tests files
+# also run standalone, which is how aiter CI invokes op_tests files
 python3 op_tests/test_mla_metadata_split_cap.py
 python3 op_tests/test_mla_metadata_split_cap_fill.py
 ```
 
-Two files, because one cannot do the other's job.
-
-**`test_mla_metadata_split_cap.py`** pins the arithmetic: a cap never enlarges the sizing, a tight cap shrinks it, a non-constraining cap changes nothing, relaxing the cap is monotonic, and `max_split_per_batch <= 0` is byte-identical to today. Sizes are derived rather than hardcoded — they track the CU count, so a literal from one part fails on another.
-
-**`test_mla_metadata_split_cap_fill.py`** is the one that matters, because a sizing formula can otherwise only be checked against itself. It allocates exactly what the sizing returns, runs the planner with the same cap, and asserts:
-
-- `reduce_indptr[-1] <= reduce_partial_map.numel()` — the partials fit;
-- `work_indptr[-1] <= work_info_set.size(0)` — the work entries fit;
-- `reduce_indptr` starts at 0 and is non-decreasing;
-- an exactly-sized allocation produces the same populated prefix as a 4×-sized one. HIP does not reliably trap an out-of-bounds write, so an extent check alone could miss an overrun.
-
-Two shapes are **vacuous** and are excluded, with that asserted rather than assumed: `cap=1` writes zero partials at any batch (the cap forbids the extra splits that produce them), and large batch with uniform KV never splits (batch alone supplies the parallelism). `0 <= bound` passes for any bound, so every row is checked to be non-empty. `cap=1` is still covered by a separate case asserting it does not *overflow* — vacuous for tightness, not for safety, and it is the smallest allocation this change produces.
+Two files because a sizing formula can otherwise only be checked against itself.
+The first pins the arithmetic and the native-support gate across gfx950, gfx942
+and gfx1250. The second allocates exactly what sizing returns, runs the planner
+into it with the same cap and dtypes, and checks the populated extents fit.
 
 ## Test Result
 
 ```
 op_tests/test_mla_metadata_split_cap.py       31 passed
 op_tests/test_mla_metadata_split_cap_fill.py  27 passed
-                                              -- --------
-                                              58 passed
 ```
 
-Measured fills against the bound, printed by the fill test so the numbers land in CI rather than in a comment:
+Measured fills against the bound, printed by the fill test so the numbers land
+in CI:
 
-| batch | cap | partials | work |
-|---:|---:|---:|---:|
-| 1 | 256 | **256 / 260** | 256 / 1024 |
-| 1 | −1 | 256 / 1024 | 256 / 1024 |
-| 8 | 256 | 256 / 288 | 256 / 1052 |
-| 512 | 256 | 506 / 2040 | 2301 / 3068 |
-| 512 | −1 | 506 / 2040 | 2301 / 3068 |
+| shape | partials / bound |
+|---|---:|
+| batch 1, cap 256 | 256 / 260 |
+| batch 8, cap 256, qlen 1 | 262 / 263 |
+| batch 512, cap 256 | 506 / 2040 |
+| nhead 48 (folded), cap 16 | 48 / 60 |
 
-And the non-natively-served shape, which exercises the `qk_batch_ratio` fold (`nhead=48`, batch 1, cap 256): **254 / 268**.
-
-**`batch=1 / cap=256` filling 256 into 260** is the evidence that shrinking the bound is safe on the path this change affects — four entries of headroom, so the capped bound is nearly exact rather than merely smaller.
-
-The **batch 512** rows are why the fast-mode estimate is kept there. An earlier revision raised it to `tile_cnt + max_splits` (2040 → 2304), on the argument that fast-mode does not grow with `tile_cnt` and could undersize. The planner does not come close to either bound — at most ~506 partials across jittered KV and skewed one-long/many-short shapes — so that would have cost ~13% for no measured benefit.
-
-**The tests have power, they are not merely green** — but the coverage is uneven, and the gaps are recorded in the test files rather than papered over:
-
-```
-max() alone (the bug this fixes):          4 failed
-this bound minus 8:                        4 failed   <- caught only by the fill test
-the sum bound applied inside the branch:   1 failed   <- a dummy cap would resize at 512
-drop the fast_mode gate:                   3 failed
-native gate always returns True:           1 failed
-drop the qk_batch_ratio fold:              1 failed
-invert the native gate at the call site:   1 failed
-correct:                                  58 passed
-```
-
-"This bound minus 8" is the case an arithmetic-only suite cannot see: eight entries sits inside the four-entry headroom at `batch=1`, so a consistent-but-too-small formula passes every sizing assertion and overflows on device.
-
-The fold is caught by a **non-saturating** cap, which is the only regime where it is observable. At `nhead=48` (not natively served on gfx950, so `qk_batch_ratio` = 3) the planner writes exactly `cap × ratio` partials at small caps — 24/48/98/192 for caps 8/16/32/64 — against unfolded bounds of 20/28/44/76, so an unfolded sizing overflows. At `cap=256` it saturates at `max_splits` and the fold becomes unobservable, which is why an earlier revision of this body wrongly reported it as unprovable by fill.
-
-`op_tests/test_metadata.py` fails identically before and after (a pytest signature mismatch — the file is an argparse CLI script), so it is pre-existing and unrelated.
+The qlen=1 row is the tight one, a single entry of headroom.
 
 ## Submission Checklist
 
