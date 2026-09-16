@@ -34,13 +34,13 @@ pytest tests/models/test_kimi_k3_dcp_defaults.py
 pytest tests/models/test_qwen3_5_mtp_config.py
 ```
 
-The new tests are CPU-only — they call the `verify_and_update_config` hook directly with a bare `ParallelConfig`, so no model is loaded. They pin four properties:
+The new tests are CPU-only: they call the `verify_and_update_config` hook directly with a bare `ParallelConfig`, so no model is loaded. They pin four properties:
 
 1. on ROCm, K3 defaults to the `a2a` combine;
 2. **off ROCm the default is untouched**, so no unmeasured platform is affected;
 3. an explicit `--dcp-comm-backend ag_rs` is **not** overridden;
 4. `q_replicate` is left alone, so K3 does not inherit `GlmMoeDsa`'s pairing by accident;
-5. the hook is registered for **both** K3 architectures — `KimiK3ForConditionalGeneration` and `KimiK3MTPModel` share the config class, and if only the main model were mapped, the target and its MTP draft would combine differently inside the same run;
+5. the hook is registered for **both** K3 architectures, `KimiK3ForConditionalGeneration` and `KimiK3MTPModel` share the config class, and if only the main model were mapped, the target and its MTP draft would combine differently inside the same run;
 6. **the dispatcher actually reaches the hook**, end to end through `VllmConfig.try_verify_and_update_config`, for both architectures. Points 1-5 prove the hook behaves correctly *when called* and that the map entry exists; this proves the two are connected. It uses the same `object.__new__` + `SimpleNamespace` model-config shape as `tests/model_executor/model_loader/test_modelexpress_loader.py`, so nothing is downloaded and no model config has to resolve.
 
 ## Test Result
@@ -50,7 +50,7 @@ tests/models/test_kimi_k3_dcp_defaults.py   7 passed
 tests/models/test_qwen3_5_mtp_config.py    10 passed
 ```
 
-The platform is patched rather than detected, so both branches are exercised on any runner — these tests are not silently vacuous on non-ROCm CI.
+The platform is patched rather than detected, so both branches are exercised on any runner, so these tests are not silently vacuous on non-ROCm CI.
 
 Mutations that turn the tests red:
 
@@ -60,7 +60,5 @@ remove the set_dcp_defaults call:      1 failed, 6 passed   (on-ROCm default mis
 drop the MTP MODELS_CONFIG_MAP entry:  2 failed, 5 passed   (registration + dispatch)
 all present:                           7 passed
 ```
-
-`pre-commit run --files <changed files>` passes in full, including `mypy` 3.10-3.13, `typos`, `check-spdx-header` and `ruff`.
 
 The hook is added to the existing `KimiK3ForConditionalGenerationConfig` class, which already defines `verify_and_update_model_config` for MXFP4 expert routing. These are two different hooks on the same class, so there is no interaction between them.

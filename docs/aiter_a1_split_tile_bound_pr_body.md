@@ -1,4 +1,4 @@
-# PR body — aiter #5559
+# PR body: aiter #5559
 
 **FILED: [ROCm/aiter#5559](https://github.com/ROCm/aiter/pull/5559)**, branch
 `xguo/mla-tighter-split-tile-bound`. Title:
@@ -25,7 +25,7 @@ Ranks do not share this split-K buffer. DCP only makes the per-GPU allocation
 worse because that GPU's decode sees gathered query heads
 (`nheads x dcp_world_size`) and still split-Ks its local KV across its own CUs.
 
-An inference framework — in our case vLLM's ROCm MLA attention backend — cannot
+An inference framework (in our case vLLM's ROCm MLA attention backend) cannot
 allocate that scratch lazily, because the buffers have to exist before a
 cudagraph is captured. So it uses aiter's ask-allocate-fill interface: ask
 `get_mla_metadata_info_v1` for the sizes, allocate exactly those, then let

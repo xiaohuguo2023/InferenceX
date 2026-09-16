@@ -14,8 +14,8 @@ vLLM has two, and they are computed as opposites (`vllm/v1/core/kv_cache_utils.p
 
 | | definition | property |
 |---|---|---|
-| `scheduler_block_size` | `math.lcm(*group_block_sizes)` | the **coarsest** common boundary — a block boundary in *every* group at once |
-| `hash_block_size` | `math.gcd(*hashing_sizes)` | the **finest** common step — a valid boundary in every group, but not in all of them simultaneously |
+| `scheduler_block_size` | `math.lcm(*group_block_sizes)` | the **coarsest** common boundary: a block boundary in *every* group at once |
+| `hash_block_size` | `math.gcd(*hashing_sizes)` | the **finest** common step: a valid boundary in every group, but not in all of them simultaneously |
 
 Which one a hit is reported at depends on whether fine-grained partial hash hits are enabled. vLLM already encodes this, in `_cache_hit_alignment_tokens`:
 
@@ -40,7 +40,7 @@ scheduler_block_size = lcm(1536, 12288) = 12288
 hash_block_size      = gcd(1536, 12288) =  1536
 ```
 
-So hits land every **1536** tokens, while the validator demands a multiple of **12288**. A user asking to checkpoint exactly where hits land is refused, and has to go 8x coarser — quantising every hit to a span the cache never reports, which costs prefix-cache hit rate.
+So hits land every **1536** tokens, while the validator demands a multiple of **12288**. A user asking to checkpoint exactly where hits land is refused, and has to go 8x coarser, quantising every hit to a span the cache never reports, which costs prefix-cache hit rate.
 
 ### How it got this way
 
@@ -61,21 +61,21 @@ So the check is split:
 
 `HybridKVCacheCoordinator` passes the alignment it just computed. `UnitaryKVCacheCoordinator` never enables partial hash hits, so it passes `scheduler_block_size`.
 
-The unitary path deliberately does **not** call `_cache_hit_alignment_tokens`: that property is defined on `HybridKVCacheCoordinator`, so reaching for it there raises `AttributeError` during construction — a boot failure for every single-group model. An earlier revision of this change did exactly that, so a test now pins which class owns the property.
+The unitary path deliberately does **not** call `_cache_hit_alignment_tokens`: that property is defined on `HybridKVCacheCoordinator`, so reaching for it there raises `AttributeError` during construction: a boot failure for every single-group model. An earlier revision of this change did exactly that, so a test now pins which class owns the property.
 
 ### Relationship to #52527
 
 **#52527** ("[Metrics] Report shared-prefix tokens lost to a missing sparse-retention checkpoint") is open and touches the same function, so whichever lands second will need a small rebase around `_validate_prefix_cache_retention_interval`.
 
-The two are complementary rather than competing: #52527 *measures* prefix tokens lost to a missing retention checkpoint, and this PR removes one cause of those misses — a validator that forces checkpoints 8x sparser than the cache can use. Landing both gives you the metric and one fewer reason for it to fire.
+The two are complementary rather than competing: #52527 *measures* prefix tokens lost to a missing retention checkpoint, and this PR removes one cause of those misses: a validator that forces checkpoints 8x sparser than the cache can use. Landing both gives you the metric and one fewer reason for it to fire.
 
 Two other open PRs touch this file in unrelated regions: **#53479** (Mamba align) in the constructors, and **#50457** (all-sliding DFlash drafter) in `allocate_new_blocks`. Neither overlaps the lines changed here.
 
 ### Scope
 
-**Scoped to ROCm**, which is the only platform where this has been tested. DCP is not backend-specific — `flashmla`, `flashmla_sparse`, `flashinfer_mla_sparse` and `flashattn_mla` all carry DCP support — so other platforms may well have the same latent mismatch. We have no way to exercise them, so we are not changing their behaviour on an untested claim.
+**Scoped to ROCm**, which is the only platform where this has been tested. DCP is not backend-specific: `flashmla`, `flashmla_sparse`, `flashinfer_mla_sparse` and `flashattn_mla` all carry DCP support, so other platforms may well have the same latent mismatch. We have no way to exercise them, so we are not changing their behaviour on an untested claim.
 
-**Off ROCm the original `scheduler_block_size` check is kept, not deferred.** This is the subtle part of gating: the alignment check now runs in a new place, so simply gating that new call would leave other platforms with *no* alignment validation at all — weaker than the status quo, not safer. Instead the base validator keeps its original check verbatim for them, and only ROCm takes the deferred, granularity-aware path. There is a test asserting the original rejection still fires off ROCm.
+**Off ROCm the original `scheduler_block_size` check is kept, not deferred.** This is the subtle part of gating: the alignment check now runs in a new place, so simply gating that new call would leave other platforms with *no* alignment validation at all, which is weaker than the status quo, not safer. Instead the base validator keeps its original check verbatim for them, and only ROCm takes the deferred, granularity-aware path. There is a test asserting the original rejection still fires off ROCm.
 
 Within ROCm, the change only alters which value the interval is compared against; it does not change what a valid interval *does*.
 
@@ -92,15 +92,15 @@ pytest tests/v1/core/test_kv_cache_utils.py
 
 The new tests are CPU-only and call the validators directly. They pin:
 
-1. an interval equal to the hit alignment is accepted — the DCP case that used to be rejected;
+1. an interval equal to the hit alignment is accepted: the DCP case that used to be rejected;
 2. an interval that cannot land on a hit boundary is still rejected;
 3. `None` (dense) and `0` (latest boundary only) skip the check, since neither describes a spacing;
 4. a multiple of the alignment is accepted;
-5. **the regression itself** — 1536 accepted against `hash_block_size`, rejected against the DCP-scaled `scheduler_block_size`, which is the before/after in one test;
+5. **the regression itself**: 1536 accepted against `hash_block_size`, rejected against the DCP-scaled `scheduler_block_size`, which is the before/after in one test;
 6. the base validator still rejects a negative interval;
 7. the base validator no longer checks alignment, so the DCP case can reach the deferred check at all;
-8. `_cache_hit_alignment_tokens` belongs to the hybrid coordinator and not the unitary one — the `AttributeError` guard described above;
-9. **off ROCm, the original `scheduler_block_size` rejection still fires**, a scheduler-aligned interval is still accepted, and the deferred check is inert — i.e. behaviour there is byte-for-byte what it is today.
+8. `_cache_hit_alignment_tokens` belongs to the hybrid coordinator and not the unitary one: the `AttributeError` guard described above;
+9. **off ROCm, the original `scheduler_block_size` rejection still fires**, a scheduler-aligned interval is still accepted, and the deferred check is inert, i.e. behaviour there is byte-for-byte what it is today.
 
 ## Test Result
 
@@ -121,4 +121,3 @@ both present:                  12 passed
 
 No new failures in `tests/v1/core/test_kv_cache_utils.py`.
 
-`pre-commit run --files <changed files>` passes in full, including `ruff`, `mypy` 3.10-3.13, `typos` and `check-spdx-header`.

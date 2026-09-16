@@ -1,4 +1,4 @@
-# PR description — vLLM: AITER ASM round-robin DCP verify
+# PR description, vLLM: AITER ASM round-robin DCP verify
 
 Branch: `xguo/rocm-mla-dcp-cprr-verify` (4 commits, +1077/−9, 5 files)
 
@@ -23,7 +23,7 @@ step leaves the AITER ASM MLA path.
 verify group into one single-query row per token and carries the causal window
 in per-row lengths. That route runs the Triton `mla_decode_fwd` kernel. Because
 a spec-decode step always has `qlen = 1 + num_speculative_tokens > 1`, the
-segmented route is taken for the whole of decode — so on a DCP + spec-decode
+segmented route is taken for the whole of decode, so on a DCP + spec-decode
 configuration the tuned ASM MLA kernels are unreachable.
 
 This PR adds a second, *additive* route that keeps those steps on the ASM path:
@@ -44,8 +44,8 @@ The two routes differ only in *how* causality is expressed:
 Selection is per KV cache group via `VLLM_ROCM_AITER_MLA_DCP_VERIFY`
 (registered in `vllm/envs.py`):
 
-- `asm` (default) / `segmented` — pick a route for every group;
-- `segmented:64` — apply the route to only the listed DCP-gathered head counts.
+- `asm` (default) / `segmented`: pick a route for every group;
+- `segmented:64`: apply the route to only the listed DCP-gathered head counts.
   The per-group form exists because a speculative target and its draft gather
   different head counts, so they can be routed (and bisected) independently.
 
@@ -63,8 +63,8 @@ Guard rails, all covered by tests:
   truncated.
 
 This PR also plumbs `max_split_per_batch` through the DCP MLA metadata, set to
-the device CU count. MLA decode is lopsided — a handful of query rows against
-tens of thousands of KV rows — so at low batch the only parallelism available is
+the device CU count. MLA decode is lopsided: a handful of query rows against
+tens of thousands of KV rows, so at low batch the only parallelism available is
 splitting the KV axis. Measured on gfx950 at batch 1, qlen 15, 128 heads, 27,318
 KV rows/rank, varying the cap:
 
@@ -85,7 +85,7 @@ there is a test asserting exactly that.
   segmented route is untouched and remains reachable via the env var. With
   `decode_context_parallel_size == 1` nothing in this PR is reachable at all.
 - **No AITER changes are required.** Verified by reverting our local AITER
-  patches and re-running the full suite — identical results (see Test Result).
+  patches and re-running the full suite, with identical results (see Test Result).
   We have a separate AITER change that tightens the reduce-scratch bound when a
   cap is supplied; it is a pure memory optimisation, is inert without a caller
   that passes a cap to the *sizing* call, and can land in either order. Until it
@@ -133,8 +133,8 @@ interleave restriction, and the `qlen` floor.
 `test_rocm_aiter_mla_dcp_cprr_numerics.py` (4 tests, GPU) is the correctness
 gate. It drives the real `AiterMLAMetadataBuilder.build()` and the real ASM
 kernel, simulating the DCP ranks one after another in a single process. That is
-sound because this path is collective-free — the query all-gather happens in the
-layer, strictly before `forward_mqa` — so `cp_rank` only selects which residue
+sound because this path is collective-free: the query all-gather happens in the
+layer, strictly before `forward_mqa`, so `cp_rank` only selects which residue
 class of global positions the shard holds. It asserts:
 
 - each shard against an exact torch reference over the global positions it
@@ -142,7 +142,7 @@ class of global positions the shard holds. It asserts:
 - that the LSE merge of all shards reproduces full-context attention;
 - that `asm_decode_num_heads` is set, so a silent fall-out to the segmented or
   Triton path fails loudly instead of passing quietly;
-- **positive control** — handing shard `r`'s pages to the kernel while telling
+- **positive control**: handing shard `r`'s pages to the kernel while telling
   it that it is rank `r+1` must blow the error up. Without this a green run
   would prove nothing, because a kernel that ignored global positions still
   produces plausible-looking output.
@@ -165,7 +165,7 @@ All on gfx950 (MI355X), ROCm 7.2.3.
 | suite | before this PR | with this PR |
 |---|---|---|
 | existing AITER MLA tests | 505 passed | 505 passed |
-| new tests | — | 35 passed |
+| new tests | n/a | 35 passed |
 | **total** | **505 passed, 0 failed** | **540 passed, 0 failed** |
 
 **No regressions.** Running the pre-existing suite against the branch is also
@@ -204,6 +204,6 @@ AITER patch and re-ran the whole suite:
 | **stock** | **540 passed, 0 failed** |
 
 Identical, so upstream CI will go green on stock AITER. We also instrumented the
-stock `get_block_n_fp8[...]` lookup — which lacks the keys our local patch adds
-and would raise `KeyError` — and confirmed it is **never reached** on the cprr
+stock `get_block_n_fp8[...]` lookup, which lacks the keys our local patch adds
+and would raise `KeyError`, and confirmed it is **never reached** on the cprr
 path, i.e. it is not a hidden dependency of this PR.
