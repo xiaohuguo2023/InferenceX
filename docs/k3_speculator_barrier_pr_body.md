@@ -18,9 +18,12 @@ The precondition is a **sharded** draft. The replicated draft of #51705 ran at `
 This adds that alignment, and only where it is needed:
 
 ```python
-if self.vllm_config.parallel_config.decode_context_parallel_size > 1:
+if (
+    current_platform.is_rocm()
+    and self.vllm_config.parallel_config.decode_context_parallel_size > 1
+):
     torch.accelerator.synchronize()
-    get_dcp_group().barrier()
+    get_tp_group().barrier()
 ```
 
 Three things worth calling out:
