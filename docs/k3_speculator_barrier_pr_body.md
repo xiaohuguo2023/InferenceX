@@ -109,6 +109,16 @@ with the barrier removed:  1 failed, 2 passed
 with the barrier present:  3 passed
 ```
 
-Measured on 8x MI355X (gfx950, ROCm 7.2.3) with Kimi-K3 + DSpark. **World size is 8: TP=8 and DCP=8 are the same 8 ranks**, so the DCP group is the full participant set for the captured graph and a DCP-only barrier is complete here. On a topology where TP and DCP span different ranks it would not be, and a TP barrier (or a world barrier across the ranks running `capture_model()`) would be needed alongside. Both attention groups are sharded both attention groups sharded (`target num_heads=12 dcp=8 decode_num_heads=96`, `draft num_heads=8 dcp=8 decode_num_heads=64`). Every boot died at speculator capture; with the barrier the server reaches `Application startup complete` in 280 s with **no serialization penalty**, and a full concurrency sweep then ran 9/9 `rc=0`.
+Measured on 8x MI355X (gfx950, ROCm 7.2.3), Kimi-K3 + DSpark, world size 8 with
+TP=8 and DCP=8. Both attention groups are sharded: target `num_heads=12 dcp=8
+decode_num_heads=96`, draft `num_heads=8 dcp=8 decode_num_heads=64`.
 
-To be precise about what was measured: that stack carries a local port that makes the DSpark draft DCP-sharded, which is what put us on this path first. The upstream reachability argument is the #55472 one above: a stock DCP + DSpark run now produces a sharded draft by the same mechanism, rather than a claim that we have reproduced it on an unmodified tree.
+Every boot died at speculator capture. With the barrier the server reaches
+`Application startup complete` in 280 s with no serialization penalty, and a
+full concurrency sweep then ran 9/9 `rc=0`.
+
+Two limits on what this measures. The stack carries a local port that makes the
+DSpark draft DCP-sharded, so upstream reachability rests on the #55472 argument
+above rather than on a boot from an unmodified tree. And at DCP == TP the two
+groups are the same 8 ranks, so this run cannot tell a TP barrier from a DCP
+one; the choice of TP is argued from config validation, not measured.
