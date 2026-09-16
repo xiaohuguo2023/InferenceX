@@ -36,6 +36,22 @@ and found correct, especially anything a reviewer would reasonably doubt.
 - For each new or changed test ask: **what single-line mutation to the
   production code would make this fail?** If the answer is "none", say so
   plainly. That is the most valuable finding you can report.
+- **Mutate at the right level.** A mutation set that only touches call sites
+  says nothing about whether a predicate's individual clauses are covered.
+  Mutate both: the call site, and each clause or branch of any predicate the
+  change introduces. A clause no test exercises can be deleted with the suite
+  still green.
+
+  Judging a test by the wrong mutation set is worse than not judging it. On
+  aiter #5559 a call-site-only set reported 45 of 58 cases as killing nothing,
+  which read as dead weight; clause-level mutation showed the same rows catching
+  four of five drift mutations, which is the risk they exist for. Acting on the
+  first number would have deleted the suite's most useful tests.
+- **Weak by design is not the same as weak.** A non-strict assertion may be
+  stating an invariant that must hold for inputs where equality is correct,
+  with a strict version elsewhere. Before calling it dead, check whether a
+  neighbouring test carries the strict form; if so the finding is "say why it is
+  weak", not "make it strict", since strictness would duplicate the neighbour.
 - **Vacuous assertions.** `0 <= bound` passes for any bound. A row that never
   fills, a loop that never iterates, a parametrize case that saturates so the
   code under test cannot change the result.
