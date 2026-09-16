@@ -14,10 +14,26 @@ Suggested reviewers by blame: **@ruanjm** (wrote both changed lines, #3391 and
 
 ## Motivation
 
-`max_split_per_batch` caps how many KV splits one batch may use, so passing it
-should reserve a smaller `reduce_partial_map`. It does not: sizing returns the
-same buffer whether you pass `1`, `256`, or `-1`.
+On one rank, MLA decode can cut that rank's local KV into chunks and run them on
+different CUs (the metadata kernel's `num_clusters` / `num_cu`).
+`max_split_per_batch` caps how many of those extra KV fragments one batch is
+allowed. The fp32 `reduce_partial_map` / `logits` buffer is the scratch to merge
+those CU partials back.
 
+DCP is separate: each GPU already holds only 1/`dcp_world_size` of the sequence.
+Ranks do not share this split-K buffer. DCP only makes the per-GPU allocation
+worse because that GPU's decode sees gathered query heads
+(`nheads x dcp_world_size`) and still split-Ks its local KV across its own CUs.
+
+An inference framework — in our case vLLM's ROCm MLA attention backend — cannot
+allocate that scratch lazily, because the buffers have to exist before a
+cudagraph is captured. So it uses aiter's ask-allocate-fill interface: ask
+`get_mla_metadata_info_v1` for the sizes, allocate exactly those, then let
+`get_mla_metadata_v1` build the schedule into them. Whatever step one returns is
+what gets reserved.
+
+So passing `max_split_per_batch` should return a smaller size. It does not:
+sizing returns the same buffer whether you pass `1`, `256`, or `-1`.
 `get_mla_metadata_info_v1` computes the cap-aware bound, then discards it with a
 `max()` against the uncapped estimate. This is the other half of #3855, which
 fixed the same expression but left the `max()`.
