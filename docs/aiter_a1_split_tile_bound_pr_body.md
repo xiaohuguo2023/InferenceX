@@ -137,8 +137,10 @@ Two shapes are **vacuous** and are excluded, with that asserted rather than assu
 ## Test Result
 
 ```
-op_tests/test_mla_metadata_split_cap.py       28 passed
+op_tests/test_mla_metadata_split_cap.py       31 passed
 op_tests/test_mla_metadata_split_cap_fill.py  27 passed
+                                              -- --------
+                                              58 passed
 ```
 
 Measured fills against the bound, printed by the fill test so the numbers land in CI rather than in a comment:
@@ -167,7 +169,7 @@ drop the fast_mode gate:                   3 failed
 native gate always returns True:           1 failed
 drop the qk_batch_ratio fold:              1 failed
 invert the native gate at the call site:   1 failed
-correct:                                  55 passed
+correct:                                  58 passed
 ```
 
 "This bound minus 8" is the case an arithmetic-only suite cannot see: eight entries sits inside the four-entry headroom at `batch=1`, so a consistent-but-too-small formula passes every sizing assertion and overflows on device.
