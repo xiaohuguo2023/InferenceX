@@ -73,11 +73,29 @@ rejects.
 | repo | command | formatter |
 |---|---|---|
 | vllm-project/vllm | `python3 -m pre_commit run --files <changed>` | ruff-format |
-| ROCm/aiter | `black --check` plus `ruff check` | black, ruff pinned to 0.16.0 |
+| ROCm/aiter | `black --check` plus `ruff check` | black, plus a pinned ruff |
 
-aiter has no `.pre-commit-config.yaml`. Its ruff pin is deliberate, because a
-newer release widens the default rule set, so a host ruff that is older will
-pass things CI fails.
+aiter has no `.pre-commit-config.yaml`; its lint jobs live in
+`.github/workflows/pre-checks.yaml`.
+
+**Never hardcode a linter version, including the one in this file.** Read the
+pin out of the repo every time, because it changes:
+
+```bash
+grep -E 'psf/black|ruff==|black==' .github/workflows/*.y*ml
+```
+
+Then run that exact version. The pin is deliberate: a newer ruff widens the
+default rule set, so a host install that is older will pass things CI fails, and
+a newer one will fail things CI passes. Install out of the way rather than over
+the host copy:
+
+```bash
+python3 -m pip install --quiet --target /tmp/ruffpin 'ruff==<pinned>'
+/tmp/ruffpin/bin/ruff check <files>
+```
+
+Check the pin has not moved since the last run before trusting a green result.
 
 **Gate on exit status, never on grepping output.** `cmd | grep Failed && commit`
 succeeds when grep matches, which has already let a lint failure through here.
