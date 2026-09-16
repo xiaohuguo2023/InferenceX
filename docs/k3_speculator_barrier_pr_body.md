@@ -29,9 +29,30 @@ Three things worth calling out:
 - **`GroupCoordinator.barrier()`, not `torch.distributed.barrier()`.** This is a correctness point, not style. The latter is an NCCL barrier, which — per its own docstring in `parallel_state.py` — "is internally a broadcast operation with secretly created GPU tensors. It is easy to mess up the current device." Doing that immediately before graph capture is exactly the wrong thing; `GroupCoordinator.barrier()` uses the CPU group instead. A test pins the choice so a later simplification cannot quietly undo it.
 - **Boot-time only**, once per speculator. No steady-state cost.
 
+### Scope: what this does and does not align
+
+The barrier runs once at the top of `capture()`, not immediately before
+`torch.cuda.graph()` and not per capture size. It fixes the failure measured
+here — ranks arriving from target capture up to ~1s apart — and does not claim
+that every captured collective is entered aligned.
+
+`graph_capture()` in `parallel_state.py` wraps TP, PP and DP, but **not DCP**, so
+the DCP communicator is never put into capture mode. Adding a
+`get_dcp_group().graph_capture(context)` there is the more complete fix and is
+deliberately not attempted in this PR: it changes a path every DCP user takes,
+including non-spec-decode DCP which works today. Flagging it as the follow-up if
+maintainers prefer that shape.
+
+### Reproduction on unmodified main
+
+The passing 8x MI355X run used a local port that shards the draft. Upstream
+reachability is argued from #55472 (which copies the target's `ParallelConfig`
+into the draft, making a sharded draft reachable on stock main) rather than
+demonstrated on a vanilla boot. Stated plainly so a reviewer can weigh it.
+
 ### Relationship to #56723
 
-#56723 touches the same file — it adds `draft_parallel_config()` and rewires `__init__`. The two are **independent and compose**: it does not touch `capture()`, and it refines the draft's effective DCP, which is exactly the value this gate reads. With PCP on, #56723 collapses the draft's DCP to 1 and this barrier then correctly skips, because the draft is no longer sharded. With PCP off (`pcp <= 1`) it returns the config unchanged and the barrier still applies.
+#56723 touches the same file — it adds `draft_parallel_config()` and rewires `__init__`. The two are **independent and compose**: it does not touch `capture()`, and it refines the draft's effective DCP, which is exactly the value this gate reads. Note the skip-under-PCP behaviour is **not** on this branch today: `__init__` currently forces `prefill_context_parallel_size=1` but leaves `decode_context_parallel_size` alone, so with PCP on the gate still fires. #56723 is what collapses the draft's DCP to 1 and makes this barrier correctly no-op there. With PCP off it returns the config unchanged and the barrier applies either way.
 
 There is no logic overlap; whichever lands second needs a one-line rebase of the import block.
 
@@ -70,6 +91,6 @@ with the barrier present:  3 passed
 
 `pre-commit run --files <changed files>` passes in full, including `mypy` 3.10–3.13, `typos`, `check-spdx-header` and `check-torch-cuda-call` — the last of which is why the synchronize goes through `torch.accelerator` rather than `torch.cuda` (RFC #30679).
 
-Measured on 8x MI355X (gfx950, ROCm 7.2.3) with Kimi-K3 + DSpark at TP8/DCP8, both attention groups sharded (`target num_heads=12 dcp=8 decode_num_heads=96`, `draft num_heads=8 dcp=8 decode_num_heads=64`): every boot died at speculator capture; with the barrier the server reaches `Application startup complete` in 280 s with **no serialization penalty**, and a full concurrency sweep then ran 9/9 `rc=0`.
+Measured on 8x MI355X (gfx950, ROCm 7.2.3) with Kimi-K3 + DSpark. **World size is 8: TP=8 and DCP=8 are the same 8 ranks**, so the DCP group is the full participant set for the captured graph and a DCP-only barrier is complete here. On a topology where TP and DCP span different ranks it would not be, and a TP barrier (or a world barrier across the ranks running `capture_model()`) would be needed alongside. Both attention groups are sharded both attention groups sharded (`target num_heads=12 dcp=8 decode_num_heads=96`, `draft num_heads=8 dcp=8 decode_num_heads=64`). Every boot died at speculator capture; with the barrier the server reaches `Application startup complete` in 280 s with **no serialization penalty**, and a full concurrency sweep then ran 9/9 `rc=0`.
 
 To be precise about what was measured: that stack carries a local port that makes the DSpark draft DCP-sharded, which is what put us on this path first. The upstream reachability argument is the #55472 one above — a stock DCP + DSpark run now produces a sharded draft by the same mechanism — rather than a claim that we have reproduced it on an unmodified tree.
