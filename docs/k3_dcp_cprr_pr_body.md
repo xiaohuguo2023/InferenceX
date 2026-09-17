@@ -43,7 +43,9 @@ This PR also plumbs `max_split_per_batch` through the DCP MLA metadata, set to t
 |---|---|---|---|---|---|
 | decode | 456 µs | 242 µs | 141 µs | **103 µs** | 103–106 µs |
 
-It is a **cap, not a mandate**, so it only binds at low batch: at batch 8 and 14 the split count changes nothing (418–422 µs / 696–708 µs across 32…256), because `batch × heads` already fills the device. The requirement is that the *same* value reaches both the sizing call (`get_mla_metadata_info_v1`) and the runtime build (`get_mla_metadata_v1`); consistency is what matters, not the number, and there is a test asserting exactly that.
+It is an upper bound, not a fixed split count, so raising it costs nothing where it does not bind. At batch 8 and 14 the timing is flat across 32 to 256 splits, because `batch x heads` already fills the device on its own.
+
+What the value has to satisfy is consistency rather than any particular number: `reduce_partial_map` is sized with the cap in effect, so the sizing call (`get_mla_metadata_info_v1`) and the runtime build (`get_mla_metadata_v1`) must both see it. Both read the same attribute on the builder, so they cannot disagree.
 
 ### Notes for reviewers
 
