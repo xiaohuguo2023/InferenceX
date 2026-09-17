@@ -106,11 +106,6 @@ merged vs full-context reference: 1.18e-02
 
 against an fp8-e4m3 error floor of ~6.2e-2 (3 mantissa bits). Gates are relative, because with fp8 the error floor scales with output magnitude and an absolute gate would just be a magnitude gate.
 
-**Independent of our AITER changes.** We reverted both Python hunks of our local AITER patch and re-ran the whole suite:
-
-| AITER | result |
-|---|---|
-| patched (ours) | 540 passed, 0 failed |
-| **stock** | **540 passed, 0 failed** |
-
-Identical, so upstream CI will go green on stock AITER. We also instrumented the stock `get_block_n_fp8[...]` lookup, which lacks the keys our local patch adds and would raise `KeyError`, and confirmed it is **never reached** on the cprr path, i.e. it is not a hidden dependency of this PR.
+**AITER requirement.** This needs an AITER build that ships the round-robin MLA
+decode kernels, added in ROCm/aiter#4521. No AITER change is required beyond
+that.
