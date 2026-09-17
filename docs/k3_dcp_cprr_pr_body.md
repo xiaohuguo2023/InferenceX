@@ -37,6 +37,8 @@ Within that, the head-count rules: the ASM kernel exists only at the native DCP-
 
 The head-count filter rejects empty entries (`segmented:,`, `asm:64,`) and non-positive counts (`asm:0`). Both previously parsed to a filter that matches nothing, which applies the route to *every* group: the opposite of what was asked, silently.
 
+### KV split cap
+
 This PR also passes `max_split_per_batch` through the DCP MLA metadata, set to
 the device CU count. At batch 1 there are few query rows against tens of
 thousands of KV rows, so splitting the KV axis is the only parallelism
