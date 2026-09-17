@@ -78,6 +78,9 @@ and found correct, especially anything a reviewer would reasonably doubt.
 - **No self-editorialising.** Phrases like "the tests have power, they are not
   merely green", "the finding that matters is", "worth noting" are banned. State
   the fact and stop.
+- **Section placement.** Read the headings in order and check each section
+  holds what its heading says. A body edited by insertion can leave a paragraph
+  under an unrelated heading; nothing fails, and only a reader notices.
 - **No CI-automatic boilerplate** in PR bodies. Every vLLM PR runs pre-commit;
   listing its hooks is noise.
 - **Commit messages**: short, plain, precise. No narrative of how the author got
