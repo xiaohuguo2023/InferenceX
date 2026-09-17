@@ -37,15 +37,16 @@ Within that, the head-count rules: the ASM kernel exists only at the native DCP-
 
 The head-count filter rejects empty entries (`segmented:,`, `asm:64,`) and non-positive counts (`asm:0`). Both previously parsed to a filter that matches nothing, which applies the route to *every* group: the opposite of what was asked, silently.
 
-This PR also plumbs `max_split_per_batch` through the DCP MLA metadata, set to the device CU count. MLA decode is lopsided: a handful of query rows against tens of thousands of KV rows, so at low batch the only parallelism available is splitting the KV axis. Measured on gfx950 at batch 1, qlen 15, 128 heads, 27,318 KV rows/rank:
+This PR also passes `max_split_per_batch` through the DCP MLA metadata, set to
+the device CU count. At batch 1 there are few query rows against tens of
+thousands of KV rows, so splitting the KV axis is the only parallelism
+available. On gfx950 at batch 1, qlen 15, 128 heads: 32 splits takes 456 us,
+256 takes 103 us. It is a maximum rather than a fixed count, so it stops
+mattering once the batch itself fills the device.
 
-| cap | 32 | 64 | 128 | 256 (= CU count) | 320 / 384 / 512 |
-|---|---|---|---|---|---|
-| decode | 456 µs | 242 µs | 141 µs | **103 µs** | 103–106 µs |
-
-This is a maximum, not a fixed number of splits, so setting it high costs nothing when it does not bind. At batch 8 and 14 the timing does not change between 32 and 256 splits, because the batch already fills the device.
-
-The number itself matters less than using the same one everywhere. `reduce_partial_map` is allocated with the cap applied, so `get_mla_metadata_info_v1` and `get_mla_metadata_v1` both have to see it. They read the same attribute, so they cannot disagree.
+`reduce_partial_map` is allocated with the cap applied, so the sizing call and
+the runtime build both have to see the same value. They read the same builder
+attribute.
 
 ### Notes for reviewers
 
