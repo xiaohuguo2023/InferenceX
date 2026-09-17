@@ -15,10 +15,27 @@ This PR adds a second, **additive** route that keeps those steps on the ASM path
 
 The route is selected per KV cache group by `VLLM_ROCM_AITER_MLA_DCP_VERIFY` (registered in `vllm/envs.py`): `asm` (default) or `segmented`, optionally restricted to listed DCP-gathered head counts, e.g. `segmented:64` keeps a 64-head draft on Triton while a 96-head target stays on ASM. A speculative target and its draft gather different head counts, so they can be routed independently.
 
-Guard rails, all covered by tests:
-- the ASM kernel exists only at the native DCP-gathered head counts `(16, 32, 64, 128)`; other counts pad up to the next native one (96 → 128), and a count above the largest native is refused at build time rather than silently leaving the ASM path;
-- `cp_kv_cache_interleave_size == 1` only, the same restriction the segmented gate carries;
-- `qlen >= 3`. `qlen == 1` is already correct on the plain kernel (a decode row sees every local token); `qlen == 2` is refused at boot rather than silently degrading acceptance, because such a row can still be causally truncated.
+### Where the route is reachable
+
+Four conditions, so it is enabled only where it works and is needed:
+
+- **gfx950.** The `cprr` kernels are built only for it: `hsa/gfx942/mla` and `hsa/gfx1250/mla` carry no `cprr` rows, so elsewhere the lookup would fail at the first verify step instead of falling back.
+- **Multi-token decode** (`speculative_config is not None`). Single-token decode is already served. Enabling the route there would still override the attention head count to the padded native width on every step, for no benefit.
+- **`decode_context_parallel_size > 1`**, and **`cp_kv_cache_interleave_size == 1`**, the same restriction the segmented gate carries.
+
+Within that, the head-count rules: the ASM kernel exists only at the native DCP-gathered counts `(16, 32, 64, 128)`; other counts pad up to the next native one (96 to 128), and a count above the largest native is refused at build time rather than silently leaving the ASM path.
+
+### Causality
+
+`causal` is forwarded to the kernel. AITER defaults it to `True`, so a non-causal group (a DSpark draft attends its whole block) would otherwise get the masked kernel and see only tokens up to its own index. The non-causal `cprr` kernels exist (`msk0_lse_cprr`); they have to be asked for.
+
+`qlen == 1` is already correct on the plain kernel, since a decode row sees every local token.
+
+**`qlen == 2` raises.** There is no `cprr` kernel below 3, and the plain kernel applies causality on *local* indices over a round-robin shard, which is silently wrong rather than an error. The constructor rejects a configured qlen of 2, but `max_qo_len` is a per-batch value: the scheduler can clamp a running spec request to 2 under a larger configured threshold, so the per-step path checks it too.
+
+### Route selection is fail-fast
+
+The head-count filter rejects empty entries (`segmented:,`, `asm:64,`) and non-positive counts (`asm:0`). Both previously parsed to a filter that matches nothing, which applies the route to *every* group: the opposite of what was asked, silently.
 
 This PR also plumbs `max_split_per_batch` through the DCP MLA metadata, set to the device CU count. MLA decode is lopsided: a handful of query rows against tens of thousands of KV rows, so at low batch the only parallelism available is splitting the KV axis. Measured on gfx950 at batch 1, qlen 15, 128 heads, 27,318 KV rows/rank:
 
@@ -65,15 +82,17 @@ No model weights are downloaded: the MLA dims come from the DeepSeek-R1 *config*
 
 All on gfx950 (MI355X), ROCm 7.2.3.
 
-| suite | unmodified base | with this PR |
-|---|---|---|
-| existing AITER MLA tests | 505 passed | 505 passed |
-| new tests | n/a | 35 passed |
-| **total** | **505 passed, 0 failed** | **540 passed, 0 failed** |
+| file | collected | needs |
+|---|---:|---|
+| `test_rocm_aiter_mla_dcp_cprr.py` | 39 | nothing, pure CPU |
+| `test_rocm_aiter_mla_dcp_cprr_numerics.py` | 4 | AITER on gfx950 |
+| `test_rocm_aiter_mla_mtp_split.py` | 59 | nothing, pure CPU |
 
-**No regressions.** Running the pre-existing suite against the branch is also what caught a real bug during development: `_build_decode` originally built `g_kv_indptr` whenever `dcp_world_size > 1`, but only the ASM route allocates the backing buffer, so a DCP run on the *segmented* route hit an assert. That is fixed here (gated on the route), and `test_dcp_fp8_verify_build_uses_segmented` covers it.
+No regressions in the pre-existing AITER MLA suite.
 
-Forcing `VLLM_ROCM_AITER_MLA_DCP_VERIFY=segmented` turns all 4 GPU tests red, so they are genuinely pinned to the route under test.
+Forcing `VLLM_ROCM_AITER_MLA_DCP_VERIFY=segmented` turns the GPU tests red, so they are genuinely pinned to the route under test.
+
+**What the tests do not cover.** The numerics file is the only coverage of the builder and decode paths, and it skips without gfx950, so on a runner without one a change to the per-step qlen gate, the `cprr` kwargs, or the `causal` forward fails nothing. It also fixes `QLEN = 5`, `causal=True` and `non_causal_multi_token_decode=False`, so qlen 1, qlen 2 and the non-causal path are not exercised anywhere. The CPU files cover the env parsing, the reachability gate and the head-count mapping.
 
 **Numerics.** Per-shard maximum relative error against the exact torch reference, 8 DCP shards, fp8 KV:
 
