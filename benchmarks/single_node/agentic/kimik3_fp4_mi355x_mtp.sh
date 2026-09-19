@@ -135,8 +135,12 @@ apply_vllm_patch() {
 # mis-detect state, "Assume -R" and REVERSE an already-applied patch -- that is how
 # kda.patch got reversed and produced SERVE_RC=1 earlier. Check for out-of-band
 # edits to amd/mla.py before running the recipe while overlap work is in flight.
+# dspark_torch_compile + fused_qk_rmsnorm_custom_op are the vLLM #56664 arm:
+# @support_torch_compile on K3DSparkModel, plus the custom-op registration the
+# draft graph needs before Dynamo can trace fused_q_kv_rmsnorm. They only pay
+# with COMPILATION_EXTRA_JSON enabling inductor graph partition (see below).
 for _p in envs utils kda linear wvsplitkq_strided fused_allreduce_rms_norm latent_moe_runner packed_latent_tail \
-          amd_mla_gate_multistream; do
+          amd_mla_gate_multistream dspark_torch_compile fused_qk_rmsnorm_custom_op; do
     apply_vllm_patch "$REPO_ROOT/patches/k3-perf/vllm/$_p.patch"
 done
 # speculative_draft_dcp and dcp_a2a_pack_mask were dropped 2026-09-15: both are

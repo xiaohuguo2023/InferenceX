@@ -1,0 +1,51 @@
+--- a/models/common/ops/fused_qk_rmsnorm.py
++++ b/models/common/ops/fused_qk_rmsnorm.py
+@@ -4,6 +4,7 @@
+ from typing import Any
+ 
+ import torch
++from vllm.utils.torch_utils import direct_register_custom_op
+ 
+ from vllm.model_executor.warmup.jit_warmup import kernel_launcher
+ from vllm.model_executor.warmup.jit_warmup_triton_helper import (
+@@ -191,7 +192,7 @@
+         )
+ 
+ 
+-def fused_q_kv_rmsnorm(
++def _fused_q_kv_rmsnorm_impl(
+     qr: torch.Tensor,
+     kv: torch.Tensor,
+     q_weight: torch.Tensor,
+@@ -220,4 +221,31 @@
+     return qr_out, kv_out
+ 
+ 
++# K3-LOCAL: with @support_torch_compile on K3DSparkModel the draft forward is
++# traced and Dynamo reaches this Triton kernel. It cannot be traced (the
++# JIT-warmup launcher calls hasattr on a TritonKernelVariable) and it cannot be
++# run on fake tensors, and the compile wrapper uses fullgraph=True so a graph
++# break is unavailable. Register it as a custom op with a meta implementation
++# so tracing gets output metadata without launching the kernel.
++def _fused_q_kv_rmsnorm_fake(
++    qr: torch.Tensor,
++    kv: torch.Tensor,
++    q_weight: torch.Tensor,
++    kv_weight: torch.Tensor,
++    eps: float = 1e-6,
++) -> tuple[torch.Tensor, torch.Tensor]:
++    return (
++        torch.empty_like(qr),
++        torch.empty_like(kv),
++    )
++
++
++direct_register_custom_op(
++    op_name="fused_q_kv_rmsnorm",
++    op_func=_fused_q_kv_rmsnorm_impl,
++    fake_impl=_fused_q_kv_rmsnorm_fake,
++)
++fused_q_kv_rmsnorm = torch.ops.vllm.fused_q_kv_rmsnorm
++
++
+ _FUSED_Q_KV_RMSNORM_KERNEL = FusedQKVRMSNormKernel()

@@ -8,7 +8,7 @@
  from vllm.compilation.breakable_cudagraph import eager_break_during_capture
  from vllm.config import VllmConfig
  from vllm.distributed import divide
-@@ -271,8 +272,7 @@
+@@ -260,8 +261,7 @@
          self,
          hidden_states: torch.Tensor,
          positions: torch.Tensor,
@@ -18,7 +18,7 @@
          num_tokens = hidden_states.size(0)
          projected_qkvgfab = self.in_proj_qkvgfab(hidden_states)[0]
  
-@@ -306,7 +306,7 @@
+@@ -295,7 +295,7 @@
              core_attn_out=core_attn_out,
          )
          core_attn_out = rearrange(core_attn_out, "1 n h d -> n (h d)")
@@ -27,7 +27,7 @@
  
      @eager_break_during_capture
      def _forward(
-@@ -463,38 +463,60 @@
+@@ -452,38 +452,60 @@
  
          # ---------- non-spec path (prefill or plain decode) ----------
          core_attn_out_non_spec = None
@@ -112,15 +112,13 @@
                  q_ns, k_ns, v_ns = (
                      rearrange(x, "n (h d) -> 1 n h d", d=self.head_dim)
                      for x in (q_ns, k_ns, v_ns)
-@@ -580,9 +602,14 @@
-                     # Both slices already landed in core_attn_out.
-                     core_attn_out_non_spec = core_attn_out[:, :num_actual_tokens]
-                 elif split_non_spec:
+@@ -560,10 +582,14 @@
+                 recurrent_state[prefill_state_indices] = last_recurrent_state
+ 
+                 if split_non_spec:
 -                    # Restore decode-first token order for the merge below.
 -                    core_attn_out_non_spec = torch.cat(
 -                        [core_attn_out_decode, core_attn_out_non_spec], dim=1
-+                    # Restore decode-first token order for the merge below,
-+                    # writing into core_attn_out rather than allocating.
 +                    core_attn_out_prefill = core_attn_out_non_spec
 +                    core_attn_out_non_spec = core_attn_out[:, :num_actual_tokens]
 +                    torch.cat(
@@ -128,23 +126,38 @@
 +                        dim=1,
 +                        out=core_attn_out_non_spec,
                      )
++                    non_spec_placed = True
  
              else:
-@@ -622,14 +649,11 @@
+                 # pure-decode non-spec batch
+@@ -601,19 +627,22 @@
+ 
          # ---------- merge spec and non-spec outputs ----------
          if core_attn_out_spec is not None and core_attn_out_non_spec is not None:
-             # Mixed batches require indexed placement in the original order.
+-            # Mixed batches require indexed placement in the original order.
 -            merged = torch.empty(
 -                (1, num_actual_tokens, *core_attn_out_spec.shape[2:]),
 -                dtype=core_attn_out_spec.dtype,
 -                device=core_attn_out_spec.device,
 -            )
-+            # Place directly into core_attn_out; the scratch tensor and the
-+            # copy back out of it are both avoidable.
 +            merged = core_attn_out[:, :num_actual_tokens]
              merged.index_copy_(1, spec_token_indx, core_attn_out_spec)
              merged.index_copy_(1, non_spec_token_indx, core_attn_out_non_spec)
 -            core_attn_out[0, :num_actual_tokens] = merged[0, :num_actual_tokens]
++        elif non_spec_placed:
++            pass
          elif core_attn_out_non_spec is not None:
-             if core_attn_out_non_spec.data_ptr() != core_attn_out.data_ptr():
-                 core_attn_out[0, :num_actual_tokens] = core_attn_out_non_spec[
+             core_attn_out[0, :num_actual_tokens] = core_attn_out_non_spec[
+                 0, :num_actual_tokens
+             ]
+         else:
+             assert core_attn_out_spec is not None
+-        core_attn_out.copy_(self.o_norm(core_attn_out, g2))
++        # The fused (triton) gated RMSNorm normalises in place -- layer_norm_gated_fwd
++        # uses `y = x` when no out_dtype is requested -- so the returned tensor is a
++        # view of core_attn_out and copying it back is a self-copy (one dead kernel
++        # per KDA layer). forward_native does return a fresh tensor, so keep the copy
++        # for that path only.
++        o_normed = self.o_norm(core_attn_out, g2)
++        if o_normed.data_ptr() != core_attn_out.data_ptr():
++            core_attn_out.copy_(o_normed)

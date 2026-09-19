@@ -1,6 +1,6 @@
 --- a/v1/attention/backends/mla/rocm_aiter_mla.py
 +++ b/v1/attention/backends/mla/rocm_aiter_mla.py
-@@ -215,6 +215,138 @@
+@@ -197,6 +197,138 @@
      )
  
  
@@ -139,7 +139,7 @@
  def _aiter_mla_small_head_mode() -> str:
      """Small-head (<16) MLA decode kernel selection.
  
-@@ -388,6 +520,22 @@
+@@ -304,6 +436,22 @@
      min_kv_seq_len: int = 1
      # Set exactly when this batch routes to segmented DCP verification.
      dcp_verify: AiterMLADCPVerifyMetadata | None = None
@@ -162,19 +162,19 @@
      # Small-head decode uses Gluon (avoids padding to 16).
      use_gluon_decode: bool = False
      # Small-head non-DCP multi-token verify uses Gluon's native MTP entry.
-@@ -436,6 +584,11 @@
-     # Set from the common metadata every build; a batch is causal unless the
-     # drafter says otherwise.
-     _decode_causal: bool = True
-+    # K3-DCP-ASM-VERIFY: the round-robin decode applies causal masking on
-+    # GLOBAL positions inside the kernel (g_kv_indptr), so the non-causal-draft
-+    # DCP gate is safe. Upstream sets only the _decode flag above; the DCP gate
-+    # in mla_attention.py reads this one.
+@@ -346,6 +494,11 @@
+     #  https://github.com/vllm-project/vllm/issues/22945
+     _cudagraph_support: ClassVar[AttentionCGSupport] = AttentionCGSupport.UNIFORM_BATCH
+     query_len_support: ClassVar[QueryLenSupport] = QueryLenSupport.UNIFORM
++    # K3-DCP-ASM-VERIFY: the DSpark draft KV spec is non_causal_multi_token_decode
++    # =True; the aiter round-robin decode applies causal masking on GLOBAL
++    # positions inside the kernel (g_kv_indptr), so the non-causal-draft DCP
++    # gate is safe.
 +    supports_non_causal_multi_token_dcp: ClassVar[bool] = True
  
      @staticmethod
      def _uniform_padded_mtp_qo_len(
-@@ -489,15 +642,79 @@
+@@ -399,15 +552,79 @@
              parallel_config.decode_context_parallel_size,
              parallel_config.cp_kv_cache_interleave_size,
          )
@@ -255,7 +255,7 @@
  
          self.compilation_config = vllm_config.compilation_config
          self.decode_attn_out_dtype = vllm_config.model_config.dtype
-@@ -511,6 +728,22 @@
+@@ -421,6 +638,22 @@
          # persistent gate below and makes aiter raise a KeyError mid-run.
          self._mtp_decode_qlen = self.reorder_batch_threshold or 1
  
@@ -278,7 +278,7 @@
          # Store the kernel block size from the spec. When kernel_block_size=1
          # (no spec-dec), behavior is identical to the original. When > 1
          # (e.g. 16 with Eagle3), we expand block-level indices into per-token
-@@ -552,6 +785,12 @@
+@@ -462,6 +695,12 @@
          self._num_attention_heads = AiterMLAHelper.get_actual_mla_num_heads(
              self._decode_num_heads
          )
@@ -291,7 +291,7 @@
          kv_cache_dtype_str = getattr(vllm_config.cache_config, "cache_dtype", "auto")
          if kv_cache_dtype_str in ("fp8", "fp8_e4m3", "fp8_e5m2"):
              kv_cache_dtype_str = "fp8"
-@@ -588,6 +827,15 @@
+@@ -498,6 +737,15 @@
              kv_dtype,
              is_sparse=False,
              fast_mode=True,
@@ -307,7 +307,7 @@
          )
          self._mla_work_meta_data = torch.empty(
              work_meta_data_size, dtype=work_meta_data_type, device=device
-@@ -619,6 +867,7 @@
+@@ -529,6 +777,7 @@
              kv_cache_dtype_str == "fp8"
              and vllm_config.model_config.dtype == torch.bfloat16
              and AiterMLAHelper.is_valid_num_heads(self.num_heads)
@@ -315,7 +315,7 @@
          )
          if self._fp8_prefill_enabled:
              max_prefill_qlen = min(
-@@ -633,6 +882,16 @@
+@@ -543,6 +792,16 @@
                  device,
              )
  
@@ -332,7 +332,7 @@
          # Persistent buffers for segmented DCP verification. Captured graphs
          # require stable addresses while row lengths vary between replays.
          self._dcp_verify_buffers: AiterMLADCPVerifyMetadata | None = None
-@@ -1022,6 +1281,12 @@
+@@ -929,6 +1188,12 @@
          pad_uniform_mtp = padded_mtp_qo_len > 0
  
          seq_lens_for_kernel = seq_lens_device
@@ -345,7 +345,7 @@
          num_kernel_reqs = num_reqs
          if pad_uniform_mtp:
              qo_lens_device = (
-@@ -1033,6 +1298,21 @@
+@@ -940,6 +1205,21 @@
                  seq_lens_for_kernel,
                  seq_lens_for_kernel.new_full((), max_qo_len),
              )
@@ -367,7 +367,7 @@
  
          if self._graph_seq_lens is not None:
              self._graph_seq_lens[:num_kernel_reqs].copy_(
-@@ -1126,6 +1406,24 @@
+@@ -1032,6 +1312,24 @@
                  else:
                      qo_indptr = query_start_loc_device[: 1 + num_kernel_reqs]
  
@@ -392,26 +392,35 @@
          has_persistent_metadata = False
          # Only the asm decode consumes the schedule, so gate on the routing
          # rather than on num_heads >= 16, which denies it to a padded rank
-@@ -1175,6 +1473,18 @@
+@@ -1059,13 +1357,26 @@
              uni_qo_len = (
                  max_qo_len if pad_uniform_mtp or torch.all(qo_len == max_qo_len) else -1
              )
 +            # K3-DCP-ASM-VERIFY: round-robin CP applies causality via global
-+            # positions plus the qlen window *inside* the kernel, so causal
++            # positions plus the qlen window *inside* the kernel, so is_causal
 +            # must be False whenever g_kv_indptr is handed over.
 +            cprr_kwargs: dict = {}
++            is_causal = True
 +            if self.dcp_world_size > 1:
 +                cprr_kwargs = dict(
 +                    max_split_per_batch=self._mla_max_split_per_batch,
 +                    intra_batch_mode=False,
 +                )
 +            if g_kv_indptr is not None:
-+                causal = False
++                is_causal = False
 +                cprr_kwargs["is_cp_round_robin"] = True
              get_mla_metadata_v1(
                  qo_indptr,
                  paged_kv_indptr,
-@@ -1195,6 +1505,7 @@
+                 paged_kv_last_page_len,
+                 self._num_attention_heads,
+                 1,
+-                True,
++                is_causal,
+                 self._mla_work_meta_data,
+                 self._mla_work_info_set,
+                 self._mla_work_indptr,
+@@ -1079,6 +1390,7 @@
                  fast_mode=True,
                  dtype_q=self._mla_q_dtype,
                  dtype_kv=self._mla_kv_dtype,
@@ -419,7 +428,7 @@
              )
              has_persistent_metadata = True
  
-@@ -1237,6 +1548,15 @@
+@@ -1121,6 +1433,15 @@
              max_qo_len=max_qo_len,
              min_kv_seq_len=min_kv_seq_len,
              dcp_verify=dcp_verify,
@@ -435,7 +444,7 @@
              use_gluon_decode=use_gluon_decode,
              use_gluon_verify=use_gluon_verify,
              attn_out_dtype=self.decode_attn_out_dtype,
-@@ -1627,6 +1947,7 @@
+@@ -1483,6 +1804,7 @@
          self._fp8_prefill_enabled = _fp8_mla_prefill_supported() and (
              is_quantized_kv_cache(kv_cache_dtype)
              and AiterMLAHelper.is_valid_num_heads(self.num_heads)
@@ -443,7 +452,7 @@
          )
          if self._fp8_prefill_enabled:
              from aiter import mla_prefill_ps_asm_fwd, mla_reduce_v1
-@@ -2032,9 +2353,14 @@
+@@ -1888,9 +2210,14 @@
                  decode.attn_out_dtype,
              )
  
@@ -460,7 +469,7 @@
              )
  
          if type(q) is tuple:
-@@ -2049,8 +2375,24 @@
+@@ -1905,8 +2232,24 @@
              "ROCM_AITER_MLA decode expected the DCP-gathered query head count "
              f"{self._decode_num_heads}, got {q.shape[1]}"
          )
@@ -487,7 +496,7 @@
          o = torch.empty(
              B,
              mla_num_heads,
-@@ -2084,6 +2426,24 @@
+@@ -1940,6 +2283,24 @@
  
          lse = None
          if self.dcp_world_size > 1:
@@ -512,7 +521,7 @@
              # The vLLM custom-op wrapper exposes only the in-place output and
              # drops aiter's final LSE, which the cross-shard merge needs, so go
              # through aiter's native entry point on the DCP path.
-@@ -2119,7 +2479,16 @@
+@@ -1974,7 +2335,16 @@
                  **mla_kwargs,
              )
  
