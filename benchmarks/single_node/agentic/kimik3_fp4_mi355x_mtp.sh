@@ -139,7 +139,7 @@ apply_vllm_patch() {
 # @support_torch_compile on K3DSparkModel, plus the custom-op registration the
 # draft graph needs before Dynamo can trace fused_q_kv_rmsnorm. They only pay
 # with COMPILATION_EXTRA_JSON enabling inductor graph partition (see below).
-for _p in envs utils kda linear wvsplitkq_strided fused_allreduce_rms_norm latent_moe_runner packed_latent_tail \
+for _p in envs utils kda kda_triton_spec_decode linear wvsplitkq_strided fused_allreduce_rms_norm latent_moe_runner packed_latent_tail \
           amd_mla_gate_multistream dspark_torch_compile fused_qk_rmsnorm_custom_op; do
     apply_vllm_patch "$REPO_ROOT/patches/k3-perf/vllm/$_p.patch"
 done

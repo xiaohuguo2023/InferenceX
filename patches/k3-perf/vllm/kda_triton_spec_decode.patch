@@ -1,0 +1,89 @@
+--- a/models/kimi_k3/amd/ops/kda_decode.py
++++ b/models/kimi_k3/amd/ops/kda_decode.py
+@@ -1,12 +1,15 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+-"""ROCm entry points for the fused Kimi-K3 KDA decode kernel.
++"""ROCm entry points for the fused Kimi-K3 KDA decode kernels.
+ 
+ The kernel in ``csrc/libtorch_stable/kimi_k3/fused_kda_decode_kernel_rocm.cu``
+ replaces, for a pure non-speculative decode batch, the three Triton launches
+ and two copies the AMD KDA layer otherwise runs per layer: the packed causal
+ conv1d update, the recurrent delta-rule step, and the gated output RMSNorm.
+ 
++Speculative decode uses AITER's Triton fusion, which additionally checkpoints
++the recurrent state after each candidate token.
++
+ The kernel wants a width-major conv weight and an fp32 norm weight, so both are
+ staged once at load time by the weight loaders below.
+ """
+@@ -41,13 +44,14 @@ def is_fused_kda_decode_supported(
+         num_heads not in SUPPORTED_NUM_HEADS
+         or head_dim != 128
+         or conv_width != 4
+-        or num_spec != 0
++        or num_spec not in (0, 7)
+         or input_dtype != torch.bfloat16
+         or conv_state_dtype != torch.bfloat16
+         or is_conv_state_dim_first()
+-        or not hasattr(torch.ops._C, "fused_kda_decode")
+     ):
+         return False
++    if num_spec == 0 and not hasattr(torch.ops._C, "fused_kda_decode"):
++        return False
+     # gfx950 (MI355X) and gfx942 (MI325X): both CDNA, sharing the wave64 / DPP /
+     # bf16 primitives the kernel relies on.
+     return on_gfx950() or on_gfx942()
+--- a/models/kimi_k3/amd/kda.py
++++ b/models/kimi_k3/amd/kda.py
+@@ -351,7 +351,51 @@ class KimiK3DeltaAttention(nn.Module):
+         if not is_conv_state_dim_first():
+             conv_state = conv_state.transpose(-1, -2)
+ 
++        if (
++            self.decode_conv1d_weight is not None
++            and self.decode_norm_weight is not None
++            and spec_sequence_masks is not None
++            and m.num_prefills == 0
++            and m.num_decodes == 0
++        ):
++            assert spec_state_indices_tensor is not None
++            assert spec_query_start_loc is not None
++            assert num_accepted_tokens is not None
++            assert self.gate_lower_bound is not None
++            from aiter.ops.triton.gated_delta_net.fused_kda_decode import (
++                fused_kda_decode as aiter_fused_kda_decode,
++            )
++
++            logger.info_once("Using AITER Triton fused KDA speculative decode.")
++            num_spec_decodes = m.num_spec_decodes
++            spec_state_indices = spec_state_indices_tensor[:num_spec_decodes]
++            spec_cu_seqlens = spec_query_start_loc[: num_spec_decodes + 1]
++            conv_state_indices = spec_state_indices[:, 0]
++            aiter_fused_kda_decode(
++                mixed_qkv=mixed_qkv,
++                conv_state=conv_state,
++                conv_weight=self.decode_conv1d_weight,
++                gate=g1,
++                beta=beta,
++                out_gate=g2[:num_actual_tokens].reshape(num_actual_tokens, -1),
++                A_log=self.A_log,
++                dt_bias=self.dt_bias,
++                ssm_state=recurrent_state,
++                ssm_state_indices=spec_state_indices,
++                cu_seqlens=spec_cu_seqlens,
++                norm_weight=self.decode_norm_weight,
++                norm_eps=self.o_norm.eps,
++                head_dim=self.head_dim,
++                num_local_heads=self.local_num_heads,
++                lower_bound=self.gate_lower_bound,
++                num_accepted_tokens=num_accepted_tokens[:num_spec_decodes],
++                conv_state_indices=conv_state_indices,
++                out=core_attn_out[0, :num_actual_tokens].reshape(num_actual_tokens, -1),
++            )
++            return
++
+         if (
++            self.num_spec == 0
+             and self.decode_conv1d_weight is not None
+             and self.decode_norm_weight is not None
