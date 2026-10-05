@@ -1,0 +1,1 @@
+PR #5709 committed HEAD 19dd37cff0f21ffbb8049491021f58f54c6ce9a3 (2026-10-02 [Triton] Trim fused KDA decode review churn); kernel installed at the image's gated_delta_rule path, wrapper import rewritten to match.

@@ -1,0 +1,117 @@
+diff -ru a/vllm/model_executor/layers/fused_moe/router/gate_linear.py b/vllm/model_executor/layers/fused_moe/router/gate_linear.py
+--- a/vllm/model_executor/layers/fused_moe/router/gate_linear.py	2026-09-27 10:02:00.214080010 +0000
++++ b/vllm/model_executor/layers/fused_moe/router/gate_linear.py	2026-09-27 10:02:13.055981705 +0000
+@@ -63,6 +63,7 @@
+ 
+             is_gfx950 = on_gfx950()
+         is_rocm_fp32_shape = False
++        is_rocm_bf16w_shape = False
+         if is_gfx950:
+             from vllm.model_executor.layers.fused_moe.router.rocm_fp32_router_gemm import (  # noqa: E501
+                 ROCM_FP32_ROUTER_GEMM_SUPPORTED_SHAPES,
+@@ -72,6 +73,14 @@
+                 input_size,
+                 output_size,
+             ) in ROCM_FP32_ROUTER_GEMM_SUPPORTED_SHAPES
++            from vllm.model_executor.layers.fused_moe.router.rocm_fp32_router_gemm import (  # noqa: E501
++                ROCM_BF16W_ROUTER_GEMM_SUPPORTED_SHAPES,
++            )
++
++            is_rocm_bf16w_shape = (
++                input_size,
++                output_size,
++            ) in ROCM_BF16W_ROUTER_GEMM_SUPPORTED_SHAPES
+         can_use_specialized_kernels = (
+             current_platform.is_cuda() and (is_hopper or is_blackwell) and not bias
+         )
+@@ -114,6 +123,16 @@
+                 or (is_gfx950 and is_rocm_fp32_shape)
+             )
+         )
++        # gfx950 bf16-weight router with fp32 logits (e.g. Kimi-K3 7168 x 896).
++        if (
++            is_gfx950
++            and is_rocm_bf16w_shape
++            and self.is_unquantized
++            and not bias
++            and self.weight.dtype == torch.bfloat16
++            and out_dtype == torch.float32
++        ):
++            self.allow_fp32_router_gemm = True
+         self.allow_bf16x3_router_gemm = (
+             self.is_unquantized
+             and not bias
+@@ -273,6 +292,8 @@
+             x = x.contiguous()
+             if can_use_rocm_fp32_router_gemm(x, weight):
+                 return rocm_fp32_router_gemm(x, weight)
++            if weight.dtype == torch.bfloat16 and x.dtype == torch.bfloat16:
++                return torch.mm(x, weight.T, out_dtype=torch.float32)
+             return torch.nn.functional.linear(x.float(), weight)
+         return ops.fp32_router_gemm(x, weight)
+ 
+@@ -283,6 +304,8 @@
+ 
+         return _bf16x3_router_gemm(x, weight)
+ 
++    if weight.dtype == torch.bfloat16 and x.dtype == torch.bfloat16:
++        return torch.mm(x, weight.T, out_dtype=torch.float32)
+     return torch.nn.functional.linear(x.float(), weight)
+ 
+ 
+diff -ru a/vllm/model_executor/layers/fused_moe/router/rocm_fp32_router_gemm.py b/vllm/model_executor/layers/fused_moe/router/rocm_fp32_router_gemm.py
+--- a/vllm/model_executor/layers/fused_moe/router/rocm_fp32_router_gemm.py	2026-09-27 10:02:00.213080018 +0000
++++ b/vllm/model_executor/layers/fused_moe/router/rocm_fp32_router_gemm.py	2026-09-27 10:02:00.230079887 +0000
+@@ -18,6 +18,11 @@
+         (6144, 256),
+     }
+ )
++# Shapes whose router weight stays in bf16 (fp32 logits only): the kernel loads
++# the bf16 row and accumulates in fp32, like torch.mm(..., out_dtype=float32),
++# but beats hipBLASLt only for a few decode tokens.
++ROCM_BF16W_ROUTER_GEMM_SUPPORTED_SHAPES = frozenset({(7168, 896)})
++_BF16W_MAX_TOKENS = 9
+ 
+ 
+ @triton.jit
+@@ -63,6 +68,9 @@
+ ) -> tuple[int, int, int]:
+     if (hidden_size, num_experts) == (4096, 8):
+         return 1, 1024, 4
++    if (hidden_size, num_experts) == (7168, 896):
++        block_m = num_tokens if num_tokens in (1, 2, 4) else (8 if num_tokens <= 8 else 2)
++        return block_m, 1024, 2
+ 
+     if num_tokens <= 4:
+         return 1, 1024, 8
+@@ -96,8 +104,15 @@
+         raise ValueError("hidden_states and router_weight must be 2D tensors")
+     if hidden_states.dtype not in (torch.bfloat16, torch.float32):
+         raise ValueError("hidden_states must have dtype bfloat16 or float32")
+-    if router_weight.dtype != torch.float32:
+-        raise ValueError("router_weight must have dtype float32")
++    bf16_weight = router_weight.dtype == torch.bfloat16
++    if bf16_weight:
++        shape = (hidden_states.shape[1], router_weight.shape[0])
++        if shape not in ROCM_BF16W_ROUTER_GEMM_SUPPORTED_SHAPES:
++            raise ValueError("a bf16 router_weight is only supported for (7168, 896)")
++        if hidden_states.shape[0] > _BF16W_MAX_TOKENS:
++            raise ValueError(f"bf16 router_weight path takes <= {_BF16W_MAX_TOKENS} tokens")
++    elif router_weight.dtype != torch.float32:
++        raise ValueError("router_weight must have dtype float32 or bfloat16")
+     if hidden_states.device.type != "cuda" or router_weight.device.type != "cuda":
+         raise ValueError("hidden_states and router_weight must be GPU tensors")
+     if hidden_states.device != router_weight.device:
+@@ -106,7 +121,11 @@
+         raise ValueError("hidden_states and router_weight must be contiguous")
+     shape = (hidden_states.shape[1], router_weight.shape[0])
+     if (
+-        shape not in ROCM_FP32_ROUTER_GEMM_SUPPORTED_SHAPES
++        shape not in (
++            ROCM_BF16W_ROUTER_GEMM_SUPPORTED_SHAPES
++            if bf16_weight
++            else ROCM_FP32_ROUTER_GEMM_SUPPORTED_SHAPES
++        )
+         or router_weight.shape[1] != shape[0]
+     ):
+         raise ValueError(

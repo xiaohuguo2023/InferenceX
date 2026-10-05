@@ -1,0 +1,42 @@
+--- a/vllm/v1/attention/backends/mla/rocm_aiter_mla.py
++++ b/vllm/v1/attention/backends/mla/rocm_aiter_mla.py
+@@ -137,6 +137,30 @@
+     except (ImportError, OSError):
+         return False
+     return "num_heads==24" in source
++
++
++@functools.lru_cache(maxsize=1)
++def _aiter_mla_native_h12_supported() -> bool:
++    """Whether the AITER fp8 persistent decode runs 12 heads natively.
++
++    ROCm/aiter#5695 adds H12 to both the decode dispatch and the metadata
++    planner. Without it, 12 heads pad to 16, which costs a query copy per
++    layer and a third more attention work. Inspect both, as for H24.
++    """
++    try:
++        import inspect
++
++        import aiter.mla as aiter_mla
++        from aiter.jit.core import AITER_CSRC_DIR
++
++        metadata_source = (
++            Path(AITER_CSRC_DIR) / "kernels" / "mla" / "metadata" / "v1_2_device.cuh"
++        )
++        planner = "".join(metadata_source.read_text(encoding="utf-8").split())
++        dispatch = "".join(inspect.getsource(aiter_mla.mla_decode_fwd).split())
++    except (ImportError, OSError, TypeError):
++        return False
++    return "num_heads==12" in planner and "nhead==12" in dispatch
+ 
+ 
+ def _aiter_mla_native_h24_supported() -> bool:
+@@ -1444,6 +1468,8 @@
+     def get_actual_mla_num_heads(num_heads: int) -> int:
+         if num_heads == 24 and _aiter_mla_native_h24_supported():
+             return num_heads
++        if num_heads == 12 and _aiter_mla_native_h12_supported():
++            return num_heads
+         m = AiterMLAHelper._AITER_MIN_MLA_HEADS
+         return -(-num_heads // m) * m
+ 

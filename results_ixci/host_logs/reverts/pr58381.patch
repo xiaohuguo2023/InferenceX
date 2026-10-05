@@ -1,0 +1,95 @@
+diff --git a/vllm/model_executor/layers/attention/mla_attention.py b/vllm/model_executor/layers/attention/mla_attention.py
+index 4ebf3ef40d5c..20bc2099eaa5 100644
+--- a/vllm/model_executor/layers/attention/mla_attention.py
++++ b/vllm/model_executor/layers/attention/mla_attention.py
+@@ -2529,16 +2529,26 @@ def build(
+                     "Non-causal multi-token MLA requires an explicitly supported "
+                     "attention group."
+                 )
+-            query_lens = query_start_loc_cpu[1:] - query_start_loc_cpu[:-1]
+-            num_active_reqs = int(torch.count_nonzero(query_lens > 0))
+-            uniform_active_queries = num_active_reqs > 0 and bool(
+-                torch.all(query_lens[:num_active_reqs] == query_lens[0])
++            # query_start_loc_cpu is host-side and holds one entry per
++            # request, so this check costs more in tensor dispatch than in
++            # the work it does. Read it out once and validate on Python ints:
++            # the block runs on every build, between decode steps.
++            qsl = query_start_loc_cpu.tolist()
++            query_lens = [qsl[i + 1] - qsl[i] for i in range(len(qsl) - 1)]
++            num_active_reqs = 0
++            for qlen in query_lens:
++                if qlen > 0:
++                    num_active_reqs += 1
++            uniform_active_queries = num_active_reqs > 0 and all(
++                qlen == query_lens[0] for qlen in query_lens[:num_active_reqs]
++            )
++            trailing_graph_padding = all(
++                qlen == 0 for qlen in query_lens[num_active_reqs:]
+             )
+-            trailing_graph_padding = bool(torch.all(query_lens[num_active_reqs:] == 0))
+             if not (uniform_active_queries and trailing_graph_padding):
+                 raise ValueError(
+                     "Non-causal MLA requires a uniform query block; got query "
+-                    f"lengths {query_lens.tolist()}."
++                    f"lengths {query_lens}."
+                 )
+             # Use exact GPU sequence lengths instead of the prefill path's CPU
+             # context-length upper bounds.
+diff --git a/vllm/v1/attention/backends/mla/rocm_aiter_mla.py b/vllm/v1/attention/backends/mla/rocm_aiter_mla.py
+index bad6ed201b89..db522d877b15 100644
+--- a/vllm/v1/attention/backends/mla/rocm_aiter_mla.py
++++ b/vllm/v1/attention/backends/mla/rocm_aiter_mla.py
+@@ -451,8 +451,6 @@ def _uniform_padded_mtp_qo_len(
+         # query_start_loc flat for dummy requests. Only synthesize dummy rows
+         # when every padded request maps to the same qlen and the q buffer has
+         # exactly that many rows.
+-        if num_decode_tokens <= int(qo_len.sum().item()):
+-            return 0
+         if num_decode_tokens % num_reqs != 0:
+             return 0
+ 
+@@ -460,19 +458,34 @@ def _uniform_padded_mtp_qo_len(
+         if uniform_qo_len <= 1:
+             return 0
+ 
+-        positive_qo_len = qo_len[qo_len > 0]
+-        if positive_qo_len.numel() == qo_len.numel():
++        # qo_len is derived from query_start_loc_cpu, so it is already
++        # host-side and tiny (one entry per request). Reading it out once and
++        # deciding on Python ints avoids eight separate tensor dispatches --
++        # sum/item, boolean-mask index, all, eq, nonzero, item, any -- on the
++        # metadata-build path, which runs between decode steps while the GPUs
++        # are idle.
++        lens = qo_len.tolist()
++        if num_decode_tokens <= sum(lens):
++            return 0
++
++        first_zero = -1
++        num_positive = 0
++        for i, qlen in enumerate(lens):
++            if qlen > 0:
++                num_positive += 1
++                # A positive entry after a zero breaks the contiguous live
++                # prefix that the padded layout requires.
++                if first_zero >= 0:
++                    return 0
++            elif first_zero < 0:
++                first_zero = i
++
++        if num_positive == num_reqs:
+             return 0
+-        if positive_qo_len.numel() > 0:
++        if num_positive > 0:
+             if max_qo_len != uniform_qo_len:
+                 return 0
+-            if not torch.all(positive_qo_len == uniform_qo_len):
+-                return 0
+-
+-        zero_positions = torch.nonzero(qo_len == 0, as_tuple=False).flatten()
+-        if zero_positions.numel() > 0:
+-            first_zero = int(zero_positions[0].item())
+-            if torch.any(qo_len[first_zero:] > 0):
++            if any(qlen != uniform_qo_len for qlen in lens if qlen > 0):
+                 return 0
+ 
+         return uniform_qo_len
