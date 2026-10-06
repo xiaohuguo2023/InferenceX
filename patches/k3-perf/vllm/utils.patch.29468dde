@@ -1,0 +1,41 @@
+--- a/model_executor/layers/utils.py
++++ b/model_executor/layers/utils.py
+@@ -3,6 +3,7 @@
+ """Utility methods for model layers."""
+ 
+ import functools
++import os
+ from collections.abc import Callable
+ from dataclasses import dataclass
+ 
+@@ -288,6 +289,12 @@
+     return chunkk, fits
+ 
+ 
++# 5 = what stock vLLM compiles into _rocm_C. Raise only after
++# skinny_gemms_n6to9.patch is built into that extension; a higher gate
++# against cases 1..5 throws "Unsupported N value" and kills the worker.
++_WVSPLITK_MAX_N = int(os.environ.get("VLLM_ROCM_WVSPLITK_MAX_N", "5"))
++
++
+ def rocm_unquantized_gemm_impl(
+     x: torch.Tensor, weight: torch.Tensor, bias: torch.Tensor | None = None
+ ) -> torch.Tensor:
+@@ -347,7 +354,7 @@
+         # The skinny kernels assume contiguous K elements. A shape-preserving
+         # reshape can retain a transposed activation's non-contiguous strides.
+         # Note: Only build that view inside the branches that consume it.
+-        if (m == 1 or m > 8) and 0 < n <= 5:
++        if (m == 1 or m > 8) and 0 < n <= _WVSPLITK_MAX_N:
+             x_view = x.reshape(-1, x.size(-1)).contiguous()
+             cu_count = num_compute_units()
+             out = ops.wvSplitK(weight, x_view, cu_count, bias)
+@@ -357,7 +364,7 @@
+             out = ops.LLMM1(weight, x_view, 4)
+             return out.reshape(*x.shape[:-1], weight.shape[0])
+ 
+-    if rocm_aiter_ops.is_tgemm_enabled():
++    if rocm_aiter_ops.is_tgemm_enabled() and x.is_contiguous():
+         from aiter.tuned_gemm import tgemm
+ 
+         return tgemm.mm(x, weight, bias)
