@@ -15,13 +15,25 @@
 # before anyone believes it.
 #
 # To get onto a node from the login host (docker is not usable on slog-006):
-#   srun --jobid=<JOBID> --overlap --pty bash -lc 'bash /shared_nfs/xiaohugu/k3_crossover/ab/ix_recipe.sh old'
+#   srun --jobid=<JOBID> --overlap --pty bash -lc 'bash .../ix_recipe/ix_recipe.sh old'
 # or, so it survives the session dropping:
-#   srun --jobid=<JOBID> --overlap bash -lc 'setsid nohup bash /shared_nfs/xiaohugu/k3_crossover/ab/ix_recipe.sh old > /shared_nfs/xiaohugu/ix_old.out 2>&1 &'
+#   srun --jobid=<JOBID> --overlap bash -lc 'setsid nohup bash .../ix_recipe/ix_recipe.sh old > ~/ix_old.out 2>&1 &'
 #
-# Bars: 172.97-175.43 historical (Sept, 9+ nodes) | 165.23 best old today | ~161 latest today.
-# Our run-to-run spread on a fixed recipe is ~4 points, so one run only settles
-# the question if it lands at 171+.
+# On a different machine or as a different user, override the three paths that
+# are specific to this checkout -- the defaults below are xiaohugu's:
+#   REPO_ROOT=/path/to/InferenceX_dcp   # the clone holding _k3_ixci_repro_setup.sh
+#   BASE=/path/to/scratch               # cache + per-node output, needs ~2 GB/run
+#   CONTAINER=<name>                    # if a k3-repro container is already yours
+# RC is the in-container mount of REPO_ROOT and is wired by the setup script;
+# change it only if you change that mount.
+#
+# Scoring: results land in $OUT_BASE/ix_<arm>. Score one directory at a time with
+#   python3 results_ixci/host_logs/ix_frITL_sum.py <dir>
+# and only trust a run with >=200 scored requests, <1% errors, no engine restart.
+#
+# Results: 172.89 reproduced on n217 with the overlap stack (163.94 without it,
+# same node, image and day). Historical best 175.43. Our run-to-run spread on a
+# fixed recipe is ~4 points, so one run only settles the question at 171+.
 set -uo pipefail
 
 WHICH=${1:-old}
@@ -38,9 +50,10 @@ case "$HOSTN" in
   *slog*) echo "refusing to run on the login node ($HOSTN): docker is not usable here."; exit 2 ;;
 esac
 
-C=k3-repro-385dce-n$NODE
-BASE=/shared_nfs/xiaohugu/k3_crossover
-RC=/inferencex_dcp/results_ixci
+C=${CONTAINER:-k3-repro-385dce-n$NODE}
+BASE=${BASE:-/shared_nfs/xiaohugu/k3_crossover}
+REPO_ROOT=${REPO_ROOT:-/home/xiaohugu/work/InferenceX_dcp}
+RC=${RC:-/inferencex_dcp/results_ixci}
 # OUT_BASE picks the filesystem the run writes to. The September 171-175 runs
 # wrote into the repo's results_ixci on /home; everything we ran on Oct 5 wrote
 # to /shared_nfs and topped out at 165. Both are NFS but they are different
@@ -52,7 +65,7 @@ mkdir -p "$D" "$BASE/cache/n${NODE}_$WHICH"
 log() { echo "[$(date -u +%H:%M:%S)] n$NODE $WHICH $*"; }
 
 log "setup $IMG"
-IMAGE=$IMG SKIP_REAP=1 bash /home/xiaohugu/work/InferenceX_dcp/_k3_ixci_repro_setup.sh "$NODE" \
+IMAGE=$IMG SKIP_REAP=1 bash "$REPO_ROOT/_k3_ixci_repro_setup.sh" "$NODE" \
   > "$D/setup.log" 2>&1
 grep -aq SETUP_OK "$D/setup.log" || { log "SETUP FAILED"; tail -20 "$D/setup.log"; exit 1; }
 docker exec "$C" bash -lc 'python3 -c "import vllm;print(\"vllm\",vllm.__version__)"'
