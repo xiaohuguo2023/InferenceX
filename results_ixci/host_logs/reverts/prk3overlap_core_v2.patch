@@ -1,0 +1,294 @@
+diff --git a/vllm/envs.py b/vllm/envs.py
+index f663414a91..88a4a217bc 100755
+--- a/vllm/envs.py
++++ b/vllm/envs.py
+@@ -214,6 +214,8 @@ if TYPE_CHECKING:
+     VLLM_MOE_SKIP_PADDING: bool = True
+     VLLM_KIMI_K3_SHARD_SP_SHARED_EXPERT: bool = False
+     VLLM_KIMI_K3_AUX_ATTN_RES_STREAM: bool = False
++    VLLM_KIMI_K3_AMD_MOE_ROUTER_DOWN_PROJ_STREAM: bool = False
++    VLLM_KIMI_K3_AMD_MLA_GATE_STREAM: bool = False
+     VLLM_KIMI_K3_GEMM_AR: bool = True
+     VLLM_ENABLE_GEMM_RS: bool = False
+     VLLM_BLOCKSCALE_FP8_GEMM_FLASHINFER: bool = True
+@@ -1633,6 +1635,19 @@ environment_variables: dict[str, Callable[[], Any]] = {
+     "VLLM_KIMI_K3_AUX_ATTN_RES_STREAM": lambda: bool(
+         int(os.getenv("VLLM_KIMI_K3_AUX_ATTN_RES_STREAM", "0"))
+     ),
++    # AMD Kimi-K3 only. Overlap the latent-MoE router gate with the routed
++    # down-projection on a dedicated HIP stream for decode-sized batches.
++    # Off by default while output parity, graph capture and MI355X latency are
++    # validated.
++    "VLLM_KIMI_K3_AMD_MOE_ROUTER_DOWN_PROJ_STREAM": lambda: bool(
++        int(os.getenv("VLLM_KIMI_K3_AMD_MOE_ROUTER_DOWN_PROJ_STREAM", "0"))
++    ),
++    # AMD Kimi-K3 only. Overlap MLA's output-gate projection with the attention
++    # front-end on a second, dedicated HIP stream. This stream is deliberately
++    # distinct from the latent-MoE router/down-projection stream.
++    "VLLM_KIMI_K3_AMD_MLA_GATE_STREAM": lambda: bool(
++        int(os.getenv("VLLM_KIMI_K3_AMD_MLA_GATE_STREAM", "0"))
++    ),
+     # Use the SM100 BF16 GEMM-AR kernel for eligible Kimi-K3 row-parallel
+     # attention projections. All TP ranks must belong to one NVLink domain.
+     "VLLM_KIMI_K3_GEMM_AR": lambda: bool(int(os.getenv("VLLM_KIMI_K3_GEMM_AR", "1"))),
+diff --git a/vllm/models/kimi_k3/amd/linear.py b/vllm/models/kimi_k3/amd/linear.py
+index 65dad661ab..84bebab44d 100644
+--- a/vllm/models/kimi_k3/amd/linear.py
++++ b/vllm/models/kimi_k3/amd/linear.py
+@@ -7,6 +7,7 @@ from typing import Any
+ import torch
+ from torch import nn
+ 
++import vllm.envs as envs
+ from vllm.config import CacheConfig, VllmConfig
+ from vllm.distributed import (
+     get_pp_group,
+@@ -68,9 +69,14 @@ from vllm.models.kimi_k3.amd.ops.attn_res import attn_res
+ from vllm.sequence import IntermediateTensors
+ from vllm.transformers_utils.configs.kimi_linear import KimiLinearConfig
+ from vllm.utils.math_utils import cdiv
++from vllm.utils.multi_stream_utils import maybe_execute_in_parallel
+ 
+ logger = init_logger(__name__)
+ 
++# Match the conservative decode thresholds used by the NVIDIA Kimi-K3 path.
++_ROUTED_DOWN_PROJ_STREAM_TOKEN_THRESHOLD = 256
++_MLA_GATE_STREAM_TOKEN_THRESHOLD = 512
++
+ 
+ class KimiMLP(nn.Module):
+     def __init__(
+@@ -163,6 +169,48 @@ def _apply_attn_res(
+     )
+ 
+ 
++class _PackedRoutingRouter:
++    """Router wrapper that accepts an expert selection computed ahead of time.
++
++    The MoE runner's custom op only carries tensors, so a selection made on a
++    side stream travels in the ``router_logits`` slot as a ``[2, T, top_k]``
++    fp32 tensor (weights, then int32 ids bit-cast to fp32). Raw ``[T, E]``
++    logits are passed through to the wrapped router unchanged.
++    """
++
++    def __init__(self, inner):
++        self.inner = inner
++
++    def __getattr__(self, name):
++        return getattr(self.inner, name)
++
++    @staticmethod
++    def pack(topk_weights: torch.Tensor, topk_ids: torch.Tensor) -> torch.Tensor:
++        return torch.stack(
++            (topk_weights.float(), topk_ids.to(torch.int32).view(torch.float32))
++        )
++
++    def select_experts(
++        self,
++        hidden_states: torch.Tensor,
++        router_logits: torch.Tensor,
++        topk_indices_dtype: torch.dtype | None = None,
++        *,
++        input_ids: torch.Tensor | None = None,
++    ) -> tuple[torch.Tensor, torch.Tensor]:
++        if router_logits.dim() != 3:
++            return self.inner.select_experts(
++                hidden_states,
++                router_logits,
++                topk_indices_dtype,
++                input_ids=input_ids,
++            )
++        topk_ids = router_logits[1].view(torch.int32)
++        if topk_indices_dtype is not None and topk_indices_dtype != torch.int32:
++            topk_ids = topk_ids.to(topk_indices_dtype)
++        return router_logits[0], topk_ids
++
++
+ class KimiMoE(nn.Module):
+     def __init__(
+         self,
+@@ -170,6 +218,7 @@ class KimiMoE(nn.Module):
+         quant_config: QuantizationConfig | None = None,
+         prefix: str = "",
+         layer_idx: int = 0,
++        router_down_proj_stream: torch.cuda.Stream | None = None,
+     ):
+         super().__init__()
+         hidden_size = config.hidden_size
+@@ -270,6 +319,16 @@ class KimiMoE(nn.Module):
+             self.routed_expert_norm = None
+             self.routed_expert_up_proj = None
+             self.routed_output_transform = None
++        self._router_down_proj_stream = (
++            router_down_proj_stream
++            if self.routed_expert_down_proj is not None
++            else None
++        )
++        self._router_down_proj_events = (
++            (torch.cuda.Event(), torch.cuda.Event())
++            if self._router_down_proj_stream is not None
++            else None
++        )
+ 
+         self.experts = FusedMoEFactory(
+             shared_experts=self.shared_experts,
+@@ -293,6 +352,17 @@ class KimiMoE(nn.Module):
+             routed_output_transform=self.routed_output_transform,
+             runner_cls=ROCmLatentMoERunner if self.use_latent_moe else None,
+         )
++        # The packed selection rides in the router_logits slot, so any runner
++        # path that dispatches or gathers router_logits by token rules it out.
++        if self._router_down_proj_stream is not None and (
++            self.experts.do_naive_dispatch_combine
++            or self.experts.moe_config.pcp_size > 1
++            or self.experts.routed_experts.quant_method.is_monolithic
++        ):
++            self._router_down_proj_stream = None
++            self._router_down_proj_events = None
++        if self._router_down_proj_stream is not None:
++            self.experts.router = _PackedRoutingRouter(self.experts.router)
+         if self.padded_moe_intermediate_size != moe_intermediate_size:
+             w13_weight = getattr(self.experts, "w13_weight", None)
+             if w13_weight is None:
+@@ -306,12 +376,67 @@ class KimiMoE(nn.Module):
+                 moe_intermediate_size // self.tp_size
+             )
+ 
++    def _route_packed(self, hidden_states: torch.Tensor) -> torch.Tensor:
++        """Router GEMM plus expert selection, packed for _PackedRoutingRouter."""
++        router = self.experts.router
++        assert isinstance(router, _PackedRoutingRouter)
++        router_logits, _ = self.gate(hidden_states)
++        topk_weights, topk_ids = router.inner.select_experts(
++            hidden_states=hidden_states,
++            router_logits=router_logits,
++            topk_indices_dtype=self.experts._quant_method.topk_indices_dtype,
++        )
++        return _PackedRoutingRouter.pack(topk_weights, topk_ids)
++
++    def _maybe_overlap_router_and_down_proj(
++        self, hidden_states: torch.Tensor
++    ) -> tuple[torch.Tensor, torch.Tensor]:
++        """Run routing and the latent down-projection concurrently at decode.
++
++        On the stream path the side stream runs the router GEMM and the
++        latency-bound expert selection (grouped top-k), so the selection hides
++        behind the bandwidth-bound down-projection instead of sitting on the
++        critical path inside the MoE runner. The runner receives the selection
++        packed in ``router_logits`` and does not recompute it.
++        """
++        down_proj = self.routed_expert_down_proj
++        events = self._router_down_proj_events
++        stream = self._router_down_proj_stream
++        if down_proj is None:
++            router_logits, _ = self.gate(hidden_states)
++            return hidden_states, router_logits
++
++        use_stream = (
++            stream is not None
++            and events is not None
++            and hidden_states.shape[0] <= _ROUTED_DOWN_PROJ_STREAM_TOKEN_THRESHOLD
++        )
++        if not use_stream:
++            router_logits, _ = self.gate(hidden_states)
++            routed_hidden_states, _ = down_proj(hidden_states)
++            return routed_hidden_states, router_logits
++
++        assert stream is not None
++        assert events is not None
++        packed_routing, (routed_hidden_states, _) = maybe_execute_in_parallel(
++            lambda: self._route_packed(hidden_states),
++            lambda: down_proj(hidden_states),
++            events[0],
++            events[1],
++            stream,
++        )
++        return routed_hidden_states, packed_routing
++
+     def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
+         num_tokens, hidden_size = hidden_states.shape
+         hidden_states = hidden_states.view(-1, hidden_size)
+-        router_logits, _ = self.gate(hidden_states)
++        routed_hidden_states, router_logits = self._maybe_overlap_router_and_down_proj(
++            hidden_states
++        )
+         final_hidden_states = self.experts(
+-            hidden_states=hidden_states, router_logits=router_logits
++            hidden_states=routed_hidden_states,
++            router_logits=router_logits,
++            shared_experts_input=hidden_states if self.use_latent_moe else None,
+         )
+         return final_hidden_states.view(num_tokens, hidden_size)
+ 
+@@ -333,6 +458,7 @@ class KimiMLAAttention(nn.Module):
+         cache_config: CacheConfig | None = None,
+         quant_config: QuantizationConfig | None = None,
+         prefix: str = "",
++        mla_gate_stream: torch.cuda.Stream | None = None,
+         **kwargs,
+     ) -> None:
+         super().__init__()
+@@ -450,6 +576,8 @@ class KimiMLAAttention(nn.Module):
+             cache_config,
+             quant_config,
+             prefix,
++            gate_stream=mla_gate_stream,
++            gate_stream_token_threshold=_MLA_GATE_STREAM_TOKEN_THRESHOLD,
+         )
+ 
+     def forward(
+@@ -466,6 +594,8 @@ class KimiDecoderLayer(nn.Module):
+         config: KimiLinearConfig,
+         vllm_config: VllmConfig,
+         prefix: str = "",
++        router_down_proj_stream: torch.cuda.Stream | None = None,
++        mla_gate_stream: torch.cuda.Stream | None = None,
+     ) -> None:
+         super().__init__()
+         self.hidden_size = config.hidden_size
+@@ -520,6 +650,7 @@ class KimiDecoderLayer(nn.Module):
+                 q_lora_rank=config.q_lora_rank,
+                 kv_lora_rank=kv_lora_rank,
+                 use_nope=mla_use_nope,
++                mla_gate_stream=mla_gate_stream,
+             )
+ 
+         if (
+@@ -533,6 +664,7 @@ class KimiDecoderLayer(nn.Module):
+                 quant_config=quant_config,
+                 prefix=f"{prefix}.block_sparse_moe",
+                 layer_idx=layer_idx,
++                router_down_proj_stream=router_down_proj_stream,
+             )
+             self.mlp = self.block_sparse_moe
+         else:
+@@ -683,11 +815,29 @@ class KimiLinearModel(nn.Module, EagleModelMixin):
+         else:
+             self.embed_tokens = PPMissingLayer()
+ 
++        # Keep the two K3-specific overlap paths on distinct model-level
++        # streams. Every layer owns its own event pair for graph capture.
++        self._router_down_proj_stream = (
++            torch.cuda.Stream()
++            if envs.VLLM_KIMI_K3_AMD_MOE_ROUTER_DOWN_PROJ_STREAM
++            else None
++        )
++        self._mla_gate_stream = (
++            torch.cuda.Stream() if envs.VLLM_KIMI_K3_AMD_MLA_GATE_STREAM else None
++        )
++        if (
++            self._router_down_proj_stream is not None
++            and self._mla_gate_stream is not None
++        ):
++            assert self._router_down_proj_stream is not self._mla_gate_stream
++
+         def get_layer(prefix: str):
+             return KimiDecoderLayer(
+                 config,
+                 vllm_config,
+                 prefix,
++                router_down_proj_stream=self._router_down_proj_stream,
++                mla_gate_stream=self._mla_gate_stream,
+             )
+ 
+         self.start_layer, self.end_layer, self.layers = make_layers(
